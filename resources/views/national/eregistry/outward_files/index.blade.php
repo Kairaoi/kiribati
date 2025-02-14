@@ -15,12 +15,12 @@
                 <tr>
                     <th class="w-16">ID</th>
                     <th>File Name</th>
-                    <th>Ministry</th>
-                    <th>Folder</th>
+                    <th>Recipient Ministries</th>
+                    {{-- <th>Folder</th> --}}
                     <th>Letter Ref No</th>
                     <th>Send Date</th>
                     <th>Security Level</th>
-                    <th>Status</th>
+                    {{-- <th>Status</th> --}}
                     <th class="w-28">Actions</th>
                 </tr>
             </thead>
@@ -98,7 +98,7 @@
     }
 
     .dropdown-item:hover {
-        background-color: #f3f4f6; 
+        background-color: #f3f4f6;
     }
 </style>
 @endpush
@@ -126,7 +126,7 @@ $(document).ready(function() {
        $('.dropdown-menu').remove();
        if (activeDropdown) {
            activeDropdown.removeClass('active');
-           activeDropdown = null; 
+           activeDropdown = null;
        }
    }
 
@@ -137,34 +137,48 @@ $(document).ready(function() {
            url: "{{ route('registry.outward-files.datatables') }}",
            type: 'POST',
            headers: {
-               'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') 
-           } 
+               'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+           }
        },
        columns: [
            { data: 'id' },
            { data: 'name' },
-           { 
-               data: 'ministry_id',
-               render: function(data) {
-                   return getMinistryName(data);
-               }
-           },
-           { 
-               data: 'folder_id',
-               render: function(data) {
-                   return getFolderName(data);
-               }
-           },
+        //    {
+        //        data: 'ministry_id',
+        //        render: function(data) {
+        //            return getMinistryName(data);
+        //        }
+        //    },
+            {
+                data: 'recipient_display',
+                render: function(data, type, row) {
+                // If recipient_display is 'all', return 'All' or a specific message
+                    if (data === 'all') {
+                        return 'All Ministries'; // or any message you want to display for 'all'
+                    }
+
+                    // If recipient_display is null, display the recipient ministries' names
+                    if (data === null) {
+                        var recipientMinistries = row.recipient_ministries;
+                        var ministryNames = recipientMinistries.map(function(ministry) {
+                            return ministry.name;  // Assuming the `name` field is present for each recipient ministry
+                        }).join(', '); // Join the names with a comma if there are multiple
+
+                        return ministryNames || 'No recipient ministries'; // Return the joined names or a fallback message if empty
+                    }
+                    return data;
+                }
+            },
+        //    {
+        //        data: 'folder_id',
+        //        render: function(data) {
+        //            return getFolderName(data);
+        //        }
+        //    },
            { data: 'letter_ref_no' },
            { data: 'send_date' },
            { data: 'security_level' },
-           { 
-               data: 'is_active',
-               render: function(data) {
-                   return data ? 'Active' : 'Inactive';
-               }
-           },
-           { 
+           {
                data: null,
                orderable: false,
                render(data, type, row) {
@@ -204,12 +218,12 @@ $(document).ready(function() {
        e.stopPropagation();
        const button = $(this);
        const rowId = button.data('id');
-       
+
        // Close any open dropdowns
        closeAllDropdowns();
 
        // Create and position the dropdown
-       const dropdown = $(` 
+       const dropdown = $(`
            <div class="dropdown-menu" style="display:none;">
                <a class="dropdown-item" href="${route('registry.outward-files.show', rowId)}">
                    <i class="fas fa-eye text-blue-500 mr-2"></i> View
@@ -225,7 +239,7 @@ $(document).ready(function() {
        // Position the dropdown below the button
        const buttonPosition = button.offset();
        const buttonHeight = button.outerHeight();
-       
+
        dropdown.css({
            top: buttonPosition.top + buttonHeight + 5,
            left: buttonPosition.left
@@ -234,23 +248,23 @@ $(document).ready(function() {
        // Add to body and show
        $('body').append(dropdown);
        dropdown.show();
-       
+
        // Mark this button as active
        button.addClass('active');
-       activeDropdown = button; 
+       activeDropdown = button;
    });
 
    // Handle delete action
    $(document).on('click', '.delete-action', function(e) {
        e.preventDefault();
        const id = $(this).data('id');
-       
+
        if (confirm('Are you sure you want to delete this file?')) {
            $.ajax({
                url: route('registry.outward-files.destroy', id),
                type: 'DELETE',
                headers: {
-                   'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') 
+                   'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                },
                success(response) {
                    $('#outwardFilesTable').DataTable().ajax.reload();
@@ -261,7 +275,7 @@ $(document).ready(function() {
                }
            });
        }
-       closeAllDropdowns(); 
+       closeAllDropdowns();
    });
 
    function route(name, id) {
@@ -282,15 +296,15 @@ $(document).ready(function() {
        return ministries[id] || 'Unknown';
    }
 
-   function getFolderName(id) {
-       // You can replace this with an actual lookup for the folder name based on the ID
-       const folders = {
-           1: 'Health Reports',
-           2: 'Educational Documents',
-           3: 'Financial Reports'
-       };
-       return folders[id] || 'Unknown';
-   }
+//    function getFolderName(id) {
+//        // You can replace this with an actual lookup for the folder name based on the ID
+//        const folders = {
+//            1: 'Health Reports',
+//            2: 'Educational Documents',
+//            3: 'Financial Reports'
+//        };
+//        return folders[id] || 'Unknown';
+//    }
 });
 </script>
 @endpush

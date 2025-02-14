@@ -45,7 +45,7 @@ class MinistriesSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            // Add more ministries as needed
+
         ]);
     }
 }

@@ -72,23 +72,23 @@ class OutWardFileStoreRequest extends FormRequest
                 'string',
                 'max:255',
             ],
-            'vessel_name' => [
-                'required',
-                'string',
-                'max:255',
-            ],
+            // 'vessel_name' => [
+            //     'required',
+            //     'string',
+            //     'max:255',
+            // ],
             'security_level' => [
                 'required',
                 'in:public,internal,confidential,strictly_confidential',
             ],
-            'circulation_status' => [
-                'nullable',
-                'boolean',
-            ],
-            'is_active' => [
-                'nullable',
-                'boolean',
-            ],
+            // 'circulation_status' => [
+            //     'nullable',
+            //     'boolean',
+            // ],
+            // 'is_active' => [
+            //     'nullable',
+            //     'boolean',
+            // ],
             'file_type_id' => [
                 'required',
                 'exists:file_types,id', // Validates that the file_type_id exists in the file_types table

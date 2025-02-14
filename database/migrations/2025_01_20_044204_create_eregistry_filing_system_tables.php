@@ -74,8 +74,28 @@ class CreateEregistryFilingSystemTables extends Migration
             $table->string('to_details_person_name');
             $table->text('comments');
             $table->enum('security_level', ['public', 'internal', 'confidential', 'strictly_confidential']);
-            $table->boolean('circulation_status')->default(false);
-            $table->boolean('is_active')->default(true);
+            $table->foreignId('created_by')->constrained('users');
+            $table->foreignId('updated_by')->constrained('users');
+            $table->foreignId('file_type_id')->constrained('file_types');  // Foreign key for file type
+            $table->timestamps();
+            $table->index(['ministry_id', 'division_id']);
+        });
+
+        // Create out_ward_files table
+        Schema::create('in_ward_files', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('folder_id')->constrained();
+            $table->foreignId('ministry_id')->constrained(); //Ministry owning the outward file
+            $table->foreignId('division_id')->constrained();
+            $table->string('name');
+            $table->string('path')->nullable();
+            $table->date('send_date');
+            $table->date('letter_date');
+            $table->string('letter_ref_no');
+            $table->text('details');
+            $table->string('from_details_name');
+            $table->string('to_details_name');
+            $table->enum('security_level', ['public', 'internal', 'confidential', 'strictly_confidential']);
             $table->foreignId('created_by')->constrained('users');
             $table->foreignId('updated_by')->constrained('users');
             $table->foreignId('file_type_id')->constrained('file_types');  // Foreign key for file type
@@ -86,11 +106,11 @@ class CreateEregistryFilingSystemTables extends Migration
         // Create out_ward_files table
         Schema::create('out_ward_files', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('folder_id')->constrained();
-            $table->foreignId('ministry_id')->constrained();
+            // $table->foreignId('folder_id')->constrained();
+            $table->foreignId('ministry_id')->constrained(); //Ministry owning the outward file
             $table->foreignId('division_id')->constrained();
             $table->string('name');
-            $table->string('path');
+            $table->string('path')->nullable();
             $table->date('send_date');
             $table->date('letter_date');
             $table->string('letter_ref_no');
@@ -98,14 +118,30 @@ class CreateEregistryFilingSystemTables extends Migration
             $table->string('from_details_name');
             $table->string('to_details_name');
             $table->enum('security_level', ['public', 'internal', 'confidential', 'strictly_confidential']);
-            $table->boolean('circulation_status')->default(false);
-            $table->boolean('is_active')->default(true);
             $table->foreignId('created_by')->constrained('users');
             $table->foreignId('updated_by')->constrained('users');
             $table->foreignId('file_type_id')->constrained('file_types');  // Foreign key for file type
             $table->timestamps();
             $table->index(['ministry_id', 'division_id']);
+            $table->string('recipient_display')->nullable(); // Store 'All' or NULL
         });
+
+        // Create file_ministry table (pivot table) - track which ministries a file is sent to
+        Schema::create('out_ward_file_ministry', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('outward_file_id')->constrained('out_ward_files')->onDelete('cascade');
+            $table->foreignId('ministry_id')->constrained()->onDelete('cascade');
+            $table->enum('role', ['owner', 'recipient']); // Identifies if the ministry owns or receives the file
+            $table->timestamps();
+        });
+
+        Schema::create('in_ward_file_ministry', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('in_ward_file_id')->constrained()->onDelete('cascade');  // Foreign key to inward_files table
+            $table->foreignId('ministry_id')->constrained()->onDelete('cascade');
+            $table->timestamps();
+        });
+
 
         // Create file_access table
         Schema::create('file_access', function (Blueprint $table) {
@@ -153,6 +189,7 @@ class CreateEregistryFilingSystemTables extends Migration
         Schema::dropIfExists('movements');
         Schema::dropIfExists('file_access');
         Schema::dropIfExists('out_ward_files');
+        Schema::dropIfExists('file_ministry');
         Schema::dropIfExists('files');
         Schema::dropIfExists('file_types');
         Schema::dropIfExists('folders');

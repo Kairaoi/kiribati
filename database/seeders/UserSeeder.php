@@ -13,7 +13,8 @@ class UserSeeder extends Seeder
             [
                 'id' => 2,
                 'ministry_id' => 1, // Assign to ministry with ID 1
-                'name' => 'Test User',
+                'first_name' => 'Test',
+                'last_name' => 'User',
                 'email' => 'testuser@example.com',
                 'password' => bcrypt('password'), // Use bcrypt to hash password
                 'created_at' => now(),
@@ -22,7 +23,8 @@ class UserSeeder extends Seeder
             [
                 'id' => 3,
                 'ministry_id' => 1, // Assign to ministry with ID 1
-                'name' => 'John Doe',
+                'first_name' => 'John',
+                'last_name' => 'Doe',
                 'email' => 'john.doe@example.com',
                 'password' => bcrypt('password'),
                 'created_at' => now(),
@@ -31,7 +33,8 @@ class UserSeeder extends Seeder
             [
                 'id' => 4,
                 'ministry_id' => 2, // Assign to ministry with ID 2
-                'name' => 'Jane Smith',
+                'first_name' => 'Jane',
+                'last_name' => 'Doe',
                 'email' => 'jane.smith@example.com',
                 'password' => bcrypt('password'),
                 'created_at' => now(),
@@ -40,7 +43,8 @@ class UserSeeder extends Seeder
             [
                 'id' => 5,
                 'ministry_id' => 2, // Assign to ministry with ID 2
-                'name' => 'Alice Johnson',
+                'first_name' => 'Alice',
+                'last_name' => 'Johnson',
                 'email' => 'alice.johnson@example.com',
                 'password' => bcrypt('password'),
                 'created_at' => now(),
@@ -49,7 +53,8 @@ class UserSeeder extends Seeder
             [
                 'id' => 6,
                 'ministry_id' => 3, // Assign to ministry with ID 3
-                'name' => 'Bob Brown',
+                'first_name' => 'Bob',
+                'last_name' => 'Brown',
                 'email' => 'bob.brown@example.com',
                 'password' => bcrypt('password'),
                 'created_at' => now(),

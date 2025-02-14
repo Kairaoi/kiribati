@@ -10,7 +10,7 @@ class MinistryRepository extends BaseRepository
 {
     /**
      * Specify Model class name
-     * 
+     *
      * @return string
      */
     public function model()
@@ -20,7 +20,7 @@ class MinistryRepository extends BaseRepository
 
     /**
      * Create a new ministry record
-     * 
+     *
      * @param array $input
      * @return Ministry
      */
@@ -44,7 +44,7 @@ class MinistryRepository extends BaseRepository
 
     /**
      * Update an existing ministry record
-     * 
+     *
      * @param Ministry $model
      * @param array $input
      * @return bool
@@ -64,7 +64,7 @@ class MinistryRepository extends BaseRepository
 
     /**
      * Get ministries for data table with search and sorting
-     * 
+     *
      * @param string $search
      * @param string $order_by
      * @param string $sort
@@ -93,7 +93,7 @@ class MinistryRepository extends BaseRepository
 
     /**
      * Get a list of ministries for dropdowns
-     * 
+     *
      * @param string $column
      * @param string $key
      * @return \Illuminate\Support\Collection

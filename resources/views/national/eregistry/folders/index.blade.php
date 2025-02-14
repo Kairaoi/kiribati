@@ -15,7 +15,7 @@
             </li>
         @endforeach
     </ol>
-</nav>
+    </nav>
 
         <h1 class="text-3xl font-bold text-gray-900 tracking-wide">Folder Registry</h1>
         <a href="{{ route('registry.folders.create') }}" class="btn btn-primary transition duration-300 transform hover:scale-105">
@@ -109,7 +109,7 @@
     }
 
     .dropdown-item:hover {
-        background-color: #f3f4f6; 
+        background-color: #f3f4f6;
     }
 </style>
 @endpush
@@ -137,7 +137,7 @@ $(document).ready(function() {
        $('.dropdown-menu').remove();
        if (activeDropdown) {
            activeDropdown.removeClass('active');
-           activeDropdown = null; 
+           activeDropdown = null;
        }
    }
 
@@ -148,12 +148,12 @@ $(document).ready(function() {
            url: "{{ route('registry.folders.datatables') }}",
            type: 'POST',
            headers: {
-               'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') 
-           } 
+               'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+           }
        },
        columns: [
            { data: 'id' },
-           { 
+           {
         data: 'fileindex',
                 render: function(data, type, row) {
                     return `<i class="fas fa-folder mr-2"></i> ${data}`;  // Folder icon + fileindex
@@ -161,13 +161,13 @@ $(document).ready(function() {
           }, // Update column to match data
            { data: 'folder_name' },
            { data: 'folder_description' },
-           { 
+           {
                data: 'is_active',
                render: function(data) {
                    return data ? 'Active' : 'Inactive';
                }
            },
-           { 
+           {
                data: null,
                orderable:false,
                render(data, type, row) {
@@ -207,12 +207,12 @@ $(document).ready(function() {
        e.stopPropagation();
        const button = $(this);
        const rowId = button.data('id');
-       
+
        // Close any open dropdowns
        closeAllDropdowns();
 
        // Create and position the dropdown
-       const dropdown = $(` 
+       const dropdown = $(`
            <div class="dropdown-menu" style="display:none;">
                <a class="dropdown-item" href="${route('registry.folders.show', rowId)}">
                    <i class="fas fa-eye text-blue-500 mr-2"></i> View
@@ -228,43 +228,43 @@ $(document).ready(function() {
        // Position the dropdown below the button
        const buttonPosition = button.offset();
        const buttonHeight = button.outerHeight();
-       
+
        dropdown.css({
            top : buttonPosition.top + buttonHeight +5,
-           left : buttonPosition.left 
+           left : buttonPosition.left
        });
 
        // Add to body and show
        $('body').append(dropdown);
        dropdown.show();
-       
+
        // Mark this button as active
        button.addClass('active');
-       activeDropdown = button; 
+       activeDropdown = button;
    });
 
    // Handle delete action
    $(document).on('click', '.delete-action', function(e) {
        e.preventDefault();
        const id = $(this).data('id');
-       
+
        if (confirm('Are you sure you want to delete this folder?')) {
            $.ajax({
                url : route('registry.folders.destroy', id),
                type : 'DELETE',
                headers :{
-                   'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') 
+                   'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                },
                success(response) {
                    $('#foldersTable').DataTable().ajax.reload();
-                   alert('Folder deleted successfully'); 
+                   alert('Folder deleted successfully');
                },
                error(xhr) {
-                   alert('Error deleting folder'); 
-               } 
+                   alert('Error deleting folder');
+               }
            });
        }
-       closeAllDropdowns(); 
+       closeAllDropdowns();
    });
 
    function route(name, id) {

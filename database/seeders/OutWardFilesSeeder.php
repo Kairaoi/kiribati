@@ -17,7 +17,7 @@ class OutWardFilesSeeder extends Seeder
         // Insert sample out_ward_files data
         DB::table('out_ward_files')->insert([
             [
-                'folder_id' => 1, // Ensure this folder ID exists in the 'folders' table
+                // 'folder_id' => 1, // Ensure this folder ID exists in the 'folders' table
                 'ministry_id' => 1, // Ensure this ministry ID exists in the 'ministries' table
                 'division_id' => 1, // Ensure this division ID exists in the 'divisions' table
                 'name' => 'Health Report January 2025',
@@ -29,8 +29,6 @@ class OutWardFilesSeeder extends Seeder
                 'from_details_name' => 'Dr. John Doe',
                 'to_details_name' => 'Dr. Jane Smith',
                 'security_level' => 'confidential',
-                'circulation_status' => true,
-                'is_active' => true,
                 'created_by' => 2, // Ensure this user ID exists in the 'users' table
                 'updated_by' => 2, // Ensure this user ID exists in the 'users' table
                 'file_type_id' => 1, // Ensure this file type ID exists in the 'file_types' table
@@ -38,7 +36,7 @@ class OutWardFilesSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'folder_id' => 2, // Ensure this folder ID exists
+                // 'folder_id' => 2, // Ensure this folder ID exists
                 'ministry_id' => 2, // Ensure this ministry ID exists
                 'division_id' => 2, // Ensure this division ID exists
                 'name' => 'Educational Policy Update February 2025',
@@ -50,8 +48,6 @@ class OutWardFilesSeeder extends Seeder
                 'from_details_name' => 'Mr. Robert Smith',
                 'to_details_name' => 'Mr. William Johnson',
                 'security_level' => 'internal',
-                'circulation_status' => false,
-                'is_active' => true,
                 'created_by' => 3, // Ensure this user ID exists
                 'updated_by' => 3, // Ensure this user ID exists
                 'file_type_id' => 2, // Ensure this file type ID exists
@@ -59,7 +55,7 @@ class OutWardFilesSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'folder_id' => 3, // Ensure this folder ID exists
+                // 'folder_id' => 3, // Ensure this folder ID exists
                 'ministry_id' => 3, // Ensure this ministry ID exists
                 'division_id' => 3, // Ensure this division ID exists
                 'name' => 'Quarterly Financial Report Q1 2025',
@@ -71,8 +67,6 @@ class OutWardFilesSeeder extends Seeder
                 'from_details_name' => 'Mr. Michael Green',
                 'to_details_name' => 'Ms. Laura White',
                 'security_level' => 'strictly_confidential',
-                'circulation_status' => true,
-                'is_active' => true,
                 'created_by' => 3, // Ensure this user ID exists
                 'updated_by' => 3, // Ensure this user ID exists
                 'file_type_id' => 1, // Ensure this file type ID exists

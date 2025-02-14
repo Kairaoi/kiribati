@@ -106,13 +106,16 @@
 <div class="container">
     <!-- Tabs Navigation -->
     <div class="tabs" id="tabs">
-        @foreach ([ 
+        @foreach ([
             ['id' => 'filetypes', 'title' => 'File Types', 'icon' => 'bi bi-folder', 'route' => 'registry.file-types.create'],
-            ['id' => 'folders', 'title' => 'Folders', 'icon' => 'bi bi-folder', 'route' => 'registry.folders.index'],
+            // ['id' => 'folders', 'title' => 'Folders', 'icon' => 'bi bi-folder', 'route' => 'registry.folders.index'],
             ['id' => 'files', 'title' => 'Files', 'icon' => 'bi bi-file-earmark', 'route' => 'registry.files.index'],
             ['id' => 'movements', 'title' => 'Movements', 'icon' => 'bi bi-arrow-right-circle', 'route' => 'registry.movements.index'],
             ['id' => 'ministries', 'title' => 'Ministries', 'icon' => 'bi bi-house-door', 'route' => 'registry.ministries.index'],
-            ['id' => 'divisions', 'title' => 'Divisions', 'icon' => 'bi bi-building', 'route' => 'registry.divisions.index'],
+            // ['id' => 'divisions', 'title' => 'Divisions', 'icon' => 'bi bi-building', 'route' => 'registry.divisions.index'],
+            ['id' => 'outwardfiles', 'title' => 'Outward Files', 'icon' => 'bi bi-folder', 'route' => 'registry.outward-files.index'],
+            ['id' => 'inwardfiles', 'title' => 'Inward Files', 'icon' => 'bi bi-folder', 'route' => 'registry.inward-files.index'],
+
         ] as $tab)
             <div class="tab {{ $loop->first ? 'active' : '' }}" data-tab="{{ $tab['id'] }}">
                 <i class="{{ $tab['icon'] }}"></i> {{ $tab['title'] }}
@@ -121,13 +124,16 @@
     </div>
 
     <!-- Tab Content -->
-    @foreach ([ 
+    @foreach ([
         ['id' => 'filetypes', 'title' => 'File Types', 'description' => 'View and manage the boards in the national registry.', 'route' => 'registry.file-types.create'],
-        ['id' => 'folders', 'title' => 'Folders', 'description' => 'View and manage the boards in the national registry.', 'route' => 'registry.folders.index'],
+        // ['id' => 'folders', 'title' => 'Folders', 'description' => 'View and manage the boards in the national registry.', 'route' => 'registry.folders.index'],
         ['id' => 'files', 'title' => 'Files', 'description' => 'View and manage the boards in the national registry.', 'route' => 'registry.files.index'],
         ['id' => 'movements', 'title' => 'Movements', 'description' => 'View and manage the boards in the national registry.', 'route' => 'registry.movements.index'],
         ['id' => 'ministries', 'title' => 'Ministries', 'description' => 'View and manage the boards in the national registry.', 'route' => 'registry.ministries.index'],
-        ['id' => 'divisions', 'title' => 'Divisions', 'description' => 'View and manage the boards in the national registry.', 'route' => 'registry.divisions.index'],
+        // ['id' => 'divisions', 'title' => 'Divisions', 'description' => 'View and manage the boards in the national registry.', 'route' => 'registry.divisions.index'],
+        ['id' => 'outwardfiles', 'title' => 'Outward Files', 'description' => 'View and manage the boards in the national registry.', 'route' => 'registry.outward-files.index'],
+        ['id' => 'inwardfiles', 'title' => 'Inward Files', 'description' => 'View and manage the boards in the national registry.', 'route' => 'registry.inward-files.index'],
+
     ] as $tab)
         <div class="tab-content {{ $loop->first ? 'active' : '' }}" id="{{ $tab['id'] }}">
             <div class="card">

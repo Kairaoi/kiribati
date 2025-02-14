@@ -31,8 +31,6 @@ class FileSeeder extends Seeder
                 'to_details_person_name' => 'Dr. John Doe',
                 'comments' => 'Report includes monthly statistics and analysis.',
                 'security_level' => 'confidential',
-                'circulation_status' => true,
-                'is_active' => true,
                 'created_by' => 2, // Ensure this user exists
                 'updated_by' => 2, // Ensure this user exists
                 'file_type_id' => 1, // Ensure this file type exists
@@ -53,8 +51,6 @@ class FileSeeder extends Seeder
                 'to_details_person_name' => 'Mr. Robert Smith',
                 'comments' => 'Includes new directives and curriculum standards.',
                 'security_level' => 'internal',
-                'circulation_status' => false,
-                'is_active' => true,
                 'created_by' => 2, // Ensure this user exists
                 'updated_by' => 2, // Ensure this user exists
                 'file_type_id' => 2, // Ensure this file type exists
@@ -75,8 +71,6 @@ class FileSeeder extends Seeder
                 'to_details_person_name' => 'Mr. Michael Green',
                 'comments' => 'Detailed financial statistics and projections included.',
                 'security_level' => 'strictly_confidential',
-                'circulation_status' => true,
-                'is_active' => true,
                 'created_by' => 3, // Ensure this user exists
                 'updated_by' => 3, // Ensure this user exists
                 'file_type_id' => 1, // Ensure this file type exists

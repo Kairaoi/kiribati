@@ -15,7 +15,7 @@
             </li>
         @endforeach
     </ol>
-</nav>
+    </nav>
         <h1 class="text-3xl font-bold text-gray-900 tracking-wide">Outward Files Registry</h1>
         <a href="{{ route('registry.outward-files.create') }}" class="btn btn-primary transition duration-300 transform hover:scale-105">
             <i class="fas fa-plus mr-2"></i> Add New File
@@ -29,7 +29,7 @@
                     <th class="w-16">ID</th>
                     <th>File Name</th>
                     <th>Ministry</th>
-                    <th>Folder</th>
+                    {{-- <th>Folder</th> --}}
                     <th>Letter Ref No</th>
                     <th>Send Date</th>
                     <th>Security Level</th>
@@ -111,7 +111,7 @@
     }
 
     .dropdown-item:hover {
-        background-color: #f3f4f6; 
+        background-color: #f3f4f6;
     }
 </style>
 @endpush
@@ -139,7 +139,7 @@ $(document).ready(function() {
        $('.dropdown-menu').remove();
        if (activeDropdown) {
            activeDropdown.removeClass('active');
-           activeDropdown = null; 
+           activeDropdown = null;
        }
    }
 
@@ -150,34 +150,34 @@ $(document).ready(function() {
            url: "{{ route('registry.files.datatables') }}",  // Updated route
            type: 'POST',
            headers: {
-               'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') 
-           } 
+               'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+           }
        },
        columns: [
            { data: 'id' },
            { data: 'name' },
-           { 
+           {
                data: 'ministry_id',
                render: function(data) {
                    return getMinistryName(data);
                }
            },
-           { 
-               data: 'folder_id',
-               render: function(data) {
-                   return getFolderName(data);
-               }
-           },
+        //    {
+        //        data: 'folder_id',
+        //        render: function(data) {
+        //            return getFolderName(data);
+        //        }
+        //    },
            { data: 'letter_ref_no' },
            { data: 'receive_date' },
            { data: 'security_level' },
-           { 
+           {
                data: 'is_active',
                render: function(data) {
                    return data ? 'Active' : 'Inactive';
                }
            },
-           { 
+           {
                data: null,
                orderable: false,
                render(data, type, row) {
@@ -217,12 +217,12 @@ $(document).ready(function() {
        e.stopPropagation();
        const button = $(this);
        const rowId = button.data('id');
-       
+
        // Close any open dropdowns
        closeAllDropdowns();
 
        // Create and position the dropdown
-       const dropdown = $(` 
+       const dropdown = $(`
            <div class="dropdown-menu" style="display:none;">
                <a class="dropdown-item" href="${route('registry.outward-files.show', rowId)}">
                    <i class="fas fa-eye text-blue-500 mr-2"></i> View
@@ -238,7 +238,7 @@ $(document).ready(function() {
        // Position the dropdown below the button
        const buttonPosition = button.offset();
        const buttonHeight = button.outerHeight();
-       
+
        dropdown.css({
            top: buttonPosition.top + buttonHeight + 5,
            left: buttonPosition.left
@@ -247,23 +247,23 @@ $(document).ready(function() {
        // Add to body and show
        $('body').append(dropdown);
        dropdown.show();
-       
+
        // Mark this button as active
        button.addClass('active');
-       activeDropdown = button; 
+       activeDropdown = button;
    });
 
    // Handle delete action
    $(document).on('click', '.delete-action', function(e) {
        e.preventDefault();
        const id = $(this).data('id');
-       
+
        if (confirm('Are you sure you want to delete this file?')) {
            $.ajax({
                url: route('registry.outward-files.destroy', id),
                type: 'DELETE',
                headers: {
-                   'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') 
+                   'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                },
                success(response) {
                    $('#outwardFilesTable').DataTable().ajax.reload();
@@ -274,7 +274,7 @@ $(document).ready(function() {
                }
            });
        }
-       closeAllDropdowns(); 
+       closeAllDropdowns();
    });
 
    function route(name, id) {

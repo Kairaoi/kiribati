@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers\National\Eregistry;
 
-use App\Http\Controllers\Controller;
-use App\Repositories\National\Eregistry\InwardFileRepository;
-use App\Repositories\National\Eregistry\FolderRepository;
-use App\Repositories\National\Eregistry\MinistryRepository;
-use App\Repositories\National\Eregistry\DivisionRepository;
-use App\Repositories\National\Eregistry\FileTypeRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\Facades\DataTables;
+use App\Models\National\Eregistry\OutwardFile;
+use App\Repositories\National\Eregistry\FolderRepository;
+use App\Repositories\National\Eregistry\DivisionRepository;
+use App\Repositories\National\Eregistry\FileTypeRepository;
+use App\Repositories\National\Eregistry\MinistryRepository;
+use App\Repositories\National\Eregistry\InwardFileRepository;
 
 
 class InwardFileController extends Controller
@@ -44,13 +46,48 @@ class InwardFileController extends Controller
      */
     public function getDataTables(Request $request)
     {
+        // Get the logged-in user's ministry_id
+        $ministryId = Auth::user()->ministry_id;
+
         $search = $request->get('search', '');
         if (is_array($search)) {
             $search = $search['value'];
         }
-        $query = $this->files->getForDataTable($search);
-        $datatables = DataTables::make($query)->make(true);
-        return $datatables;
+
+        $query = OutwardFile::where('ministry_id', '!=', $ministryId) // Exclude outward files created by the logged-in ministry
+                ->whereHas('recipientMinistries', function ($q) {
+                    $q->whereNotNull('ministries.id'); // Ensure there are recipient ministries
+                })
+                ->orWhereHas('recipientMinistries', function ($q) use ($ministryId) {
+                    $q->where('ministries.id', $ministryId); // Check if the ministry is a recipient
+                })
+                ->whereDoesntHave('owningMinistry', function ($q) use ($ministryId) {
+                    $q->where('ministries.id', $ministryId); // Exclude files owned by the logged-in ministry
+                }) //Is this code necessary??
+                ->with(['owningMinistry:id,name']); // Eager load owning ministry name
+
+    // Select ministry name
+
+        // // Execute the query and get the results
+        // $results = $query->get();  // Execute the query
+
+        // // Check if results are empty
+        // if ($results->isEmpty()) {
+        //     Log::debug('No results found.');
+        // } else {
+        //     Log::debug('Query Results: ', $results->toArray());
+        // }
+
+        // $datatables = DataTables::of($results)->make(true);
+        // // dd($datatables);
+
+        // return $datatables;
+
+        return datatables()->of($query)
+                            ->addColumn('owning_ministry_name', function ($outwardFile) {
+                                return $outwardFile->owningMinistry->first()->name ?? 'N/A'; // Get the first owning ministry
+                            })
+                            ->make(true);
     }
 
     /**
@@ -58,9 +95,12 @@ class InwardFileController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        return view('national.eregistry.files.index');
+
+        $dataTables = app(OutwardFileController::class)->getDataTables($request);
+
+        return view('national.eregistry.inward_files.index', ['inwardFiles' => $dataTables]);
     }
 
     /**
@@ -98,33 +138,6 @@ class InwardFileController extends Controller
         if (!Auth::user()->can('file.store')) {
             abort(403, 'Unauthorized action.');
         }
-
-        $input = $request->all();
-
-        // Validation
-        $request->validate([
-            'folder_id' => 'required|exists:folders,id',
-            'ministry_id' => 'required|exists:ministries,id',
-            'division_id' => 'required|exists:divisions,id',
-            'name' => 'required|string',
-            'path' => 'required|string',
-            'receive_date' => 'required|date',
-            'letter_date' => 'required|date',
-            'letter_ref_no' => 'required|string',
-            'details' => 'nullable|string',
-            'from_details_name' => 'required|string',
-            'to_details_person_name' => 'required|string',
-            'comments' => 'nullable|string',
-            'security_level' => 'required|in:public,internal,confidential,strictly_confidential',
-            'circulation_status' => 'nullable|boolean',
-            'is_active' => 'nullable|boolean',
-            'file_type_id' => 'required|exists:file_types,id',
-        ]);
-
-        // Store the file
-        $this->files->create($input);
-
-        return redirect()->route('file.index')->with('message', 'File created successfully.');
     }
 
     /**

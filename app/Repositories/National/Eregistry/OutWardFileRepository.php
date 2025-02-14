@@ -4,7 +4,7 @@ namespace App\Repositories\National\Eregistry;
 
 use App\Repositories\BaseRepository;
 use App\Models\National\Eregistry\OutWardFile;
-use Auth;
+use Illuminate\Support\Facades\Auth;
 
 class OutWardFileRepository extends BaseRepository
 {
@@ -27,7 +27,7 @@ class OutWardFileRepository extends BaseRepository
     public function create(array $input)
     {
         $data = [
-            'folder_id' => $input['folder_id'],
+            // 'folder_id' => $input['folder_id'],
             'ministry_id' => $input['ministry_id'],
             'division_id' => $input['division_id'],
             'name' => $input['name'],
@@ -38,10 +38,8 @@ class OutWardFileRepository extends BaseRepository
             'details' => $input['details'] ?? '',
             'from_details_name' => $input['from_details_name'],
             'to_details_name' => $input['to_details_name'],
-            'vessel_name' => $input['vessel_name'],
+            // 'vessel_name' => $input['vessel_name'],
             'security_level' => $input['security_level'] ?? 'public',
-            'circulation_status' => $input['circulation_status'] ?? false,
-            'is_active' => $input['is_active'] ?? true,
             'file_type_id' => $input['file_type_id'],
             'created_by' => Auth::id(),
             'updated_by' => Auth::id(),
@@ -64,7 +62,7 @@ class OutWardFileRepository extends BaseRepository
     public function update(OutWardFile $model, array $input)
     {
         $data = [
-            'folder_id' => $input['folder_id'] ?? $model->folder_id,
+            // 'folder_id' => $input['folder_id'] ?? $model->folder_id,
             'ministry_id' => $input['ministry_id'] ?? $model->ministry_id,
             'division_id' => $input['division_id'] ?? $model->division_id,
             'name' => $input['name'] ?? $model->name,
@@ -75,10 +73,8 @@ class OutWardFileRepository extends BaseRepository
             'details' => $input['details'] ?? $model->details,
             'from_details_name' => $input['from_details_name'] ?? $model->from_details_name,
             'to_details_name' => $input['to_details_name'] ?? $model->to_details_name,
-            'vessel_name' => $input['vessel_name'] ?? $model->vessel_name,
+            // 'vessel_name' => $input['vessel_name'] ?? $model->vessel_name,
             'security_level' => $input['security_level'] ?? $model->security_level,
-            'circulation_status' => $input['circulation_status'] ?? $model->circulation_status,
-            'is_active' => $input['is_active'] ?? $model->is_active,
             'file_type_id' => $input['file_type_id'] ?? $model->file_type_id,
             'updated_by' => Auth::id(),
         ];
@@ -96,10 +92,12 @@ class OutWardFileRepository extends BaseRepository
      */
     public function getForDataTable($search = '', $order_by = 'id', $sort = 'asc')
     {
+
+
         $query = $this->model->query()
             ->select([
                 'id',
-                'folder_id',
+                // 'folder_id',
                 'ministry_id',
                 'division_id',
                 'name',
@@ -107,8 +105,7 @@ class OutWardFileRepository extends BaseRepository
                 'send_date',
                 'letter_date',
                 'letter_ref_no',
-                 'security_level',
-                'is_active',
+                'security_level',
             ]);
 
         if (!empty($search)) {
@@ -116,9 +113,11 @@ class OutWardFileRepository extends BaseRepository
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'ILIKE', $search)
                   ->orWhere('letter_ref_no', 'ILIKE', $search);
-                 
+
             });
         }
+
+        // dd($query->toSql(), $query->get());
 
         return $query->orderBy($order_by, $sort);
     }

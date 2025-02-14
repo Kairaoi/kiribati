@@ -20,7 +20,6 @@
     <!-- FontAwesome CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
-   
 
     <!-- Add custom styles or styles from individual pages -->
     @stack('styles')
@@ -32,7 +31,7 @@
     <div class="min-h-screen bg-gray-100">
 
         <!-- Navigation Bar -->
-      
+
 
         <!-- Main Content Area -->
         <main class="py-4 mt-16"> <!-- mt-16 adds margin to offset the fixed navbar -->
@@ -50,7 +49,7 @@
     </footer>
 
     <!-- Scripts -->
-    
+
 
     <!-- DataTables JS (CDN) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -60,6 +59,6 @@
     <!-- Add custom scripts or scripts from individual pages -->
     @stack('scripts')
 
-    
+
 </body>
 </html>

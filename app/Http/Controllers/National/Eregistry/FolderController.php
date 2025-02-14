@@ -27,11 +27,19 @@ class FolderController extends Controller
      */
     public function getDataTables(Request $request)
     {
+
+        // Get the logged-in user's ministry_id
+        $ministryId = Auth::user()->ministry_id;
+
         $search = $request->get('search', '');
         if (is_array($search)) {
             $search = $search['value'];
         }
-        $query = $this->folders->getForDataTable($search);
+
+        $query = $this->folders->getForDataTable($search)
+                        ->where('ministry_id', $ministryId);
+
+
         $datatables = DataTables::make($query)->make(true);
         return $datatables;
     }
