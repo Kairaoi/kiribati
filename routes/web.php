@@ -38,11 +38,21 @@ Route::group([
     
 
     // File Routes
-    Route::match(['get', 'post'], 'files/datatables', [\App\Http\Controllers\National\Eregistry\InwardFileController::class, 'getDataTables'])->name('files.datatables');
-    Route::resource('files', \App\Http\Controllers\National\Eregistry\InwardFileController::class);
+   
+    // Route for serving the actual file content
+    Route::get('files/{id}/view', [\App\Http\Controllers\National\Eregistry\FileController::class, 'viewFile'])->name('files.view');
+    Route::get('files/{id}/download', [\App\Http\Controllers\National\Eregistry\FileController::class, 'download'])
+     ->name('files.download');
+
+    Route::match(['get', 'post'], 'files/datatables', [\App\Http\Controllers\National\Eregistry\FileController::class, 'getDataTables'])->name('files.datatables');
+    Route::resource('files', \App\Http\Controllers\National\Eregistry\FileController::class);
    
 
     // File Type Routes
+    Route::get('/registry/file-types/{fileTypeId}/dynamic-form', [
+        'as' => 'file-types.dynamic-form',
+        'uses' => 'App\Http\Controllers\National\Eregistry\FileTypeController@dynamicForm'
+    ]);
     Route::match(['get', 'post'], 'file-types/datatables', [\App\Http\Controllers\National\Eregistry\FileTypeController::class, 'getDataTables'])->name('file-types.datatables');
     Route::resource('file-types', \App\Http\Controllers\National\Eregistry\FileTypeController::class);
    
@@ -57,30 +67,27 @@ Route::group([
     Route::resource('movements', \App\Http\Controllers\National\Eregistry\MovementController::class);
     
 
-    // Outward File Routes
-    Route::match(['get', 'post'], 'outward-files/datatables', [\App\Http\Controllers\National\Eregistry\OutwardFileController::class, 'getDataTables'])->name('outward-files.datatables');
-    Route::resource('outward-files', \App\Http\Controllers\National\Eregistry\OutwardFileController::class);
-
+    
     Route::resource('boards', \App\Http\Controllers\National\Eregistry\EregistryBoradController::class, ['only' => ['index']]);
    
 
     // Add additional routes here if needed, such as PDF download or specific actions
 });
 
-use Diglactic\Breadcrumbs\Breadcrumbs;
-use Diglactic\Breadcrumbs\Generator as BreadcrumbsGenerator;
+// use Diglactic\Breadcrumbs\Breadcrumbs;
+// use Diglactic\Breadcrumbs\Generator as BreadcrumbsGenerator;
 
-Breadcrumbs::for('dashboard', function (BreadcrumbsGenerator $trail) {
-    $trail->push('dashboard', route('dashboard'));
-});
+// Breadcrumbs::for('dashboard', function (BreadcrumbsGenerator $trail) {
+//     $trail->push('dashboard', route('dashboard'));
+// });
 
-Breadcrumbs::for('registry.folders.index', function (BreadcrumbsGenerator $trail) {
-    $trail->parent('dashboard');
-    $trail->push('Folders', route('registry.folders.index'));
-});
+// Breadcrumbs::for('registry.folders.index', function (BreadcrumbsGenerator $trail) {
+//     $trail->parent('dashboard');
+//     $trail->push('Folders', route('registry.folders.index'));
+// });
 
-Breadcrumbs::for('registry.files.index', function (BreadcrumbsGenerator $trail) {
-    $trail->parent('registry.folders.index');
-    $trail->push('Files', route('registry.files.index'));
-});
+// Breadcrumbs::for('registry.files.index', function (BreadcrumbsGenerator $trail) {
+//     $trail->parent('registry.folders.index');
+//     $trail->push('Files', route('registry.files.index'));
+// });
 

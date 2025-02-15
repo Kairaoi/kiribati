@@ -4,6 +4,10 @@ namespace App\Http\Controllers\National\Eregistry;
 
 use App\Http\Controllers\Controller;
 use App\Repositories\National\Eregistry\FileTypeRepository;
+use App\Repositories\National\Eregistry\FolderRepository;
+use App\Repositories\National\Eregistry\MinistryRepository;
+use App\Repositories\National\Eregistry\DivisionRepository;
+
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,10 +17,18 @@ use Yajra\DataTables\Facades\DataTables;
 class FileTypeController extends Controller {
 
     private $fileTypes;
+    private $folders;
+    private $ministries;
+    private $divisions;
 
-    public function __construct(FileTypeRepository $fileTypes)
+    public function __construct(FileTypeRepository $fileTypes, FolderRepository $folders,
+    MinistryRepository $ministries,
+    DivisionRepository $divisions)
     {
         $this->fileTypes = $fileTypes;
+        $this->folders = $folders;
+        $this->ministries = $ministries;
+        $this->divisions = $divisions;
     }
 
     /**
@@ -57,8 +69,34 @@ class FileTypeController extends Controller {
         //     abort(403, 'Unauthorized action.');
         // }
         $fileTypes = $this->fileTypes->pluck();
+        // dd($fileTypes); 
         return view('national.eregistry.file_types.create')->with('fileTypes', $fileTypes);
     }
+
+    public function dynamicForm($fileTypeId)
+{ 
+    \Log::info('Dynamic form called with ID: ' . $fileTypeId);
+
+    $fileType = $this->fileTypes->getById($fileTypeId);
+    
+    if (!$fileType) {
+        return response()->json(['message' => 'File type not found'], 404);
+    }
+    
+    if ($fileType->type === 'Outward') {
+        return view('national.eregistry.outward_files.create', [
+            'folders' => $this->folders->pluck(),
+            'ministries' => $this->ministries->pluck(),
+            'divisions' => $this->divisions->pluck(),
+            'fileTypes' => $this->fileTypes->pluck(),
+        ])->render();
+    } elseif ($fileType->type === 'Inward') {
+        return view('national.eregistry.file_types.inward_create')->render();
+    }
+    
+    return response()->json(['message' => 'Invalid file type'], 400);
+}
+    
 
     /**
      * Store a newly created resource in storage.
@@ -85,7 +123,7 @@ class FileTypeController extends Controller {
         return redirect()->route('file_type.index')->with('message', 'File Type created successfully.');
     }
 
-    /**
+     /**
      * Display the specified resource.
      *
      * @param  int  $id

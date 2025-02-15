@@ -113,6 +113,7 @@
             ['id' => 'movements', 'title' => 'Movements', 'icon' => 'bi bi-arrow-right-circle', 'route' => 'registry.movements.index'],
             ['id' => 'ministries', 'title' => 'Ministries', 'icon' => 'bi bi-house-door', 'route' => 'registry.ministries.index'],
             ['id' => 'divisions', 'title' => 'Divisions', 'icon' => 'bi bi-building', 'route' => 'registry.divisions.index'],
+     
         ] as $tab)
             <div class="tab {{ $loop->first ? 'active' : '' }}" data-tab="{{ $tab['id'] }}">
                 <i class="{{ $tab['icon'] }}"></i> {{ $tab['title'] }}
@@ -128,6 +129,7 @@
         ['id' => 'movements', 'title' => 'Movements', 'description' => 'View and manage the boards in the national registry.', 'route' => 'registry.movements.index'],
         ['id' => 'ministries', 'title' => 'Ministries', 'description' => 'View and manage the boards in the national registry.', 'route' => 'registry.ministries.index'],
         ['id' => 'divisions', 'title' => 'Divisions', 'description' => 'View and manage the boards in the national registry.', 'route' => 'registry.divisions.index'],
+       
     ] as $tab)
         <div class="tab-content {{ $loop->first ? 'active' : '' }}" id="{{ $tab['id'] }}">
             <div class="card">

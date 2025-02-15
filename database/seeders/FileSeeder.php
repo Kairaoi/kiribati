@@ -22,7 +22,9 @@ class FileSeeder extends Seeder
                 'ministry_id' => 1, // Ensure this ministry exists
                 'division_id' => 1, // Ensure this division exists
                 'name' => 'Health Report January 2025',
-                'path' => 'uploads/health_reports/jan_2025_report.pdf',
+                'file_reference' => 'HR-001-JAN2025', // Provide the file_reference
+                'file_data' => file_get_contents(storage_path('uploads/health_reports/jan_2025_report.pdf')), // Read file content
+                'mime_type' => 'application/pdf', // Make sure to set the mime type correctly
                 'receive_date' => Carbon::create('2025', '01', '20'),
                 'letter_date' => Carbon::create('2025', '01', '15'),
                 'letter_ref_no' => 'HR-001-JAN2025',
@@ -44,7 +46,9 @@ class FileSeeder extends Seeder
                 'ministry_id' => 2, // Ensure this ministry exists
                 'division_id' => 2, // Ensure this division exists
                 'name' => 'Educational Policy Update February 2025',
-                'path' => 'uploads/educational_documents/feb_2025_policy.pdf',
+                'file_reference' => 'EP-002-FEB2025', // Provide the file_reference
+                'file_data' => file_get_contents(storage_path('uploads/educational_documents/feb_2025_policy.pdf')), // Read file content
+                'mime_type' => 'application/pdf', // Make sure to set the mime type correctly
                 'receive_date' => Carbon::create('2025', '02', '10'),
                 'letter_date' => Carbon::create('2025', '02', '05'),
                 'letter_ref_no' => 'EP-002-FEB2025',
@@ -66,7 +70,9 @@ class FileSeeder extends Seeder
                 'ministry_id' => 3, // Ensure this ministry exists
                 'division_id' => 3, // Ensure this division exists
                 'name' => 'Quarterly Financial Report Q1 2025',
-                'path' => 'uploads/financial_reports/q1_2025_report.pdf',
+                'file_reference' => 'FR-003-Q1-2025', // Provide the file_reference
+                'file_data' => file_get_contents(storage_path('uploads/financial_reports/q1_2025_report.pdf')), // Read file content
+                'mime_type' => 'application/pdf', // Make sure to set the mime type correctly
                 'receive_date' => Carbon::create('2025', '03', '01'),
                 'letter_date' => Carbon::create('2025', '02', '28'),
                 'letter_ref_no' => 'FR-003-Q1-2025',
@@ -85,5 +91,6 @@ class FileSeeder extends Seeder
             ],
             // Add more file records as necessary
         ]);
+        
     }
 }

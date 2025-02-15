@@ -11,6 +11,15 @@ class UserSeeder extends Seeder
     {
         DB::table('users')->insert([
             [
+                'id' => 1,
+                'ministry_id' => 1, // Assign to ministry with ID 1
+                'name' => 'User',
+                'email' => 'user@example.com',
+                'password' => bcrypt('password'), // Use bcrypt to hash password
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
                 'id' => 2,
                 'ministry_id' => 1, // Assign to ministry with ID 1
                 'name' => 'Test User',

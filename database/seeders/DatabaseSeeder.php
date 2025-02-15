@@ -14,10 +14,10 @@ class DatabaseSeeder extends Seeder
             DivisionSeeder::class,  // Run last to create divisions
             FileTypesSeeder::class,  
             FolderSeeder::class,  
-            FileSeeder::class,
-            OutWardFilesSeeder::class,  
-            FileAccessSeeder::class,  
-            MovementSeeder::class,  
+            // FileSeeder::class,
+           
+           
+            // MovementSeeder::class,  
         ]);
     }
 }
