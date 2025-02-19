@@ -13,6 +13,11 @@ export default {
 
     theme: {
         extend: {
+            colors: {
+                red: {
+                    700: '#c53030', // Ensure Tailwind includes this shade
+                },
+            },
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },

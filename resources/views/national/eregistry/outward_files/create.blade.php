@@ -70,7 +70,7 @@
             <label for="division_id" class="block text-sm font-medium text-gray-700">Division</label>
             <select name="division_id" id="division_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
                 <option value="" disabled selected>Select Division</option>
-                @foreach ($divisions as $id => $name)
+                @foreach ($divisions as $id => $name) 
                     <option value="{{ $id }}" {{ old('division_id') == $id ? 'selected' : '' }}>{{ $name }}</option>
                 @endforeach
             </select>

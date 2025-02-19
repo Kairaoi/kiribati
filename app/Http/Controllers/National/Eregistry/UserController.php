@@ -5,6 +5,7 @@ namespace App\Http\Controllers\National\Eregistry;
 use DB;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -42,18 +43,24 @@ class UserController extends Controller
         if (is_array($search)) {
             $search = $search['value'];
         }
-         // Query include ministry name
+
+        // Query to include ministry and roles relationships
         $query = $this->users->getForDataTable($search)
-                    ->with('ministry') // Eager load ministry relationship
+                    ->with(['ministry', 'roles']) // Eager load ministry and roles relationships
                     ->select('users.*'); // Ensure all user fields are selected
 
         $datatables = DataTables::of($query)
+            // Add column for ministry name
             ->addColumn('ministry_name', function ($user) {
                 return $user->ministry ? $user->ministry->name : 'N/A'; // Handle cases where ministry is null
             })
+            // Add column for roles
+            ->addColumn('roles', function ($user) {
+                // Pluck the role names and join them with commas
+                return $user->roles->pluck('name')->implode(', ') ?: 'No Roles Assigned';
+            })
             ->make(true);
 
-        // dd($datatables);
         return $datatables;
     }
 
@@ -78,10 +85,12 @@ class UserController extends Controller
         //     abort(403, 'Unauthorized action.');
         // }
 
+        $roles = Role::all(); // Fetch all roles from the database
         $ministries = $this->ministries->pluck();
         $divisions = $this->divisions->pluck();
 
         return view('national.eregistry.users.create', [
+            'roles' => $roles,
             'ministries' => $ministries,
             'divisions' => $divisions,
         ]);
@@ -100,13 +109,25 @@ class UserController extends Controller
         // }
 
        // Validate incoming request data
+    //    dd($request->all());
         $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email|max:255',
             'ministry_id' => 'required|exists:ministries,id', // Ensures the ministry exists
+            // 'role' => 'required|exits:roles,name',
         ]);
 
+        // Check if the 'secretary' role is being assigned
+        if ($request->role === 'Secretary') {
+            $secretaryRole = \Spatie\Permission\Models\Role::where('name', 'Secretary')->first();
+
+            // Ensure only one user has the 'secretary' role
+            if ($secretaryRole && $secretaryRole->users()->count() > 0) {
+                return redirect()->route('registry.users.create')->with('error', 'Secretary can only be assigned to one user!');
+
+            }
+        }
         // Create the user
         $user = User::create([
             'first_name' => $request->input('first_name'),
@@ -115,6 +136,8 @@ class UserController extends Controller
             'ministry_id' => $request->input('ministry_id'),
             'password' => Hash::make('defaultpassword'), // Set a default password (should be changed later)
         ]);
+
+        $user->syncRoles($request->role);
 
         // Redirect with success message
         return redirect()->route('registry.users.index')->with('success', 'User created successfully!');

@@ -10,7 +10,7 @@ class FolderRepository extends BaseRepository
 {
     /**
      * Specify Model class name
-     * 
+     *
      * @return string
      */
     public function model()
@@ -20,7 +20,7 @@ class FolderRepository extends BaseRepository
 
     /**
      * Create a new folder record
-     * 
+     *
      * @param array $input
      * @return Folder
      */
@@ -45,7 +45,7 @@ class FolderRepository extends BaseRepository
 
     /**
      * Update an existing folder record
-     * 
+     *
      * @param Folder $model
      * @param array $input
      * @return bool
@@ -66,7 +66,7 @@ class FolderRepository extends BaseRepository
 
     /**
      * Get folders for data table with search and sorting
-     * 
+     *
      * @param string $search
      * @param string $order_by
      * @param string $sort
@@ -75,7 +75,7 @@ class FolderRepository extends BaseRepository
     public function getForDataTable($search = '', $order_by = 'id', $sort = 'asc')
 {
     $query = $this->model->query()->select([
-        'id', 
+        'id',
         'ministry_id',
         'folder_number',
         'folder_name',
@@ -100,7 +100,7 @@ class FolderRepository extends BaseRepository
 
     /**
      * Get a list of folders for dropdowns
-     * 
+     *
      * @param string $column
      * @param string $key
      * @return \Illuminate\Support\Collection

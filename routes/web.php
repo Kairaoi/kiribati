@@ -61,15 +61,17 @@ Route::group([
     Route::match(['get', 'post'], 'outward-files/datatables', [\App\Http\Controllers\National\Eregistry\OutwardFileController::class, 'getDataTables'])->name('outward-files.datatables');
     Route::resource('outward-files', \App\Http\Controllers\National\Eregistry\OutwardFileController::class);
 
-
     // Inward File Routes
     Route::match(['get', 'post'], 'inward-files/datatables', [\App\Http\Controllers\National\Eregistry\InwardFileController::class, 'getDataTables'])->name('inward-files.datatables');
     Route::resource('inward-files', \App\Http\Controllers\National\Eregistry\InwardFileController::class);
 
-    // Inward File Routes
+    // Users Routes
     Route::match(['get', 'post'], 'users/datatables', [\App\Http\Controllers\National\Eregistry\UserController::class, 'getDataTables'])->name('users.datatables');
     Route::resource('users', \App\Http\Controllers\National\Eregistry\UserController::class);
 
+    // Roles Routes
+    Route::match(['get', 'post'], 'roles/datatables', [\App\Http\Controllers\National\Eregistry\RoleController::class, 'getDataTables'])->name('roles.datatables');
+    Route::resource('roles', \App\Http\Controllers\National\Eregistry\RoleController::class);
 
     Route::resource('boards', \App\Http\Controllers\National\Eregistry\EregistryBoradController::class, ['only' => ['index']]);
 

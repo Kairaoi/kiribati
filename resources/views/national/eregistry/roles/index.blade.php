@@ -3,30 +3,26 @@
 @section('content')
 <div class="container mx-auto px-4 py-6 max-w-7xl">
     <div class="flex justify-between items-center mb-4">
-        <h1 class="text-3xl font-bold text-gray-900 tracking-wide">E-Registry Users</h1>
-        <a href="{{ route('registry.users.create') }}" class="btn btn-primary transition duration-300 transform hover:scale-105">
-            <i class="fas fa-plus mr-2"></i> Add new user
+        <h1 class="text-3xl font-bold text-gray-900 tracking-wide">E-Registry Roles</h1>
+        <a href="{{ route('registry.roles.create') }}" class="btn btn-primary transition duration-300 transform hover:scale-105">
+            <i class="fas fa-plus mr-2"></i> Add new role
         </a>
     </div>
 
     @if(session('success'))
-        <div class="bg-green-500 text-green-700 px-4 py-3 rounded-md shadow-md mb-6 !important">
-            <strong class="font-bold">Success! </strong>
-            <span class="block sm:inline">{{ session('success') }}</span>
-        </div>
+    <div class="bg-green-500 px-4 py-3 rounded-md shadow-md mb-6 !important">
+        <strong class="font-bold">Success! </strong>
+        <span class="block sm:inline">{{ session('success') }}</span>
+    </div>
     @endif
 
     <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-        <table id="usersTable" class="table w-full">
+        <table id="rolesTable" class="table w-full">
             <thead class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
                 <tr>
                     <th class="w-16">ID</th>
                     <th>Name</th>
-                    <th>Ministry</th>
-                    {{-- <th>Division</th> --}}
-                    <th>Email Address</th>
-                    <th>Role</th>
-                    {{-- <th>Status</th> --}}
+                    <th>Permissions</th>
                     <th class="w-28">Actions</th>
                 </tr>
             </thead>
@@ -52,16 +48,6 @@
 @endsection
 
 @push('styles')
-<script>
-    setTimeout(() => {
-        let alertBox = document.querySelector("[role='alert']");
-        if (alertBox) {
-            alertBox.style.transition = "opacity 0.5s ease-out";
-            alertBox.style.opacity = "0";
-            setTimeout(() => alertBox.remove(), 500);
-        }
-    }, 5000); // Message disappears after 5 seconds
-</script>
 <style>
     /* Table Styles */
     table {
@@ -146,11 +132,11 @@ $(document).ready(function() {
        }
    }
 
-   $('#usersTable').DataTable({
+   $('#rolesTable').DataTable({
        processing: true,
        serverSide: true,
        ajax: {
-           url: "{{ route('registry.users.datatables') }}",
+           url: "{{ route('registry.roles.datatables') }}",
            type: 'POST',
            headers: {
                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -158,20 +144,8 @@ $(document).ready(function() {
        },
        columns: [
            { data: 'id' },
-           {
-                data: 'name', // Define a custom 'name' field
-                render: function(data, type, row) {
-                    return row.first_name + ' ' + row.last_name; // Combine first name and last name
-                }
-            },
-           { data: 'ministry_name'},
-           { data: 'email' },
-           {
-                data: 'roles', // Update this to use 'roles' as fetched from the server
-                render: function(data, type, row) {
-                    return data || 'No Roles Assigned'; // Display roles or a fallback if no roles
-                }
-            },
+           { data: 'name' },
+           { data: 'permissions', name: 'permissions' }, // Add this for displaying permissions
            {
                data: null,
                orderable: false,
@@ -180,6 +154,7 @@ $(document).ready(function() {
                        Actions <i class="fas fa-chevron-down ml-2"></i></button>`;
                }
            }
+
        ],
        pageLength: 10,
        responsive: true,
@@ -190,7 +165,7 @@ $(document).ready(function() {
                extend: 'excelHtml5',
                text: '<i class="fas fa-file-excel"></i> Excel',
                className: 'btn btn-success',
-               title: 'Users',
+               title: 'Roles',
                exportOptions: {
                    columns: ':not(:last-child)' // Exclude the last column (Actions)
                }
@@ -199,7 +174,7 @@ $(document).ready(function() {
                extend: 'pdfHtml5',
                text: '<i class="fas fa-file-pdf"></i> PDF',
                className: 'btn btn-danger',
-               title: 'Users Registry',
+               title: 'Roles Registry',
                exportOptions: {
                    columns: ':not(:last-child)' // Exclude the last column (Actions)
                }
@@ -208,7 +183,7 @@ $(document).ready(function() {
    });
 
    // Handle action button click
-   $('#usersTable').on('click', '.action-dropdown', function(e) {
+   $('#rolesTable').on('click', '.action-dropdown', function(e) {
        e.stopPropagation();
        const button = $(this);
        const rowId = button.data('id');
@@ -219,10 +194,10 @@ $(document).ready(function() {
        // Create and position the dropdown
        const dropdown = $(`
            <div class="dropdown-menu" style="display:none;">
-               <a class="dropdown-item" href="${route('registry.users.show', rowId)}">
+               <a class="dropdown-item" href="${route('registry.roles.show', rowId)}">
                    <i class="fas fa-eye text-blue-500 mr-2"></i> View
                </a>
-               <a class="dropdown-item" href="${route('registry.users.edit', rowId)}">
+               <a class="dropdown-item" href="${route('registry.roles.edit', rowId)}">
                    <i class="fas fa-edit text-green-500 mr-2"></i> Edit
                </a>
                <a class="dropdown-item delete-action" href="#" data-id="${rowId}">
@@ -253,16 +228,16 @@ $(document).ready(function() {
        e.preventDefault();
        const id = $(this).data('id');
 
-       if (confirm('Are you sure you want to delete this user?')) {
+       if (confirm('Are you sure you want to delete this role?')) {
            $.ajax({
-               url: route('registry.users.destroy', id),
+               url: route('registry.roles.destroy', id),
                type: 'DELETE',
                headers: {
                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                },
                success(response) {
-                   $('#usersTable').DataTable().ajax.reload();
-                   alert('User deleted successfully');
+                   $('#rolesTable').DataTable().ajax.reload();
+                   alert('Role deleted successfully');
                },
                error(xhr) {
                    alert('Error deleting file');
@@ -274,9 +249,9 @@ $(document).ready(function() {
 
    function route(name, id) {
       return {
-          'registry.users.show': "{{ route('registry.users.show', ':id') }}".replace(':id', id),
-          'registry.users.edit': "{{ route('registry.users.edit', ':id') }}".replace(':id', id),
-          'registry.users.destroy': "{{ route('registry.users.destroy', ':id') }}".replace(':id', id)
+          'registry.roles.show': "{{ route('registry.roles.show', ':id') }}".replace(':id', id),
+          'registry.roles.edit': "{{ route('registry.roles.edit', ':id') }}".replace(':id', id),
+          'registry.roles.destroy': "{{ route('registry.roles.destroy', ':id') }}".replace(':id', id)
       }[name];
    }
 
@@ -302,3 +277,5 @@ $(document).ready(function() {
 });
 </script>
 @endpush
+
+

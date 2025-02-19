@@ -2,9 +2,10 @@
 
 namespace App\Repositories\National\Eregistry;
 
-use App\Repositories\BaseRepository;
 use App\Models\User;
+use App\Repositories\BaseRepository;
 use Auth;
+
 
 class UserRepository extends BaseRepository
 {

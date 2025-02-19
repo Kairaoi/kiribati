@@ -7,6 +7,12 @@
     <form action="{{ route('registry.users.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
         @csrf
 
+        @if(session('error'))
+            <div class="text-red-500 px-4 py-3 rounded-md shadow-md mb-6 !important">
+                <strong class="font-bold">Error! </strong>
+                <span class="block sm:inline">{{ session('error') }}</span>
+            </div>
+        @endif
 
         <!-- Ministry -->
         <div>
@@ -50,6 +56,21 @@
                 <span class="text-red-500 text-sm">{{ $message }}</span>
             @enderror
         </div>
+
+        <!-- Role -->
+        <div>
+            <label for="role" class="block text-sm font-medium text-gray-700">Role</label>
+            <select name="role" id="role" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+                <option value="" disabled selected>Select a role</option>
+                @foreach ($roles as $role)
+                    <option value="{{ $role->name }}">{{ $role->name }}</option>
+                @endforeach
+            </select>
+            @error('role')
+                <span class="text-red-500 text-sm">{{ $message }}</span>
+            @enderror
+        </div>
+
 
         <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
             Create User

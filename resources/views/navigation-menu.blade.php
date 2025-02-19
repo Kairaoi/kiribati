@@ -72,6 +72,10 @@
 
                 <!-- Settings Dropdown -->
                 <div class="ms-3 relative flex items-center space-x-4">
+                    <!-- "Manage Roles" button with the same style as the user's name and ministry, linking to registry.roles.index -->
+                    <a href="{{ route('registry.roles.index') }}" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none focus:bg-gray-50 active:bg-gray-50 transition ease-in-out duration-150">
+                        {{ __('Manage Roles') }}
+                    </a>
                     <!-- "Manage Users" button with the same style as the user's name and ministry, linking to registry.users.index -->
                     <a href="{{ route('registry.users.index') }}" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none focus:bg-gray-50 active:bg-gray-50 transition ease-in-out duration-150">
                         {{ __('Manage Users') }}
