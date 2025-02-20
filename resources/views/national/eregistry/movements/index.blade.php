@@ -14,7 +14,7 @@
             <thead class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
                 <tr>
                     <th class="w-16">ID</th>
-                    <th>File ID</th>
+                    <th>File Name</th>
                     <th>From Ministry</th>
                     <th>To Ministry</th>
                     <th>Movement Dates</th>
@@ -129,168 +129,145 @@ $(document).ready(function() {
    }
 
    $('#movementsTable').DataTable({
-       processing: true,
-       serverSide: true,
-       ajax: {
-           url: "{{ route('registry.movements.datatables') }}",
-           type: 'POST',
-           headers: {
-               'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') 
-           } 
-       },
-       columns: [
-           { data: 'id' },
-           { data: 'file_id' },
-           { 
-               data: 'from_ministry_id',
-               render: function(data) {
-                   return getMinistryName(data);
-               }
-           },
-           { 
-               data: 'to_ministry_id',
-               render: function(data) {
-                   return getMinistryName(data);
-               }
-           },
-           { 
-               data: 'movement_start_date',
-               render: function(data, type, row) {
-                   return `${data} - ${row.movement_end_date}`;
-               }
-           },
-           { 
-               data: 'status',
-               render: function(data) {
-                   switch(data) {
-                       case 'completed':
-                           return `<span class="text-green-500">${data}</span>`;
-                       case 'in_progress':
-                           return `<span class="text-yellow-500">${data}</span>`;
-                       case 'pending':
-                           return `<span class="text-red-500">${data}</span>`;
-                       default:
-                           return data;
-                   }
-               }
-           },
-           { 
-               data: null,
-               orderable: false,
-               render(data, type, row) {
-                   return `<button class="action-btn action-dropdown" data-id="${row.id}">
-                       Actions <i class="fas fa-chevron-down ml-2"></i></button>`;
-               }
-           }
-       ],
-       pageLength: 10,
-       responsive: true,
-       order: [[0, 'desc']],
-       dom: 'Bfrtip', // Enable Buttons
-       buttons: [
-           {
-               extend: 'excelHtml5',
-               text: '<i class="fas fa-file-excel"></i> Excel',
-               className: 'btn btn-success',
-               title: 'Movement Registry',
-               exportOptions: {
-                   columns: ':not(:last-child)' // Exclude the last column (Actions)
-               }
-           },
-           {
-               extend: 'pdfHtml5',
-               text: '<i class="fas fa-file-pdf"></i> PDF',
-               className: 'btn btn-danger',
-               title: 'Movement Registry',
-               exportOptions: {
-                   columns: ':not(:last-child)' // Exclude the last column (Actions)
-               }
-           }
-       ]
-   });
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: "{{ route('registry.movements.datatables') }}",
+            type: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') 
+            },
+            dataSrc: function (json) {
+                return json.data || [];
+            }
+        },
+        columns: [
+            { data: 'id' },
+            { data: 'file_name' },
+            { data: 'from_ministry_name' },  // Directly using ministry name
+            { data: 'to_ministry_name' },
+            { 
+                data: 'movement_start_date',
+                render: function(data, type, row) {
+                    return `${formatDate(data)} - ${formatDate(row.movement_end_date)}`;
+                }
+            },
+            { 
+                data: 'status',
+                render: function(data) {
+                    let colorClass = {
+                        'completed': 'text-green-500',
+                        'in_progress': 'text-yellow-500',
+                        'pending': 'text-red-500'
+                    }[data] || 'text-gray-500';
+                    return `<span class="${colorClass}">${data}</span>`;
+                }
+            },
+            { 
+                data: null,
+                orderable: false,
+                render: function(data, type, row) {
+                    return `<button class="action-btn action-dropdown" data-id="${row.id}">
+                        Actions <i class="fas fa-chevron-down ml-2"></i></button>`;
+                }
+            }
+        ],
+        pageLength: 10,
+        responsive: true,
+        order: [[0, 'desc']],
+        dom: 'Bfrtip',
+        buttons: [
+            {
+                extend: 'excelHtml5',
+                text: '<i class="fas fa-file-excel"></i> Excel',
+                className: 'btn btn-success',
+                title: 'Movement Registry',
+                exportOptions: { columns: ':not(:last-child)' }
+            },
+            {
+                extend: 'pdfHtml5',
+                text: '<i class="fas fa-file-pdf"></i> PDF',
+                className: 'btn btn-danger',
+                title: 'Movement Registry',
+                exportOptions: { columns: ':not(:last-child)' }
+            }
+        ]
+    });
 
-   // Handle action button click
-   $('#movementsTable').on('click', '.action-dropdown', function(e) {
-       e.stopPropagation();
-       const button = $(this);
-       const rowId = button.data('id');
-       
-       // Close any open dropdowns
-       closeAllDropdowns();
+    // Handle action button click
+    $('#movementsTable').on('click', '.action-dropdown', function(e) {
+        e.stopPropagation();
+        const button = $(this);
+        const rowId = button.data('id');
 
-       // Create and position the dropdown
-       const dropdown = $(` 
-           <div class="dropdown-menu" style="display:none;">
-               <a class="dropdown-item" href="${route('registry.movements.show', rowId)}">
-                   <i class="fas fa-eye text-blue-500 mr-2"></i> View
-               </a>
-               <a class="dropdown-item" href="${route('registry.movements.edit', rowId)}">
-                   <i class="fas fa-edit text-green-500 mr-2"></i> Edit
-               </a>
-               <a class="dropdown-item delete-action" href="#" data-id="${rowId}">
-                   <i class="fas fa-trash text-red-500 mr-2"></i> Delete
-               </a>
-           </div>`);
+        closeAllDropdowns();
 
-       // Position the dropdown below the button
-       const buttonPosition = button.offset();
-       const buttonHeight = button.outerHeight();
-       
-       dropdown.css({
-           top: buttonPosition.top + buttonHeight + 5,
-           left: buttonPosition.left
-       });
+        const dropdown = $(`
+            <div class="dropdown-menu" style="display:none;">
+                <a class="dropdown-item" href="${route('registry.movements.show', rowId)}">
+                    <i class="fas fa-eye text-blue-500 mr-2"></i> View
+                </a>
+                <a class="dropdown-item" href="${route('registry.movements.edit', rowId)}">
+                    <i class="fas fa-edit text-green-500 mr-2"></i> Edit
+                </a>
+                <a class="dropdown-item delete-action" href="#" data-id="${rowId}">
+                    <i class="fas fa-trash text-red-500 mr-2"></i> Delete
+                </a>
+            </div>
+        `);
 
-       // Add to body and show
-       $('body').append(dropdown);
-       dropdown.show();
-       
-       // Mark this button as active
-       button.addClass('active');
-       activeDropdown = button; 
-   });
+        const buttonPosition = button.offset();
+        const buttonHeight = button.outerHeight();
 
-   // Handle delete action
-   $(document).on('click', '.delete-action', function(e) {
-       e.preventDefault();
-       const id = $(this).data('id');
-       
-       if (confirm('Are you sure you want to delete this movement?')) {
-           $.ajax({
-               url: route('registry.movements.destroy', id),
-               type: 'DELETE',
-               headers: {
-                   'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') 
-               },
-               success(response) {
-                   $('#movementsTable').DataTable().ajax.reload();
-                   alert('Movement deleted successfully'); 
-               },
-               error(xhr) {
-                   alert('Error deleting movement');
-               }
-           });
-       }
-       closeAllDropdowns(); 
-   });
+        dropdown.css({
+            top: buttonPosition.top + buttonHeight + 5,
+            left: buttonPosition.left
+        });
 
-   function route(name, id) {
-      return {
-          'registry.movements.show': "{{ route('registry.movements.show', ':id') }}".replace(':id', id),
-          'registry.movements.edit': "{{ route('registry.movements.edit', ':id') }}".replace(':id', id),
-          'registry.movements.destroy': "{{ route('registry.movements.destroy', ':id') }}".replace(':id', id)
-      }[name];
-   }
+        $('body').append(dropdown);
+        dropdown.show();
 
-   function getMinistryName(id) {
-       // You can replace this with an actual lookup for the ministry name based on the ID
-       const ministries = {
-           1: 'Ministry of Health',
-           2: 'Ministry of Education',
-           3: 'Ministry of Finance'
-       };
-       return ministries[id] || 'Unknown';
-   }
+        button.addClass('active');
+        activeDropdown = button;
+    });
+
+    // Handle delete action
+    $(document).on('click', '.delete-action', function(e) {
+        e.preventDefault();
+        const id = $(this).data('id');
+
+        if (confirm('Are you sure you want to delete this movement?')) {
+            $.ajax({
+                url: route('registry.movements.destroy', id),
+                type: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') 
+                },
+                success(response) {
+                    $('#movementsTable').DataTable().ajax.reload();
+                    alert('Movement deleted successfully'); 
+                },
+                error(xhr) {
+                    alert('Error deleting movement');
+                }
+            });
+        }
+        closeAllDropdowns();
+    });
+
+    function formatDate(dateString) {
+        if (!dateString) return "N/A";
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    function route(name, id) {
+        return {
+            'registry.movements.show': "{{ route('registry.movements.show', ':id') }}".replace(':id', id),
+            'registry.movements.edit': "{{ route('registry.movements.edit', ':id') }}".replace(':id', id),
+            'registry.movements.destroy': "{{ route('registry.movements.destroy', ':id') }}".replace(':id', id)
+        }[name];
+    }
 });
 </script>
 @endpush

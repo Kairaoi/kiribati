@@ -4,10 +4,21 @@ namespace App\Repositories\National\Eregistry;
 
 use App\Repositories\BaseRepository;
 use App\Models\National\Eregistry\Ministry;
-use Auth;
+use Illuminate\Support\Facades\Auth;
 
 class MinistryRepository extends BaseRepository
 {
+    protected $auth;
+
+    /**
+     * Constructor to inject dependencies
+     */
+    public function __construct()
+    {
+        parent::__construct();
+        $this->auth = Auth::user();
+    }
+
     /**
      * Specify Model class name
      * 
@@ -35,11 +46,7 @@ class MinistryRepository extends BaseRepository
             'updated_by' => Auth::id(),
         ];
 
-        $ministry = $this->model();
-        $ministry = new $ministry($data);
-        $ministry->save();
-
-        return $ministry;
+        return $this->model()::create($data);
     }
 
     /**
@@ -73,18 +80,18 @@ class MinistryRepository extends BaseRepository
      */
     public function getForDataTable($search = '', $order_by = 'id', $sort = 'asc', $trashed = false)
     {
-        $query = $this->model->query()->select(['id', 'name', 'code', 'description', 'is_active']);
+        $query = $this->model()::query()->select(['id', 'name', 'code', 'description', 'is_active']);
 
         if (!empty($search)) {
             $search = '%' . strtolower($search) . '%';
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'ILIKE', $search)
-                  ->orWhere('code', 'ILIKE', $search)
-                  ->orWhere('description', 'ILIKE', $search);
+                $q->whereRaw("LOWER(name) LIKE ?", [$search])
+                  ->orWhereRaw("LOWER(code) LIKE ?", [$search])
+                  ->orWhereRaw("LOWER(description) LIKE ?", [$search]);
             });
         }
 
-        if ($trashed === true) {
+        if ($trashed) {
             $query->onlyTrashed();
         }
 
@@ -92,7 +99,7 @@ class MinistryRepository extends BaseRepository
     }
 
     /**
-     * Get a list of ministries for dropdowns
+     * Get a list of ministries for dropdowns filtered by the authenticated user's ministry
      * 
      * @param string $column
      * @param string $key
@@ -100,7 +107,22 @@ class MinistryRepository extends BaseRepository
      */
     public function pluck($column = 'name', $key = 'id')
     {
-        return $this->model->query()
+        return $this->model()::query()
+            ->where('id', Auth::user()->ministry_id) // Ensure this is the correct filtering column
+            ->orderBy($column)
+            ->pluck($column, $key);
+    }
+
+    /**
+     * Get a full list of ministries for dropdowns
+     * 
+     * @param string $column
+     * @param string $key
+     * @return \Illuminate\Support\Collection
+     */
+    public function list($column = 'name', $key = 'id')
+    {
+        return $this->model()::query()
             ->orderBy($column)
             ->pluck($column, $key);
     }

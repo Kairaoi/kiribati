@@ -9,15 +9,17 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
-            UserSeeder::class,      // Run first to create users
-            MinistriesSeeder::class,  // Run second to create ministries
-            DivisionSeeder::class,  // Run last to create divisions
+            MictUserSeeder::class,      // Run first to create users
+            MohUserSeeder::class,  // Run second to create ministries
+            MofUserSeeder::class,  // Run last to create divisions
             FileTypesSeeder::class,  
-            FolderSeeder::class,  
-            // FileSeeder::class,
+            MoeUserSeeder::class,  
+            // DivisionSeeder::class,
+            // FoldSeeder::class,
+               // FileSeeder::class,
            
            
-            // MovementSeeder::class,  
+            MinistriesSeeder::class,  
         ]);
     }
 }

@@ -27,23 +27,23 @@ class CreateEregistryFilingSystemTables extends Migration
             $table->foreignId('updated_by')->constrained('users');
             $table->timestamps();
         });
-        Schema::create('divisions', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('code');  // Make sure this line is present
-            $table->text('description');
-            $table->boolean('is_active')->default(true);
-            $table->foreignId('ministry_id')->constrained();
-            $table->foreignId('created_by')->constrained('users');
-            $table->foreignId('updated_by')->constrained('users');
-            $table->timestamps();
-        });
+        // Schema::create('divisions', function (Blueprint $table) {
+        //     $table->id();
+        //     $table->string('name');
+        //     $table->string('code');  // Make sure this line is present
+        //     $table->text('description');
+        //     $table->boolean('is_active')->default(true);
+        //     $table->foreignId('ministry_id')->constrained();
+        //     $table->foreignId('created_by')->constrained('users');
+        //     $table->foreignId('updated_by')->constrained('users');
+        //     $table->timestamps();
+        // });
 
         // Create folders table
         Schema::create('folders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('ministry_id')->constrained('ministries');
-            $table->integer('folder_number');
+            $table->string('folder_number');  // Change to string
             $table->string('folder_name');
             $table->string('category')->nullable();
             $table->text('folder_description')->nullable();
@@ -54,17 +54,18 @@ class CreateEregistryFilingSystemTables extends Migration
             $table->softDeletes();
             $table->unique(['ministry_id', 'folder_number']);
         });
+        
 
         // Create files table
         Schema::create('files', function (Blueprint $table) {
             $table->id();
             $table->foreignId('folder_id')->constrained();
             $table->foreignId('ministry_id')->constrained();
-            $table->string('file_reference')->unique()->nullable()->default('default_value');
-            $table->string('file_index')->nullable(); // Remove the GENERATED ALWAYS AS constraint
+            $table->string('file_reference')->unique()->nullable();
+            $table->string('file_index')->nullable();
             $table->string('name');
             $table->string('path');
-            $table->foreignId('division_id')->nullable()->constrained('divisions');
+            // $table->foreignId('division_id')->nullable()->constrained('divisions');
             $table->date('receive_date');
             $table->date('letter_date');
             $table->string('letter_ref_no')->nullable()->unique();
@@ -72,9 +73,24 @@ class CreateEregistryFilingSystemTables extends Migration
             $table->string('from_details_name');
             $table->string('to_details_person_name');
             $table->text('comments')->nullable();
-            $table->enum('security_level', ['public', 'internal', 'confidential', 'strictly_confidential']);
-            $table->enum('status', ['draft', 'pending_review', 'approved', 'archived'])->default('draft');
+            $table->enum('security_level', [
+                'public', 
+                'internal', 
+                'confidential', 
+                'strictly_confidential'
+            ]);
+            $table->enum('status', [
+                'draft',
+                'pending_registry_review',
+                'pending_secretary_review',
+                'pending_staff_action',
+                'in_circulation',
+                'completed',
+                'archived'
+            ])->default('draft');
             $table->boolean('circulation_status')->default(false);
+            $table->boolean('requires_response')->default(false);
+            $table->dateTime('response_deadline')->nullable();
             $table->boolean('is_active')->default(true);
             $table->foreignId('created_by')->constrained('users');
             $table->foreignId('updated_by')->constrained('users');
@@ -86,7 +102,6 @@ class CreateEregistryFilingSystemTables extends Migration
         
         
 
-        // Create file movements table
         Schema::create('movements', function (Blueprint $table) {
             $table->id();
             $table->foreignId('file_id')->constrained();
@@ -94,37 +109,57 @@ class CreateEregistryFilingSystemTables extends Migration
             $table->foreignId('to_ministry_id')->constrained('ministries');
             $table->foreignId('from_user_id')->constrained('users');
             $table->foreignId('to_user_id')->constrained('users');
-            $table->foreignId('to_division_id')->nullable()->constrained('divisions'); // New field for internal movements
+            // $table->foreignId('from_division_id')->nullable()->constrained('divisions'); // Added this line
+            // $table->foreignId('to_division_id')->nullable()->constrained('divisions');
             $table->datetime('movement_start_date');
             $table->datetime('movement_end_date')->nullable();
             $table->boolean('read_status')->default(false);
             $table->text('comments')->nullable();
             $table->string('required_action')->nullable();
             $table->string('action_taken')->nullable();
-            $table->enum('status', ['pending', 'in_progress', 'completed']);
+            $table->enum('status', [
+                'pending_registry',
+                'pending_secretary_review',
+                'pending_staff_assignment',
+                'assigned_to_staff',
+                'in_circulation',
+                'completed',
+                'returned'
+            ])->default('pending_registry');
+            $table->boolean('is_circular')->default(false);
+            $table->json('circular_recipients')->nullable();
             $table->foreignId('created_by')->constrained('users');
             $table->foreignId('updated_by')->constrained('users');
             $table->timestamps();
             $table->softDeletes();
-            $table->index(['from_ministry_id', 'to_ministry_id'], 'movements_ministry_index');
+            // $table->index(['from_ministry_id', 'to_ministry_id'], 'movements_ministry_index');
         });
-
-       
-        // Create file versioning table
-        Schema::create('file_versions', function (Blueprint $table) {
+        
+        // Updated file_circulations table for internal ministry circulation
+        Schema::create('file_circulations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('file_id')->constrained();
-            $table->string('version_number');
-            $table->string('path');
-            $table->foreignId('updated_by')->constrained('users');
+            $table->foreignId('ministry_id')->constrained('ministries');  // Added ministry_id
+            // $table->foreignId('division_id')->nullable()->constrained('divisions');  // Added division_id
+            $table->foreignId('to_user_id')->constrained('users');
+            $table->foreignId('circulated_by')->constrained('users');    // Added who circulated
+            $table->datetime('circulated_at')->default(now());
+            $table->datetime('read_at')->nullable();                     // Changed to read_at timestamp
+            $table->boolean('read_status')->default(false);
+            $table->text('comments')->nullable();                        // Added comments field
+            $table->boolean('requires_action')->default(false);          // Added action required flag
+            $table->text('action_taken')->nullable();                    // Added action taken field
             $table->timestamps();
+            
+            // Add index for better query performance
+            $table->index(['ministry_id',  'user_id']);
         });
     }
 
     public function down()
     {
-        Schema::dropIfExists('file_versions');
-        Schema::dropIfExists('file_permissions');
+        Schema::dropIfExists('file_circulations');
+     
         Schema::dropIfExists('movements');
         Schema::dropIfExists('files');
         Schema::dropIfExists('file_types');

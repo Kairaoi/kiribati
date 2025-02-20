@@ -16,7 +16,7 @@ class File extends Model
     protected $fillable = [
         'folder_id',
         'ministry_id',
-        'division_id',
+        // 'division_id',
         'file_reference',
         'file_index',
         'name',
@@ -31,11 +31,14 @@ class File extends Model
         'security_level',
         'status',
         'circulation_status',
+        'requires_response', // Added
+        'response_deadline', // Added
         'is_active',
         'created_by',
         'updated_by',
         'file_type_id',
     ];
+    
 
     public function folder()
     {
@@ -77,4 +80,10 @@ class File extends Model
             $file->letter_ref_no = strtoupper("$ministryCode/GEN/$year-" . str_pad($count, 3, '0', STR_PAD_LEFT));
         });
     }
+
+    // Add this to your existing File model
+public function movements()
+{
+    return $this->hasMany(Movement::class);
+}
 }

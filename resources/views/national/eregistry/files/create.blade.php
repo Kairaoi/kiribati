@@ -3,7 +3,7 @@
 @section('content')
 <div class="container mx-auto px-4 py-6 max-w-7xl">
     <h1 class="text-2xl font-bold mb-6">Create File</h1>
-    
+
     @if ($errors->any())
         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             <ul class="list-disc pl-5">
@@ -13,20 +13,9 @@
             </ul>
         </div>
     @endif
-    
+
     <form action="{{ route('registry.files.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
         @csrf
-
-        <!-- Folder -->
-        <div>
-            <label for="folder_id" class="block text-sm font-medium text-gray-700">Folder</label>
-            <select name="folder_id" id="folder_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
-                <option value="" disabled selected>Select Folder</option>
-                @foreach ($folders as $id => $name)
-                    <option value="{{ $id }}" {{ old('folder_id') == $id ? 'selected' : '' }}>{{ $name }}</option>
-                @endforeach
-            </select>
-        </div>
 
         <!-- Ministry -->
         <div>
@@ -39,13 +28,13 @@
             </select>
         </div>
 
-        <!-- Division -->
+        <!-- Folder -->
         <div>
-            <label for="division_id" class="block text-sm font-medium text-gray-700">Division</label>
-            <select name="division_id" id="division_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                <option value="">Select Division (Optional)</option>
-                @foreach ($divisions as $id => $name)
-                    <option value="{{ $id }}" {{ old('division_id') == $id ? 'selected' : '' }}>{{ $name }}</option>
+            <label for="folder_id" class="block text-sm font-medium text-gray-700">Folder</label>
+            <select name="folder_id" id="folder_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+                <option value="" disabled selected>Select Folder</option>
+                @foreach ($folders as $id => $name)
+                    <option value="{{ $id }}" {{ old('folder_id') == $id ? 'selected' : '' }}>{{ $name }}</option>
                 @endforeach
             </select>
         </div>
@@ -62,18 +51,6 @@
             <input type="file" name="file" id="file" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
         </div>
 
-        <!-- Receive Date -->
-        <div>
-            <label for="receive_date" class="block text-sm font-medium text-gray-700">Receive Date</label>
-            <input type="date" name="receive_date" id="receive_date" value="{{ old('receive_date') ?? date('Y-m-d') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
-        </div>
-
-        <!-- Letter Date -->
-        <div>
-            <label for="letter_date" class="block text-sm font-medium text-gray-700">Letter Date</label>
-            <input type="date" name="letter_date" id="letter_date" value="{{ old('letter_date') ?? date('Y-m-d') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
-        </div>
-
         <!-- Details -->
         <div>
             <label for="details" class="block text-sm font-medium text-gray-700">Details</label>
@@ -86,11 +63,24 @@
             <input type="text" name="from_details_name" id="from_details_name" value="{{ old('from_details_name') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
         </div>
 
-        <!-- To Details - Fixed name to to_details_person_name -->
+        <!-- To Details -->
         <div>
             <label for="to_details_person_name" class="block text-sm font-medium text-gray-700">To Details</label>
             <input type="text" name="to_details_person_name" id="to_details_person_name" value="{{ old('to_details_person_name') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
         </div>
+
+         <!-- Receive Date -->
+         <div>
+            <label for="receive_date" class="block text-sm font-medium text-gray-700">Receive Date</label>
+            <input type="date" name="receive_date" id="receive_date" value="{{ old('receive_date') ?? date('Y-m-d') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+        </div>
+
+        <!-- Letter Date -->
+        <div>
+            <label for="letter_date" class="block text-sm font-medium text-gray-700">Letter Date</label>
+            <input type="date" name="letter_date" id="letter_date" value="{{ old('letter_date') ?? date('Y-m-d') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+        </div>
+
 
         <!-- Security Level -->
         <div>

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\National\Eregistry;
 
 use App\Http\Controllers\Controller;
 use App\Repositories\National\Eregistry\MovementRepository;
-use App\Repositories\National\Eregistry\InwardFileRepository;
+use App\Repositories\National\Eregistry\FileRepository;
 use App\Repositories\National\Eregistry\MinistryRepository;
 use App\Repositories\National\Eregistry\DivisionRepository;
 use App\Repositories\National\Eregistry\UserRepository;
@@ -23,7 +23,7 @@ class MovementController extends Controller
 
     public function __construct(
         MovementRepository $movement,
-        InwardFileRepository $files,
+        FileRepository $files,
         MinistryRepository $ministries,
         DivisionRepository $divisions,
         UserRepository $users
@@ -70,20 +70,23 @@ class MovementController extends Controller
      */
     public function create()
     {
-        if (!Auth::user()->can('movement.create')) {
-            abort(403, 'Unauthorized action.');
-        }
+        // if (!Auth::user()->can('movement.create')) {
+        //     abort(403, 'Unauthorized action.');
+        // }
 
         $files = $this->files->pluck();
+        $lists = $this->ministries->list();
+        // dd($files);
         $ministries = $this->ministries->pluck();
-        $divisions = $this->divisions->pluck();
+        // $divisions = $this->divisions->pluck();
         $users = $this->users->pluck();
 
         return view('national.eregistry.movements.create', [
             'files' => $files,
             'ministries' => $ministries,
-            'divisions' => $divisions,
+            // 'divisions' => $divisions,
             'users' => $users,
+            'lists' => $lists,
         ]);
     }
 
@@ -95,32 +98,32 @@ class MovementController extends Controller
      */
     public function store(Request $request)
     {
-        if (!Auth::user()->can('movement.store')) {
-            abort(403, 'Unauthorized action.');
-        }
-
-        $input = $request->all();
-
-        // Validation
+        $user = Auth::user(); // Get the authenticated user
+    
         $request->validate([
             'file_id' => 'required|exists:files,id',
             'from_ministry_id' => 'required|exists:ministries,id',
             'to_ministry_id' => 'required|exists:ministries,id',
-            'from_division_id' => 'required|exists:divisions,id',
-            'to_division_id' => 'required|exists:divisions,id',
-            'from_user_id' => 'required|exists:users,id',
             'to_user_id' => 'required|exists:users,id',
             'movement_start_date' => 'required|date',
-            'movement_end_date' => 'required|date',
+            'movement_end_date' => 'nullable|date|after_or_equal:movement_start_date',
             'comments' => 'nullable|string',
-            'status' => 'required|in:pending,in_progress,completed',
+            'status' => 'required|in:pending_registry,pending_secretary_review,pending_staff_assignment,assigned_to_staff,in_circulation,completed,returned',
         ]);
-
+    
+        $input = $request->all();
+        
+        // Automatically set the authenticated user as the sender
+        $input['from_user_id'] = $user->id;  
+        $input['created_by'] = $user->id;
+        $input['updated_by'] = $user->id;
+    
         // Store the movement record
         $this->movement->create($input);
-
-        return redirect()->route('movements.index')->with('message', 'Movement created successfully.');
+    
+        return redirect()->route('registry.movements.index')->with('message', 'Movement created successfully.');
     }
+    
 
     /**
      * Display the specified resource.
@@ -130,13 +133,30 @@ class MovementController extends Controller
      */
     public function show($id)
     {
-        if (!Auth::user()->can('movement.show')) {
-            abort(403, 'Unauthorized action.');
+        // if (!Auth::user()->can('movement.show')) {
+        //     abort(403, 'Unauthorized action.');
+        // }
+
+        $file = $this->files->getById($id);
+        return view('national.eregistry.movements.show', compact('file'));
+    }
+
+    /**
+     * View the file associated with the movement.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function viewFile($id)
+    {
+        $file = $this->files->getById($id);
+        $filePath = public_path('storage/' . $file->path);
+
+        if (!file_exists($filePath)) {
+            abort(404, 'File not found');
         }
 
-        $movement = $this->movement->getById($id);
-
-        return view('national.eregistry.movements.show')->with('movement', $movement);
+        return response()->file($filePath);
     }
 
     /**

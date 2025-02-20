@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\National\Eregistry;
 
 use App\Http\Controllers\Controller;
-use App\Repositories\National\Eregistry\FolderRepository;
+use App\Repositories\National\Eregistry\DivisionRepository;
 use App\Repositories\National\Eregistry\MinistryRepository;
 use DB;
 use Illuminate\Http\Request;
@@ -11,14 +11,14 @@ use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\Facades\DataTables;
 
 
-class FolderController extends Controller
+class DivisionController extends Controller
 {
-    private $folders;
+    private $divisions;
     private $ministries;
 
-    public function __construct(FolderRepository $folders, MinistryRepository $ministries)
+    public function __construct(DivisionRepository $divisions, MinistryRepository $ministries)
     {
-        $this->folders = $folders;
+        $this->divisions = $divisions;
         $this->ministries = $ministries;
     }
 
@@ -34,7 +34,7 @@ class FolderController extends Controller
         if (is_array($search)) {
             $search = $search['value'];
         }
-        $query = $this->folders->getForDataTable($search);
+        $query = $this->divisions->getForDataTable($search);
         $datatables = DataTables::make($query)->make(true);
         return $datatables;
     }
@@ -46,7 +46,7 @@ class FolderController extends Controller
      */
     public function index()
     {
-        return view('national.eregistry.folders.index');
+        return view('national.eregistry.divisions.index');
     }
 
     /**
@@ -56,13 +56,13 @@ class FolderController extends Controller
      */
     public function create()
     {
-        // if (!Auth::user()->can('folder.create')) {
+        // if (!Auth::user()->can('division.create')) {
         //     abort(403, 'Unauthorized action.');
         // }
 
         $ministries = $this->ministries->pluck();
 
-        return view('national.eregistry.folders.create')->with('ministries', $ministries);
+        return view('national.eregistry.divisions.create')->with('ministries', $ministries);
     }
 
     /**
@@ -73,7 +73,7 @@ class FolderController extends Controller
      */
     public function store(Request $request)
     {
-        // if (!Auth::user()->can('folder.store')) {
+        // if (!Auth::user()->can('division.store')) {
         //     abort(403, 'Unauthorized action.');
         // }
 
@@ -81,17 +81,17 @@ class FolderController extends Controller
 
         // Validation
         $request->validate([
-            'index_no' => 'required|string|unique:folders',
-            'folder_name' => 'required|string',
-            'folder_description' => 'nullable|string',
-            'is_public' => 'boolean',
+            'ministry_id' => 'required|exists:ministries,id',
+            'name' => 'required|string',
+            'code' => 'required|string|unique:divisions',
+            'description' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
 
-        // Create the folder
-        $this->folders->create($input);
+        // Create the division
+        $this->divisions->create($input);
 
-        return redirect()->route('registry.folder.index')->with('message', 'Folder created successfully.');
+        return redirect()->route('division.index')->with('message', 'Division created successfully.');
     }
 
     /**
@@ -102,13 +102,13 @@ class FolderController extends Controller
      */
     public function show($id)
     {
-        if (!Auth::user()->can('folder.show')) {
-            abort(403, 'Unauthorized action.');
-        }
+        // if (!Auth::user()->can('division.show')) {
+        //     abort(403, 'Unauthorized action.');
+        // }
 
-        $folder = $this->folders->getById($id);
+        $division = $this->divisions->getById($id);
 
-        return view('national.eregistry.folders.show')->with('folder', $folder);
+        return view('national.eregistry.divisions.show')->with('division', $division);
     }
 
     /**
@@ -119,13 +119,17 @@ class FolderController extends Controller
      */
     public function edit($id)
     {
-        if (!Auth::user()->can('folder.edit')) {
-            abort(403, 'Unauthorized action.');
-        }
+        // if (!Auth::user()->can('division.edit')) {
+        //     abort(403, 'Unauthorized action.');
+        // }
 
-        $folder = $this->folders->getById($id);
+        $division = $this->divisions->getById($id);
+        $ministries = $this->ministries->pluck();
 
-        return view('national.eregistry.folders.edit')->with('folder', $folder);
+        return view('national.eregistry.divisions.edit', [
+            'division' => $division,
+            'ministries' => $ministries,
+        ]);
     }
 
     /**
@@ -137,14 +141,14 @@ class FolderController extends Controller
      */
     public function update(Request $request, $id)
     {
-        if (!Auth::user()->can('folder.update')) {
-            abort(403, 'Unauthorized action.');
-        }
+        // if (!Auth::user()->can('division.update')) {
+        //     abort(403, 'Unauthorized action.');
+        // }
 
-        $folder = $this->folders->getById($id);
-        $this->folders->update($folder, $request->all());
+        $division = $this->divisions->getById($id);
+        $this->divisions->update($division, $request->all());
 
-        return redirect()->route('folder.index')->with('message', 'Folder updated successfully.');
+        return redirect()->route('division.index')->with('message', 'Division updated successfully.');
     }
 
     /**
@@ -155,13 +159,13 @@ class FolderController extends Controller
      */
     public function destroy($id)
     {
-        if (!Auth::user()->can('folder.delete')) {
-            abort(403, 'Unauthorized action.');
-        }
+        // if (!Auth::user()->can('division.delete')) {
+        //     abort(403, 'Unauthorized action.');
+        // }
 
-        $folder = $this->folders->getById($id);
-        $this->folders->delete($folder);
+        $division = $this->divisions->getById($id);
+        $this->divisions->delete($division);
 
-        return redirect()->route('folder.index')->with('message', 'Folder deleted successfully.');
+        return redirect()->route('division.index')->with('message', 'Division deleted successfully.');
     }
 }

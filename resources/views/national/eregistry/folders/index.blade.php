@@ -3,20 +3,7 @@
 @section('content')
 <div class="container mx-auto px-4 py-6 max-w-7xl">
     <div class="flex justify-between items-center mb-4">
-    <nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        @foreach (Breadcrumbs::generate() as $breadcrumb)
-            <li class="breadcrumb-item">
-                @if ($breadcrumb->url)
-                    <a href="{{ $breadcrumb->url }}">{{ $breadcrumb->title }}</a>
-                @else
-                    <span>{{ $breadcrumb->title }}</span>
-                @endif
-            </li>
-        @endforeach
-    </ol>
-</nav>
-
+    
         <h1 class="text-3xl font-bold text-gray-900 tracking-wide">Folder Registry</h1>
         <a href="{{ route('registry.folders.create') }}" class="btn btn-primary transition duration-300 transform hover:scale-105">
             <i class="fas fa-plus mr-2"></i> Add New Folder
