@@ -2,9 +2,10 @@
 
 namespace App\Repositories\National\Eregistry;
 
-use App\Repositories\BaseRepository;
 use App\Models\National\Eregistry\File;
-use Auth;
+use App\Repositories\BaseRepository;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class FileRepository extends BaseRepository
 {
@@ -22,32 +23,33 @@ class FileRepository extends BaseRepository
     public function create(array $input)
     {
         $data = [
-            'folder_id' => $input['folder_id'],
-            'ministry_id' => $input['ministry_id'],
+            // 'folder_id' => $input['folder_id'],
+            'organisation_id' => $input['organisation_id'],
             'file_reference' => $input['file_reference'] ?? 'FILE-' . time() . '-' . Auth::id(),
             'name' => $input['name'],
-            'path' => $input['path'],
-            'receive_date' => $input['receive_date'],
+            'main_file_path' => $input['main_file_path'],
+            'additional_file1_path' => $input['additional_file1_path'] ?? null,
+            'additional_file2_path' => $input['additional_file2_path'] ?? null,
+            'additional_file3_path' => $input['additional_file3_path'] ?? null,
             'letter_date' => $input['letter_date'],
-            'details' => $input['details'] ?? '',
-            'from_details_name' => $input['from_details_name'],
-            'to_details_person_name' => $input['to_details_person_name'],
             'comments' => $input['comments'] ?? '',
-            'security_level' => $input['security_level'] ?? 'public',
-            'status' => $input['status'] ?? 'draft',
-            'circulation_status' => $input['circulation_status'] ?? false,
+            'status' => isset($input['status']) ? $input['status'] : 'draft',
             'is_active' => $input['is_active'] ?? true,
             'file_type_id' => $input['file_type_id'],
+            'category_id' => $input['category_id'] ?? null,
+            'letter_ref_no' => $input['letter_ref_no'] ?? '',
+            'division_id' => $input['division_id'] ?? null,
+            'recipient_organisations' => $input['recipient_organisations'] ?? [],
             'created_by' => Auth::id(),
             'updated_by' => Auth::id(),
-            'division_id' => $input['division_id'] ?? null,
+            
         ];
 
         $file = new File($data);
         $file->save();
 
         // Update file_index after ID is available
-        $file->update(['file_index' => "{$file->ministry_id}/{$file->folder_id}/{$file->id}"]);
+        // $file->update(['file_index' => "{$file->organisation_id}/{$file->id}"]);
 
         return $file;
     }
@@ -58,76 +60,74 @@ class FileRepository extends BaseRepository
     public function update(File $model, array $input)
     {
         $data = array_merge($model->toArray(), [
-            'folder_id' => $input['folder_id'] ?? $model->folder_id,
-            'ministry_id' => $input['ministry_id'] ?? $model->ministry_id,
+            'organisation_id' => $input['organisation_id'] ?? $model->organisation_id,
             'name' => $input['name'] ?? $model->name,
             'path' => $input['path'] ?? $model->path,
-            'receive_date' => $input['receive_date'] ?? $model->receive_date,
             'letter_date' => $input['letter_date'] ?? $model->letter_date,
-            'details' => $input['details'] ?? $model->details,
-            'from_details_name' => $input['from_details_name'] ?? $model->from_details_name,
-            'to_details_person_name' => $input['to_details_person_name'] ?? $model->to_details_person_name,
-            'comments' => $input['comments'] ?? $model->comments,
-            'security_level' => $input['security_level'] ?? $model->security_level,
-            'circulation_status' => $input['circulation_status'] ?? $model->circulation_status,
+            'status' => $input['status'] ?? $model->status,
             'is_active' => $input['is_active'] ?? $model->is_active,
             'file_type_id' => $input['file_type_id'] ?? $model->file_type_id,
+            'division_id' => $input['division_id'] ?? $model->division_id,
+            'category_id' => $input['category_id'] ?? $model->category_id,
+            'letter_ref_no' => $input['letter_ref_no'] ?? $model->letter_ref_no,
+            'recipient_organisations' => $input['recipient_organisations'] ?? $model->recipient_organisations,
             'updated_by' => Auth::id(),
         ]);
 
         return $model->update($data);
     }
 
-    /**
-     * Get files for data table with search and sorting
-     */
-    public function getForDataTable($search = '', $order_by = 'id', $sort = 'asc')
+
+
+    public function getForDataTable(string $search = '')
     {
-        $ministryId = auth()->user()->ministry_id;
-
-        $query = $this->model->query()
-            ->select([
-                'id', 'folder_id', 'ministry_id',  'name', 'path',
-                'receive_date', 'letter_date', 'letter_ref_no', 'security_level', 'is_active',
-            ])
-            ->with('ministry')
-            ->where('ministry_id', $ministryId)
-            ->withTrashed();
-
-        if (!empty($search)) {
-            $search = '%' . strtolower($search) . '%';
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'ILIKE', $search)
-                  ->orWhere('letter_ref_no', 'ILIKE', $search)
-                  ->orWhere('details', 'ILIKE', $search)
-                  ->orWhereHas('ministry', function ($q) use ($search) {
-                      $q->where('name', 'ILIKE', $search);
-                  });
+        return $this->model->query()
+            ->select('files.id', 'files.name')
+            ->when($search, function ($q) use ($search) {
+                $q->where('files.name', 'like', "%{$search}%");
             });
-        }
-
-        return $query->orderBy($order_by, $sort);
     }
 
-    /**
-     * Get a list of files for dropdowns
-     */
+    
+    public function getForFilteredTable($selectedType, int $userMinistryId, array $filterOrgIds = [], $fromDate = null, $toDate = null)
+    {
+        return $this->model->query()
+            ->forType($selectedType, $userMinistryId) //scope in Model
+            ->forOrganisation($filterOrgIds)  //scope in Model
+            ->forDateRange($fromDate, $toDate) //scope in Model
+            ->join('organisations as from_org', 'files.organisation_id', '=', 'from_org.id')
+            // ->join('file_recipients', 'files.id', '=', 'file_recipients.file_id')
+            // ->join('organisations as to_org', 'file_recipients.organisation_id', '=', 'to_org.id')
+            ->select([
+                'files.id',
+                'files.name as file_name',
+                'files.letter_date as letter_date',
+                'from_org.code as organisation_code',
+            //     'to_org.name as to_organisation_name'
+            ]);
+    } 
+
+
     public function pluck($column = 'name', $key = 'id')
     {
-        $ministryId = auth()->user()->ministry_id;
+        $organisationId = auth()->user()->organisation_id;
     
         return $this->model()::query()
-                ->where('ministry_id', $ministryId)
-                ->where('is_active', true)  // Optional: only show active folders
+                ->where('organisation_id', $organisationId)
+                ->where('is_active', true) 
                 ->orderBy($column)
                 ->pluck($column, $key);
     }
 
 
-public function list($column = 'name', $key = 'id')
+    public function list($column = 'name', $key = 'id')
     {
         return $this->model->query()
             ->orderBy($column)
             ->pluck($column, $key);
-    }
+    }    
+
 }
+
+
+

@@ -30,55 +30,55 @@
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const fileTypeDropdown = document.getElementById('fileType');
-    const dynamicFormContainer = document.getElementById('dynamic_form');
+    document.addEventListener('DOMContentLoaded', function () {
+        const fileTypeDropdown = document.getElementById('fileType');
+        const dynamicFormContainer = document.getElementById('dynamic_form');
 
-    fileTypeDropdown.addEventListener('change', function () {
-        const selectedFileTypeId = this.value;
+        fileTypeDropdown.addEventListener('change', function () {
+            const selectedFileTypeId = this.value;
 
-        if (!selectedFileTypeId) {
-            dynamicFormContainer.innerHTML = '<p class="text-gray-500">Please select a file type to load the corresponding form.</p>';
-            return;
-        }
-
-        // Show loading indicator
-        dynamicFormContainer.innerHTML = '<p class="text-blue-500">Loading form...</p>';
-
-        // Get CSRF token from meta tag
-        const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-        fetch(`/registry/file-types/${selectedFileTypeId}/dynamic-form`, {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'text/html',
-                'X-CSRF-TOKEN': token
+            if (!selectedFileTypeId) {
+                dynamicFormContainer.innerHTML = '<p class="text-gray-500">Please select a file type to load the corresponding form.</p>';
+                return;
             }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.text();
-        })
-        .then(html => {
-            dynamicFormContainer.innerHTML = html;
 
-            // Add file type ID to the loaded form
-            const form = dynamicFormContainer.querySelector('form');
-            if (form) {
-                const hiddenInput = document.createElement('input');
-                hiddenInput.type = 'hidden';
-                hiddenInput.name = 'file_type_id';
-                hiddenInput.value = selectedFileTypeId;
-                form.appendChild(hiddenInput);
-            }
-        })
-        .catch(error => {
-            dynamicFormContainer.innerHTML = `<p class="text-red-500">Error loading form: ${error.message}</p>`;
-            console.error('Error:', error);
+            // Show loading indicator
+            dynamicFormContainer.innerHTML = '<p class="text-blue-500">Loading form...</p>';
+
+            // Get CSRF token from meta tag
+            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            fetch(`/registry/file-types/${selectedFileTypeId}/dynamic-form`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'text/html',
+                    'X-CSRF-TOKEN': token
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.text();
+            })
+            .then(html => {
+                dynamicFormContainer.innerHTML = html;
+
+                // Add file type ID to the loaded form
+                const form = dynamicFormContainer.querySelector('form');
+                if (form) {
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'file_type_id';
+                    hiddenInput.value = selectedFileTypeId;
+                    form.appendChild(hiddenInput);
+                }
+            })
+            .catch(error => {
+                dynamicFormContainer.innerHTML = `<p class="text-red-500">Error loading form: ${error.message}</p>`;
+                console.error('Error:', error);
+            });
         });
     });
-});
 </script>
 @endpush

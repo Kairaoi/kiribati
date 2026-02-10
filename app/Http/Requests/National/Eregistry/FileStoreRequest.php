@@ -23,16 +23,16 @@ class FileStoreRequest extends FormRequest
     public function rules()
     {
         return [
-            'folder_id' => ['required', 'exists:folders,id'],
-            'ministry_id' => ['required', 'exists:ministries,id'],
+            // 'folder_id' => ['required', 'exists:folders,id'],
+            'organisation_id' => ['required', 'exists:organisations,id'],
             'name' => ['required', 'string', 'max:255'],
             'receive_date' => ['required', 'date'],
             'letter_date' => ['required', 'date'],
             'letter_ref_no' => ['required', 'string', 'max:100'],
-            'details' => ['nullable', 'string'],
-            'from_details_name' => ['required', 'string', 'max:255'],
-            'to_details_person_name' => ['required', 'string', 'max:255'],
-            'security_level' => ['required', 'in:public,internal,confidential,strictly_confidential'],
+            // 'details' => ['nullable', 'string'],
+            // 'from_details_name' => ['required', 'string', 'max:255'],
+            // 'to_details_person_name' => ['required', 'string', 'max:255'],
+            // 'security_level' => ['required', 'in:public,internal,confidential,strictly_confidential'],
             'file_type_id' => ['required', 'exists:file_types,id'],
             'file' => ['required', 'file', 'mimes:pdf,docx,xlsx', 'max:10240'], // 10MB max
         ];

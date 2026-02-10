@@ -2,24 +2,27 @@
 
 namespace Database\Seeders;
 
+use App\Models\Category;
+use App\Models\National\Eregistry\Organisation;
+use App\Models\Role;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
     public function run()
     {
+        
         $this->call([
-            MictUserSeeder::class,      // Run first to create users
-            MohUserSeeder::class,  // Run second to create ministries
-            MofUserSeeder::class,  // Run last to create divisions
-            FileTypesSeeder::class,  
-            MoeUserSeeder::class,  
-            // DivisionSeeder::class,
-            // FoldSeeder::class,
-               // FileSeeder::class,
-           
-           
-            MinistriesSeeder::class,  
+            RolesAndPermissionsSeeder::class,
+            UserSeeder::class,
+            OrganisationTypeSeeder::class,
+            OrganisationSeeder::class,
+            DivisionSeeder::class,
+            CategorySeeder::class,
+            MICTUserSeeder::class,  
+            MFEDUserSeeder::class,  
+            FileTypesSeeder::class,
+            MOEUserSeeder::class,
         ]);
     }
 }

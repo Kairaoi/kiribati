@@ -9,15 +9,15 @@ use Illuminate\Http\Request;
 
 class ApiController extends Controller
 {
-    public function getMinistryUsers($ministryId)
+    public function getOrganisationUsers($organisationId)
     {
-        $users = User::where('ministry_id', $ministryId)->pluck('name', 'id');
+        $users = User::where('organisation_id', $organisationId)->pluck('name', 'id');
         return response()->json($users);
     }
 
-    public function getMinistryDivisions($ministryId)
+    public function getOrganisationDivision($organisationId)
     {
-        $divisions = Division::where('ministry_id', $ministryId)->pluck('name', 'id');
+        $divisions = Division::where('organisation_id', $organisationId)->pluck('name', 'id');
         return response()->json($divisions);
     }
 }

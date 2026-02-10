@@ -23,13 +23,13 @@ class FileUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'folder_id' => [
+            // 'folder_id' => [
+            //     'required',
+            //     'exists:folders,id', // Validates that the folder_id exists in the folders table
+            // ],
+            'organisation_id' => [
                 'required',
-                'exists:folders,id', // Validates that the folder_id exists in the folders table
-            ],
-            'ministry_id' => [
-                'required',
-                'exists:ministries,id', // Validates that the ministry_id exists in the ministries table
+                'exists:organisations,id', // Validates that the organisation_id exists in the organisations table
             ],
             'division_id' => [
                 'required',
@@ -58,32 +58,32 @@ class FileUpdateRequest extends FormRequest
                 'string',
                 'max:255',
             ],
-            'details' => [
-                'nullable',
-                'string',
-            ],
-            'from_details_name' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-            'to_details_person_name' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-            'comments' => [
-                'nullable',
-                'string',
-            ],
-            'security_level' => [
-                'required',
-                'in:public,internal,confidential,strictly_confidential',
-            ],
-            'circulation_status' => [
-                'nullable',
-                'boolean',
-            ],
+            // 'details' => [
+            //     'nullable',
+            //     'string',
+            // ],
+            // 'from_details_name' => [
+            //     'required',
+            //     'string',
+            //     'max:255',
+            // ],
+            // 'to_details_person_name' => [
+            //     'required',
+            //     'string',
+            //     'max:255',
+            // ],
+            // 'comments' => [
+            //     'nullable',
+            //     'string',
+            // ],
+            // 'security_level' => [
+            //     'required',
+            //     'in:public,internal,confidential,strictly_confidential',
+            // ],
+            // 'circulation_status' => [
+            //     'nullable',
+            //     'boolean',
+            // ],
             'is_active' => [
                 'nullable',
                 'boolean',

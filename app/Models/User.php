@@ -3,14 +3,17 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\National\Eregistry\Division;
+use App\Models\National\Eregistry\FileCirculation;
+use App\Models\National\Eregistry\Organisation;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable
 {
@@ -28,8 +31,11 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-        'ministry_id',
-        'name',
+        'organisation_id',
+        'first_name',
+        'last_name',
+        'division_id',
+        'organisation_id',
         'email',
         'password',
     ];
@@ -68,13 +74,24 @@ class User extends Authenticatable
         ];
     }
 
-    public function ministry()
+    public function organisation()
     {
-        return $this->belongsTo(Ministry::class);
+        return $this->belongsTo(Organisation::class);
     }
 
-    public function folders()
+    // public function folders()
+    // {
+    //     return $this->hasManyThrough(Folder::class, Organisation::class);
+    // }
+
+    public function division()
     {
-        return $this->hasManyThrough(Folder::class, Ministry::class);
+        return $this->belongsTo(Division::class);
     }
+
+    public function assignedCirculations()
+    {
+        return $this->belongsToMany(FileCirculation::class, 'file_circulation_officer', 'officer_id', 'file_circulation_id');
+    }
+
 }

@@ -18,7 +18,7 @@ class FileAccessSeeder extends Seeder
         DB::table('file_access')->insert([
             [
                 'file_id' => 1, // Ensure this file_id exists
-                'ministry_id' => 1, // Ensure this ministry_id exists
+                'organisation_id' => 1, // Ensure this organisation_id exists
                 'division_id' => 1, // Ensure this division_id exists
                 'access_type' => 'view',
                 'is_active' => true,
@@ -29,7 +29,7 @@ class FileAccessSeeder extends Seeder
             ],
             [
                 'file_id' => 2, // Ensure this file_id exists
-                'ministry_id' => 2, // Ensure this ministry_id exists
+                'organisation_id' => 2, // Ensure this organisation_id exists
                 'division_id' => 2, // Ensure this division_id exists
                 'access_type' => 'edit',
                 'is_active' => true,
@@ -40,7 +40,7 @@ class FileAccessSeeder extends Seeder
             ],
             [
                 'file_id' => 3, // Ensure this file_id exists
-                'ministry_id' => 3, // Ensure this ministry_id exists
+                'organisation_id' => 3, // Ensure this organisation_id exists
                 'division_id' => 3, // Ensure this division_id exists
                 'access_type' => 'full',
                 'is_active' => true,

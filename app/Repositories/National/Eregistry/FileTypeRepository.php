@@ -30,6 +30,11 @@ class FileTypeRepository extends BaseRepository
         $data = [
             'name' => $input['name'],
             'description' => $input['description'] ?? null,
+            'code' => $input['code'],
+            'created_at' => now(),
+            'updated_at' => now(),
+
+
         ];
 
         $fileType = $this->model();
@@ -51,6 +56,10 @@ class FileTypeRepository extends BaseRepository
         $data = [
             'name' => $input['name'],
             'description' => $input['description'] ?? $model->description,
+            'code' => $input['code'],
+            'created_at' => now(),
+            'updated_at' => now(),
+
         ];
 
         return $model->update($data);
@@ -66,12 +75,17 @@ class FileTypeRepository extends BaseRepository
      */
     public function getForDataTable($search = '', $order_by = 'id', $sort = 'asc')
     {
-        $query = $this->model->query()->select(['id', 'name', 'description']);
+        $query = $this->model->query()->select(['id', 'name', 'description', 'code', 'created_at', 'updated_at']);
 
         if (!empty($search)) {
             $search = '%' . strtolower($search) . '%';
-            $query->where('name', 'ILIKE', $search)
-                  ->orWhere('description', 'ILIKE', $search);
+            $query->where(function ($q) use ($search) {
+                $q->whereRaw('LOWER(name) LIKE ?', [$search])
+                  ->orWhereRaw('LOWER(description) LIKE ?', [$search])
+                  ->orWhereRaw('LOWER(code) LIKE ?', [$search])
+                  ->orWhereRaw('DATE_FORMAT(created_at, "%Y-%m-%d") LIKE ?', [str_replace('%', '', $search)]) // Date must match format
+                  ->orWhereRaw('CAST(created_by AS CHAR) LIKE ?', [$search]);
+            });
         }
 
         return $query->orderBy($order_by, $sort);
@@ -90,4 +104,13 @@ class FileTypeRepository extends BaseRepository
             ->orderBy($column)
             ->pluck($column, $key);
     }
+
+
+    public function listWithDescriptions()
+    {
+        return $this->model->query()
+            ->orderBy('name')
+            ->get(['id', 'name', 'description']);
+    }
+
 }

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\National\Eregistry;
 use App\Http\Controllers\Controller;
 use App\Repositories\National\Eregistry\FileAccessRepository;
 use App\Repositories\National\Eregistry\FileRepository;
-use App\Repositories\National\Eregistry\MinistryRepository;
+use App\Repositories\National\Eregistry\OrganisationRepository;
 use App\Repositories\National\Eregistry\DivisionRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,19 +16,19 @@ class FileAccessController extends Controller
 {
     private $file_access;
     private $files;
-    private $ministries;
+    private $organisations;
     private $divisions;
 
     public function __construct(
         FileAccessRepository $file_access,
         FileRepository $files,
-        MinistryRepository $ministries,
+        OrganisationRepository $organisations,
         DivisionRepository $divisions
     )
     {
         $this->file_access = $file_access;
         $this->files = $files;
-        $this->ministries = $ministries;
+        $this->organisations = $organisations;
         $this->divisions = $divisions;
     }
 
@@ -71,12 +71,12 @@ class FileAccessController extends Controller
         }
 
         $files = $this->files->pluck();
-        $ministries = $this->ministries->pluck();
+        $organisations = $this->organisations->pluck();
         $divisions = $this->divisions->pluck();
 
         return view('national.eregistry.file_access.create', [
             'files' => $files,
-            'ministries' => $ministries,
+            'organisations' => $organisations,
             'divisions' => $divisions,
         ]);
     }
@@ -98,7 +98,7 @@ class FileAccessController extends Controller
         // Validation
         $request->validate([
             'file_id' => 'required|exists:files,id',
-            'ministry_id' => 'required|exists:ministries,id',
+            'organisation_id' => 'required|exists:organisations,id',
             'division_id' => 'required|exists:divisions,id',
             'access_type' => 'required|in:view,edit,full',
             'is_active' => 'nullable|boolean',
@@ -141,13 +141,13 @@ class FileAccessController extends Controller
 
         $file_access = $this->file_access->getById($id);
         $files = $this->files->pluck();
-        $ministries = $this->ministries->pluck();
+        $organisations = $this->organisations->pluck();
         $divisions = $this->divisions->pluck();
 
         return view('national.eregistry.file_access.edit', [
             'file_access' => $file_access,
             'files' => $files,
-            'ministries' => $ministries,
+            'organisations' => $organisations,
             'divisions' => $divisions,
         ]);
     }

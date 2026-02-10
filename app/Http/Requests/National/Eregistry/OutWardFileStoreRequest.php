@@ -23,13 +23,13 @@ class OutWardFileStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'folder_id' => [
+            // 'folder_id' => [
+            //     'required',
+            //     'exists:folders,id', // Validates that the folder_id exists in the folders table
+            // ],
+            'organisation_id' => [
                 'required',
-                'exists:folders,id', // Validates that the folder_id exists in the folders table
-            ],
-            'ministry_id' => [
-                'required',
-                'exists:ministries,id', // Validates that the ministry_id exists in the ministries table
+                'exists:organisations,id', // Validates that the organisation_id exists in the organisations table
             ],
             'division_id' => [
                 'required',
@@ -40,56 +40,64 @@ class OutWardFileStoreRequest extends FormRequest
                 'string',
                 'max:255',
             ],
-            'path' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-            'send_date' => [
-                'required',
-                'date',
-            ],
-            'letter_date' => [
-                'required',
-                'date',
-            ],
+            // 'path' => [
+            //     'required',
+            //     'string',
+            //     'max:255',
+            // ],
+            // 'send_date' => [
+            //     'required',
+            //     'date',
+            // ],
+            // 'letter_date' => [
+            //     'required',
+            //     'date',
+            // ],
             'letter_ref_no' => [
                 'required',
                 'string',
                 'max:255',
             ],
-            'details' => [
-                'nullable',
-                'string',
-            ],
-            'from_details_name' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-            'to_details_name' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-            'vessel_name' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-            'security_level' => [
-                'required',
-                'in:public,internal,confidential,strictly_confidential',
-            ],
-            'circulation_status' => [
-                'nullable',
-                'boolean',
-            ],
-            'is_active' => [
-                'nullable',
-                'boolean',
-            ],
+            // 'details' => [
+            //     'nullable',
+            //     'string',
+            // ],
+            // 'from_details_name' => [
+            //     'required',
+            //     'string',
+            //     'max:255',
+            // ],
+            // 'to_details_name' => [
+            //     'required',
+            //     'string',
+            //     'max:255',
+            // ],
+            // 'vessel_name' => [
+            //     'required',
+            //     'string',
+            //     'max:255',
+            // ],
+            // 'security_level' => [
+            //     'required',
+            //     'in:public,internal,confidential,strictly_confidential',
+            // ],
+            // 'circulation_status' => [
+            //     'nullable',
+            //     'boolean',
+            // ],
+            // 'is_active' => [
+            //     'nullable',
+            //     'boolean',
+            // ],
             'file_type_id' => [
+                'required',
+                'exists:file_types,id', // Validates that the file_type_id exists in the file_types table
+            ],
+            'category_id' => [
+                'required',
+                'exists:file_types,id', // Validates that the file_type_id exists in the file_types table
+            ],
+            'recipient_organisations' => [
                 'required',
                 'exists:file_types,id', // Validates that the file_type_id exists in the file_types table
             ],

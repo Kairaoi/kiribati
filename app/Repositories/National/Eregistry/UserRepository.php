@@ -2,9 +2,10 @@
 
 namespace App\Repositories\National\Eregistry;
 
-use App\Repositories\BaseRepository;
 use App\Models\User;
-use Auth;
+use App\Repositories\BaseRepository;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class UserRepository extends BaseRepository
 {
@@ -27,9 +28,13 @@ class UserRepository extends BaseRepository
     public function create(array $input)
     {
         $data = [
-            'name' => $input['name'],
+            'first_name' => $input['first_name'],
+            'last_name' => $input['last_name'],
+            'division_id' => $input['division_id'] ?? null,
+            'organisation_id' => $input['organisation_id'] ?? null,
+            'role' => $input['role'] ?? null,
             'email' => $input['email'],
-            'password' => bcrypt($input['password']),
+            'password'=> Hash::make($input['password']),// Only here
             'current_team_id' => $input['current_team_id'] ?? null,
             'profile_photo_path' => $input['profile_photo_path'] ?? null,
             'created_by' => Auth::id(),
@@ -53,7 +58,7 @@ class UserRepository extends BaseRepository
     public function update(User $model, array $input)
     {
         $data = [
-            'name' => $input['name'] ?? $model->name,
+            'first_name' => $input['first_name'] ?? $model->name,
             'email' => $input['email'] ?? $model->email,
             'password' => isset($input['password']) ? bcrypt($input['password']) : $model->password,
             'current_team_id' => $input['current_team_id'] ?? $model->current_team_id,
@@ -72,20 +77,29 @@ class UserRepository extends BaseRepository
      * @param string $sort
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function getForDataTable($search = '', $order_by = 'id', $sort = 'asc')
+    public function getForDataTable($search = '')
     {
         $query = $this->model->query()
-            ->select(['id', 'name', 'email', 'current_team_id', 'profile_photo_path']);
+        ->select([
+            'users.id',
+            'users.first_name',
+            'users.last_name',
+            'users.email',
+            // 'users.created_at as user_created_at',
+            'users.profile_photo_path',
+            'divisions.name as division_name',
+            'roles.name as role_name'
+        ])
+        // ->leftJoin('organisations', 'users.organisation_id', '=', 'organisations.id')
+        ->leftJoin('divisions', 'users.division_id', '=', 'divisions.id')
+        ->leftJoin('model_has_roles', function ($join) {
+            $join->on('users.id', '=', 'model_has_roles.model_id')
+                 ->where('model_has_roles.model_type', '=', User::class);
+        })
+        ->leftJoin('roles', 'model_has_roles.role_id', '=', 'roles.id')
+        ->where('users.organisation_id', auth()->user()->organisation_id);  // Filter by logged-in user's organisation
 
-        if (!empty($search)) {
-            $search = '%' . strtolower($search) . '%';
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'ILIKE', $search)
-                  ->orWhere('email', 'ILIKE', $search);
-            });
-        }
-
-        return $query->orderBy($order_by, $sort);
+        return $query->orderBy('users.created_at', 'desc');
     }
 
     /**
@@ -95,10 +109,36 @@ class UserRepository extends BaseRepository
      * @param string $key
      * @return \Illuminate\Support\Collection
      */
-    public function pluck($column = 'name', $key = 'id')
+    public function pluck($column = 'first_name', $key = 'id')
     {
+        $organisationId = auth()->user()->organisation_id;
+
+        //return users name and id for the logged in organisation 
+        //and with the role of 'admin'
         return $this->model->query()
+            ->where('organisation_id', $organisationId)
             ->orderBy($column)
             ->pluck($column, $key);
     }
+
+
+    /**
+     * Get users with their division in a organisation
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getUsersDivision()
+    {
+        // dd(Auth::user()->organisation_id);
+
+        return $this->model->query()
+            ->select('users.id', 'users.first_name', 'users.last_name', 'divisions.name as division_name')
+            ->join('divisions', 'users.division_id', '=', 'divisions.id')
+            ->where('users.organisation_id', Auth::user()->organisation_id)
+            ->orderBy('divisions.name')
+            ->orderBy('users.first_name')
+            ->orderBy('users.last_name')
+            ->get();
+    }
+
 }

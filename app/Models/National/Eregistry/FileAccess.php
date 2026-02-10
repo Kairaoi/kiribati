@@ -13,7 +13,7 @@ class FileAccess extends Model
 
     protected $fillable = [
         'file_id',
-        'ministry_id',
+        'organisation_id',
         'division_id',
         'access_type',
         'is_active',
@@ -26,9 +26,9 @@ class FileAccess extends Model
         return $this->belongsTo(File::class);
     }
 
-    public function ministry()
+    public function organisation()
     {
-        return $this->belongsTo(Ministry::class);
+        return $this->belongsTo(Organisation::class);
     }
 
     public function division()

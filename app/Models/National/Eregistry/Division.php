@@ -12,17 +12,15 @@ class Division extends Model
     protected $table = 'divisions';
 
     protected $fillable = [
-        'ministry_id',
+        'organisation_id',
         'name',
-        'code',
-        'description',
+        'location',
         'is_active',
-        'created_by',
-        'updated_by',
+       
     ];
 
-    public function ministry()
+    public function organisation()
     {
-        return $this->belongsTo(Ministry::class);
+        return $this->belongsTo(Organisation::class);
     }
 }

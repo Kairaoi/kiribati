@@ -5,7 +5,7 @@ namespace App\Http\Requests\National\Eregistry;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class MinistryUpdateRequest extends FormRequest
+class OrganisationUpdateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -32,7 +32,7 @@ class MinistryUpdateRequest extends FormRequest
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('ministries')->whereNull('deleted_at'), // Ensure the code is unique
+                Rule::unique('organisations')->whereNull('deleted_at'), // Ensure the code is unique
             ],
             'description' => [
                 'required',

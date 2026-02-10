@@ -1,9 +1,19 @@
 <?php
 
+use App\Http\Controllers\National\Eregistry\DivisionController;
+use App\Http\Controllers\National\Eregistry\DispatchController;
+use App\Http\Controllers\National\Eregistry\EregistryBoradController;
+use App\Http\Controllers\National\Eregistry\FileAccessController;
+use App\Http\Controllers\National\Eregistry\FileCirculationController;
+use App\Http\Controllers\National\Eregistry\FileController;
+use App\Http\Controllers\National\Eregistry\FileTypeController;
+use App\Http\Controllers\National\Eregistry\OrganisationController;
+use App\Http\Controllers\National\Eregistry\UserController;
 use Illuminate\Support\Facades\Route;
 
+
 Route::get('/', function () {
-    return view('welcome');
+    return view('auth.login');
 });
 
 Route::middleware([
@@ -11,8 +21,14 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('dashboard');
+    Route::get('dashboard', function () {
+        $user = auth()->user();
+
+        if ($user->hasRole('admin') || $user->hasRole('user')) {
+            return view('national.eregistry.circulations.reviewIndex');
+        }
+
+        return view('national.eregistry.index');
     })->name('dashboard');
 });
 
@@ -22,72 +38,84 @@ Route::group([
     'middleware' => ['auth'],
 ], function () {
 
-    // Ministry Routes
-    Route::match(['get', 'post'], 'ministries/datatables', [\App\Http\Controllers\National\Eregistry\MinistryController::class, 'getDataTables'])->name('ministries.datatables');
-    Route::resource('ministries', \App\Http\Controllers\National\Eregistry\MinistryController::class);
-    
+    // Organisation Routes
+    Route::match(['get', 'post'], 'organisations/datatables', [OrganisationController::class, 'getDataTables'])->name('organisations.datatables');
+    Route::resource('organisations', OrganisationController::class);
+    Route::get('/organisations/{id}/review-officer', [OrganisationController::class, 'showReviewOfficer'])->name('organisations.reviewOfficer.show');
+    Route::patch('/organisations/{id}/update-review-officer', [OrganisationController::class, 'updateReviewOfficer'])->name('organisations.reviewOfficer.update');
+
 
     // Division Routes
-    Route::match(['get', 'post'], 'divisions/datatables', [\App\Http\Controllers\National\Eregistry\DivisionController::class, 'getDataTables'])->name('divisions.datatables');
-    Route::resource('divisions', \App\Http\Controllers\National\Eregistry\DivisionController::class);
-    
+    Route::match(['get', 'post'], 'divisions/datatables', [DivisionController::class, 'getDataTables'])->name('divisions.datatables');
+    Route::resource('divisions', DivisionController::class);
 
-    // Folder Routes
-    Route::match(['get', 'post'], 'folders/datatables', [\App\Http\Controllers\National\Eregistry\FolderController::class, 'getDataTables'])->name('folders.datatables');
-    Route::resource('folders', \App\Http\Controllers\National\Eregistry\FolderController::class);
     
-
     // File Routes
-   
     // Route for serving the actual file content
-    Route::get('files/{id}/view', [\App\Http\Controllers\National\Eregistry\FileController::class, 'viewFile'])->name('files.view');
-    Route::get('files/{id}/download', [\App\Http\Controllers\National\Eregistry\FileController::class, 'download'])
-     ->name('files.download');
+    Route::get('files/{id}/view', [FileController::class, 'viewFile'])->name('files.view');
+    Route::get('files/{id}/download', [FileController::class, 'downloadMain'])->name('files.download.main');
+    Route::get('files/{id}/download-additional/{number}', [FileController::class, 'downloadAdditionalFile'])->name('files.download.additional');
+    
+    Route::get('files/create-type/{createType}', [FileController::class, 'createType'])->name('files.create.withType');
+    Route::get('files/{id}/edit-type/{editType}', [FileController::class, 'editType'])->name('files.edit.withType');
 
-    Route::match(['get', 'post'], 'files/datatables', [\App\Http\Controllers\National\Eregistry\FileController::class, 'getDataTables'])->name('files.datatables');
-    Route::resource('files', \App\Http\Controllers\National\Eregistry\FileController::class);
-   
+
+    // Route::match(['get', 'post'], 'files/received/datatables', [FileController::class, 'getReceivedFilesDataTable'])->name('files.received.datatables');
+    Route::match(['get', 'post'], 'files/datatables', [FileController::class, 'getArchiveFiles'])->name('files.archive.datatables');
+    Route::resource('files', FileController::class);
+    Route::post('files/archive', [FileController::class, 'archive'])->name('files.archive');
+
 
     // File Type Routes
     Route::get('/registry/file-types/{fileTypeId}/dynamic-form', [
         'as' => 'file-types.dynamic-form',
         'uses' => 'App\Http\Controllers\National\Eregistry\FileTypeController@dynamicForm'
     ]);
-    Route::match(['get', 'post'], 'file-types/datatables', [\App\Http\Controllers\National\Eregistry\FileTypeController::class, 'getDataTables'])->name('file-types.datatables');
-    Route::resource('file-types', \App\Http\Controllers\National\Eregistry\FileTypeController::class);
-   
+    Route::match(['get', 'post'], 'file-types/datatables', [FileTypeController::class, 'getDataTables'])->name('file-types.datatables');
+    Route::resource('file-types', FileTypeController::class);
+
 
     // File Access Routes
-    Route::match(['get', 'post'], 'file-access/datatables', [\App\Http\Controllers\National\Eregistry\FileAccessController::class, 'getDataTables'])->name('file-access.datatables');
-    Route::resource('file-access', \App\Http\Controllers\National\Eregistry\FileAccessController::class);
-    
+    Route::match(['get', 'post'], 'file-access/datatables', [FileAccessController::class, 'getDataTables'])->name('file-access.datatables');
+    Route::resource('file-access', FileAccessController::class);
 
-    // Movement Routes
-    Route::match(['get', 'post'], 'movements/datatables', [\App\Http\Controllers\National\Eregistry\MovementController::class, 'getDataTables'])->name('movements.datatables');
-    Route::resource('movements', \App\Http\Controllers\National\Eregistry\MovementController::class);
-    
 
+    // Dispatch Routes
+    Route::get('dispatches/userIndex', [DispatchController::class, 'userIndex'])->name('dispatches.user.index');
+
+    Route::match(['get', 'post'], 'dispatches/datatables', [DispatchController::class, 'getDataTables'])->name('dispatches.datatables');
+    Route::resource('dispatches', DispatchController::class);
+    Route::match(['get', 'post'], 'user-dispatches/datatables', [DispatchController::class, 'getUserDataTables'])->name('dispatches.user.datatables');
+    // Route::get('user', [DispatchController::class, 'userIndex'])->name('dispatches.user.index');
     
-    Route::resource('boards', \App\Http\Controllers\National\Eregistry\EregistryBoradController::class, ['only' => ['index']]);
-   
+    
+    // File Circulation Routes
+    Route::match(['get', 'post'], 'file-circulations/initial/datatables', [FileCirculationController::class, 'getDataTables'])->name('file-circulations.datatables');
+    Route::match(['get', 'post'], 'file-circulations/review/datatables', [FileCirculationController::class, 'getReviewDataTables'])->name('file-circulations.reviews.datatables');
+    Route::match(['get', 'post'], 'file-circulations/assigned/datatables', [FileCirculationController::class, 'getAssignedDataTables'])->name('file-circulations.assigned.datatables');
+    
+    Route::resource('file-circulations', FileCirculationController::class);
+    Route::get('/file-circulations/review/index', [FileCirculationController::class, 'reviewIndex'])->name('file-circulations.review.index');
+    Route::get('/file-circulations/{fileCirculation}/review', [FileCirculationController::class, 'reviewFile'])->name('file-circulations.review.file');
+    Route::patch('/file-circulations/{fileCirculation}/store/assigned-officers/', [FileCirculationController::class, 'storeAssignedOfficers'])->name('file-circulations.store.assigned-officers');
+    Route::get('/file-circulations/assigned/index', [FileCirculationController::class, 'assignedIndex'])->name('file-circulations.assigned.index');
+    Route::patch('/file-circulations/{fileCirculation}/store/complete', [FileCirculationController::class, 'storeComplete'])->name('file-circulations.store.complete');
+
+
+    // User Routes
+    Route::match(['get', 'post'], 'users/datatables', [UserController::class, 'getDataTables'])->name('users.datatables');
+    Route::resource('users', UserController::class);
+
+
+    // Eregistry Board Routes
+    Route::get('boards', [EregistryBoradController::class, 'index'])->name('boards.index');
+    Route::get('boards/myFiles', [EregistryBoradController::class, 'myFiles'])->name('boards.myFiles');
+    Route::get('boards/management', [EregistryBoradController::class, 'management'])->name('boards.management');
+    Route::get('boards/profile', [EregistryBoradController::class, 'profile'])->name('boards.profile');
 
     // Add additional routes here if needed, such as PDF download or specific actions
+
 });
 
-// use Diglactic\Breadcrumbs\Breadcrumbs;
-// use Diglactic\Breadcrumbs\Generator as BreadcrumbsGenerator;
 
-// Breadcrumbs::for('dashboard', function (BreadcrumbsGenerator $trail) {
-//     $trail->push('dashboard', route('dashboard'));
-// });
-
-// Breadcrumbs::for('registry.folders.index', function (BreadcrumbsGenerator $trail) {
-//     $trail->parent('dashboard');
-//     $trail->push('Folders', route('registry.folders.index'));
-// });
-
-// Breadcrumbs::for('registry.files.index', function (BreadcrumbsGenerator $trail) {
-//     $trail->parent('registry.folders.index');
-//     $trail->push('Files', route('registry.files.index'));
-// });
 

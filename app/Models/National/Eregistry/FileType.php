@@ -15,4 +15,18 @@ class FileType extends Model
         'name',
         'description',
     ];
+
+    
+    public function files()
+    {
+        return $this->hasMany(File::class);
+    }
+
+
+    public function fileAccess()
+    {
+        return $this->hasMany(FileAccess::class);
+    }
+
+ 
 }

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\National\Eregistry;
 
 use App\Http\Controllers\Controller;
 use App\Repositories\National\Eregistry\DivisionRepository;
-use App\Repositories\National\Eregistry\MinistryRepository;
+use App\Repositories\National\Eregistry\OrganisationRepository;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,12 +14,12 @@ use Yajra\DataTables\Facades\DataTables;
 class DivisionController extends Controller
 {
     private $divisions;
-    private $ministries;
+    private $organisations;
 
-    public function __construct(DivisionRepository $divisions, MinistryRepository $ministries)
+    public function __construct(DivisionRepository $divisions, OrganisationRepository $organisations)
     {
         $this->divisions = $divisions;
-        $this->ministries = $ministries;
+        $this->organisations = $organisations;
     }
 
     /**
@@ -34,11 +34,13 @@ class DivisionController extends Controller
         if (is_array($search)) {
             $search = $search['value'];
         }
-        $query = $this->divisions->getForDataTable($search);
-        $datatables = DataTables::make($query)->make(true);
-        return $datatables;
+    
+        $organisationId = Auth::user()->organisation_id; // Add this line
+        $query = $this->divisions->getForDataTable($search, 'id', 'asc', $organisationId); // Pass it
+    
+        return DataTables::of($query)->make(true);
     }
-
+    
     /**
      * Display a listing of the resource.
      *
@@ -56,13 +58,13 @@ class DivisionController extends Controller
      */
     public function create()
     {
-        // if (!Auth::user()->can('division.create')) {
+        // if (!Auth::user()->can('Division.create')) {
         //     abort(403, 'Unauthorized action.');
         // }
 
-        $ministries = $this->ministries->pluck();
+        $organisations = $this->organisations->pluck();
 
-        return view('national.eregistry.divisions.create')->with('ministries', $ministries);
+        return view('national.eregistry.divisions.create')->with('organisations', $organisations);
     }
 
     /**
@@ -81,7 +83,7 @@ class DivisionController extends Controller
 
         // Validation
         $request->validate([
-            'ministry_id' => 'required|exists:ministries,id',
+            'organisation_id' => 'required|exists:organisations,id',
             'name' => 'required|string',
             'code' => 'required|string|unique:divisions',
             'description' => 'nullable|string',
@@ -124,11 +126,11 @@ class DivisionController extends Controller
         // }
 
         $division = $this->divisions->getById($id);
-        $ministries = $this->ministries->pluck();
+        $organisations = $this->organisations->pluck();
 
         return view('national.eregistry.divisions.edit', [
             'division' => $division,
-            'ministries' => $ministries,
+            'organisations' => $organisations,
         ]);
     }
 
@@ -148,7 +150,7 @@ class DivisionController extends Controller
         $division = $this->divisions->getById($id);
         $this->divisions->update($division, $request->all());
 
-        return redirect()->route('division.index')->with('message', 'Division updated successfully.');
+        return redirect()->route('division.index')->with('message', 'division updated successfully.');
     }
 
     /**
@@ -166,6 +168,6 @@ class DivisionController extends Controller
         $division = $this->divisions->getById($id);
         $this->divisions->delete($division);
 
-        return redirect()->route('division.index')->with('message', 'Division deleted successfully.');
+        return redirect()->route('division.index')->with('message', 'division deleted successfully.');
     }
 }

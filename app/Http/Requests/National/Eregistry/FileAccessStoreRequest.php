@@ -27,9 +27,9 @@ class FileAccessStoreRequest extends FormRequest
                 'required',
                 'exists:files,id', // Validates that the file_id exists in the files table
             ],
-            'ministry_id' => [
+            'organisation_id' => [
                 'required',
-                'exists:ministries,id', // Validates that the ministry_id exists in the ministries table
+                'exists:organisations,id', // Validates that the organisation_id exists in the organisations table
             ],
             'division_id' => [
                 'required',

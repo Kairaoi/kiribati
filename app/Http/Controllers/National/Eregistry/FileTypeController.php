@@ -4,8 +4,8 @@ namespace App\Http\Controllers\National\Eregistry;
 
 use App\Http\Controllers\Controller;
 use App\Repositories\National\Eregistry\FileTypeRepository;
-use App\Repositories\National\Eregistry\FolderRepository;
-use App\Repositories\National\Eregistry\MinistryRepository;
+// use App\Repositories\National\Eregistry\FolderRepository;
+use App\Repositories\National\Eregistry\OrganisationRepository;
 use App\Repositories\National\Eregistry\DivisionRepository;
 
 use DB;
@@ -17,17 +17,17 @@ use Yajra\DataTables\Facades\DataTables;
 class FileTypeController extends Controller {
 
     private $fileTypes;
-    private $folders;
-    private $ministries;
+    // private $folders;
+    private $organisations;
     private $divisions;
 
-    public function __construct(FileTypeRepository $fileTypes, FolderRepository $folders,
-    MinistryRepository $ministries,
+    public function __construct(FileTypeRepository $fileTypes,
+    OrganisationRepository $organisations,
     DivisionRepository $divisions)
     {
         $this->fileTypes = $fileTypes;
-        $this->folders = $folders;
-        $this->ministries = $ministries;
+        // $this->folders = $folders;
+        $this->organisations = $organisations;
         $this->divisions = $divisions;
     }
 
@@ -85,8 +85,8 @@ class FileTypeController extends Controller {
     
     if ($fileType->type === 'Outward') {
         return view('national.eregistry.outward_files.create', [
-            'folders' => $this->folders->pluck(),
-            'ministries' => $this->ministries->pluck(),
+            // 'folders' => $this->folders->pluck(),
+            'organisations' => $this->organisations->pluck(),
             'divisions' => $this->divisions->pluck(),
             'fileTypes' => $this->fileTypes->pluck(),
         ])->render();

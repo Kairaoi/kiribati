@@ -23,13 +23,13 @@ class OutWardFileUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'folder_id' => [
+            // 'folder_id' => [
+            //     'required',
+            //     'exists:folders,id', // Validates that the folder_id exists in the folders table
+            // ],
+            'organisation_id' => [
                 'required',
-                'exists:folders,id', // Validates that the folder_id exists in the folders table
-            ],
-            'ministry_id' => [
-                'required',
-                'exists:ministries,id', // Validates that the ministry_id exists in the ministries table
+                'exists:organisations,id', // Validates that the organisation_id exists in the organisations table
             ],
             'division_id' => [
                 'required',

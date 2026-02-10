@@ -4,7 +4,7 @@ namespace App\Repositories\National\Eregistry;
 
 use App\Repositories\BaseRepository;
 use App\Models\National\Eregistry\FileAccess;
-use Auth;
+use Illuminate\Support\Facades\Auth;
 
 class FileAccessRepository extends BaseRepository
 {
@@ -28,7 +28,7 @@ class FileAccessRepository extends BaseRepository
     {
         $data = [
             'file_id' => $input['file_id'],
-            'ministry_id' => $input['ministry_id'],
+            'organisation_id' => $input['organisation_id'],
             'division_id' => $input['division_id'],
             'access_type' => $input['access_type'], // Should be one of 'view', 'edit', 'full'
             'is_active' => $input['is_active'] ?? true,
@@ -54,7 +54,7 @@ class FileAccessRepository extends BaseRepository
     {
         $data = [
             'file_id' => $input['file_id'] ?? $model->file_id,
-            'ministry_id' => $input['ministry_id'] ?? $model->ministry_id,
+            'organisation_id' => $input['organisation_id'] ?? $model->organisation_id,
             'division_id' => $input['division_id'] ?? $model->division_id,
             'access_type' => $input['access_type'] ?? $model->access_type,
             'is_active' => $input['is_active'] ?? $model->is_active,
@@ -78,7 +78,7 @@ class FileAccessRepository extends BaseRepository
             ->select([
                 'id',
                 'file_id',
-                'ministry_id',
+                'organisation_id',
                 'division_id',
                 'access_type',
                 'is_active',

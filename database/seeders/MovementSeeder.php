@@ -19,15 +19,15 @@ class MovementSeeder extends Seeder
         DB::table('movements')->insert([
             [
                 'file_id' => 1, // Ensure this file exists
-                'from_ministry_id' => 1, // Ensure this ministry exists
-                'to_ministry_id' => 2, // Ensure this ministry exists
+                'from_organisation_id' => 1, // Ensure this organisation exists
+                'to_organisation_id' => 2, // Ensure this organisation exists
                 'from_user_id' => 1, // Ensure this user exists
                 'to_user_id' => 2, // Ensure this user exists
                 'to_division_id' => 1, // Ensure this division exists
                 'movement_start_date' => Carbon::create('2025', '01', '21', '10', '00', '00'),
                 'movement_end_date' => Carbon::create('2025', '02', '20', '17', '00', '00'),
                 'read_status' => false,
-                'comments' => 'File moved for review in the education ministry.',
+                'comments' => 'File moved for review in the education organisation.',
                 'required_action' => 'Review and approve policy update.',
                 'action_taken' => 'File reviewed, awaiting final approval.',
                 'status' => 'in_progress',
@@ -39,8 +39,8 @@ class MovementSeeder extends Seeder
             ],
             [
                 'file_id' => 2, // Ensure this file exists
-                'from_ministry_id' => 2, // Ensure this ministry exists
-                'to_ministry_id' => 3, // Ensure this ministry exists
+                'from_organisation_id' => 2, // Ensure this organisation exists
+                'to_organisation_id' => 3, // Ensure this organisation exists
                 'from_user_id' => 2, // Ensure this user exists
                 'to_user_id' => 3, // Ensure this user exists
                 'to_division_id' => null, // No division assigned for this case
@@ -59,15 +59,15 @@ class MovementSeeder extends Seeder
             ],
             [
                 'file_id' => 3, // Ensure this file exists
-                'from_ministry_id' => 3, // Ensure this ministry exists
-                'to_ministry_id' => 1, // Ensure this ministry exists
+                'from_organisation_id' => 3, // Ensure this organisation exists
+                'to_organisation_id' => 1, // Ensure this organisation exists
                 'from_user_id' => 3, // Ensure this user exists
                 'to_user_id' => 4, // Ensure this user exists
                 'to_division_id' => 2, // Ensure this division exists
                 'movement_start_date' => Carbon::create('2025', '03', '02', '15', '30', '00'),
                 'movement_end_date' => null, // No end date yet
                 'read_status' => true,
-                'comments' => 'File received for ministry’s health update.',
+                'comments' => 'File received for organisation’s health update.',
                 'required_action' => 'Provide comments on the report.',
                 'action_taken' => 'Comments submitted.',
                 'status' => 'completed',

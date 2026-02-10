@@ -8,58 +8,81 @@
     <title>{{ config('app.name', 'Laravel') }}</title>
 
     <!-- Fonts -->
-    <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
+    <!-- Montserrat -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+    <!-- Roboto -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/2.3.2/css/dataTables.bootstrap5.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" rel="stylesheet" >
+
 
     <!-- DataTables CSS (CDN) -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap4.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.5/css/buttons.dataTables.min.css">
 
-    <!-- Styles -->
+    <style>
+        [x-cloak] { display: none !important; }
+        
+        .font-montserrat {
+            font-family: 'Montserrat', sans-serif;
+        }
 
-    <!-- FontAwesome CDN -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+        .font-poppins {
+            font-family: 'Poppins', sans-serif;
+        }
 
+        .font-roboto {
+            font-family: 'Roboto', sans-serif;
+        }
+    </style>
+
+    @livewireStyles
    
-
     <!-- Add custom styles or styles from individual pages -->
     @stack('styles')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-
+   
+    <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 </head>
+
 <body class="font-sans antialiased">
-    <div class="min-h-screen bg-gray-100">
+        <x-banner />
 
-        <!-- Navigation Bar -->
-      
+        <div class="min-h-screen bg-gray-100">
+            @livewire('navigation-menu')
 
-        <!-- Main Content Area -->
-        <main class="py-4 mt-16"> <!-- mt-16 adds margin to offset the fixed navbar -->
-        @include('navigation-menu')
-            @yield('content') <!-- The content of each page will be injected here -->
-        </main>
+            <!-- Page Heading -->
+            @if (isset($header))
+                {{ $header }}
+            @elseif (View::hasSection('header'))
+                @yield('header')
+            @endif
 
-    </div>
+            <!-- Page Content -->
+            <main>
+                @if (isset($slot))
+                    {{ $slot }}          {{-- component pages --}}
+                @else
+                    @yield('content')    {{-- classic pages --}}
+                @endif
+            </main>
 
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-white py-4">
-        <div class="max-w-7xl mx-auto px-4 text-center">
-            <p>&copy; {{ date('Y') }} {{ config('app.name', 'Laravel') }}. All rights reserved.</p>
+            @include('footer')
         </div>
-    </footer>
 
-    <!-- Scripts -->
-    
+        @stack('modals')
 
-    <!-- DataTables JS (CDN) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap4.min.js"></script>
+        @livewireScripts
 
-    <!-- Add custom scripts or scripts from individual pages -->
-    @stack('scripts')
-
-    
+        @stack('scripts')
 </body>
 </html>

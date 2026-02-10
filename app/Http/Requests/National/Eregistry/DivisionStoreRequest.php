@@ -23,9 +23,9 @@ class DivisionStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'ministry_id' => [
+            'organisation_id' => [
                 'required',
-                'exists:ministries,id', // Validates that the ministry_id exists in the ministries table
+                'exists:organisations,id', // Validates that the organisation_id exists in the organisations table
             ],
             'name' => [
                 'required',
