@@ -22,14 +22,13 @@
         @method('PUT')
  
         <!-- <label for="name" class="block text-sm font-medium text-gray-700">Division</label> -->
-    
-            <div class="text-gray-700 text-sm grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                <!-- File Name -->
-                <div>
-                    <label for="name" class="block">Main File Name: <span class="text-red-600">*</span></label>
-                    <input type="text" name="name" id="name" value="{{ old('name', $file->name) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
-                </div>
+         <div class="text-gray-700 text-sm grid grid-cols-1">
+            <label for="subject" class="block">Document Subject: <span class="text-red-600">*</span></label>
+            <input type="text" name="subject" id="subject" value="{{ old('subject', $file->subject) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+         </div>
+    
+        <div class="text-gray-700 text-sm grid grid-cols-1 md:grid-cols-2 gap-6">
 
                 <!-- Division -->
 
@@ -111,12 +110,12 @@
 
                 <!-- File Type -->
                 <div>
-                    <label for="file_type_id" class="block">File Type: <span class="text-red-600">*</span></label>
+                    <label for="file_type_id" class="block">Document Type: <span class="text-red-600">*</span></label>
                     <select name="file_type_id"
                             id="file_type_id" 
                             class="select2 mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                             required>
-                        <option class="" disabled selected>Select File Type</option>
+                        <option class="" disabled selected>Select Document Type</option>
                         @foreach ($file_types as $type)
                             <option value="{{ $type->id }}" 
                                 {{ $type->id == $file->file_type_id ? 'selected' : '' }}>
@@ -129,13 +128,13 @@
                 <!-- File Category -->
                 <div>
                     <label for="category_id" class="block">
-                        File Category:
+                        Document Category:
                     </label>
                     <select name="category_id" 
                             id="category_id" 
                             class="select2 mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" 
                             required>
-                        <option value="" disabled selected>Select File Category</option>
+                        <option value="" disabled selected>Select Document Category</option>
                         @foreach ($categories as $category)
                             <option value="{{ $category->id }}" 
                                 {{ $category->id == $file->category_id ? 'selected' : '' }}>
@@ -150,41 +149,79 @@
     
             <!-- Main File Section -->
             <div>
-                <label for="file_1" class="block mt-2 text-sm">
-                        Main File:  <span class="text-red-600">*</span>               
+                <label for="main_file" class="block mt-2 text-sm font-medium">
+                    Main Document: <span class="text-red-600">*</span>
                 </label>
-                <a href="{{ asset('storage/' . $file->path) }}" target="_blank">
-                    {{ $file->original_name ?? 'View File' }}
-                </a>
-                {{-- <input type="file" name="main_file" id="main_file" accept="application/pdf"
-                       class="block w-full text-sm 
+
+                @if($file->main_file_path)
+                    <div class="mb-2">
+                        <a href="{{ asset('storage/' . $file->main_file_path) }}" 
+                        target="_blank"
+                        class="text-blue-600 text-sm hover:text-blue-800 underline">
+                            {{ basename($file->main_file_path) }}
+                        </a>
+                    </div>
+                @endif
+
+                <input type="file" 
+                    name="main_file" 
+                    id="main_file" 
+                    accept="application/pdf"
+                    class="block w-full text-sm
                             file:mr-4 file:py-2 file:px-4
                             file:border-0
                             file:text-sm file:font-semibold
                             file:bg-blue-50 file:text-blue-700
-                            hover:file:bg-blue-100"
-                       required> --}}
+                            hover:file:bg-blue-100">
+            
         
         
                 <!-- Additional Files Section -->
                 <div id="file-upload-container" class="space-y-4">
+
+                    <label class="block mt-4 text-sm font-medium">
+                       Existing Additional Documents:
+                    </label>
+
+                    {{-- Show additional Files --}}
+                    @if(!empty($file->additional_file_paths))
+                        @foreach($file->additional_file_paths as $index => $path)
+                            <div class="flex items-center gap-3 text-sm mb-1">
+
+                                <!-- View File -->
+                                <a href="{{ asset('storage/' . $path) }}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">
+                                    {{ basename($path) }}
+                                </a>
+
+                                <!-- Delete Option -->
+                                <label class="flex items-center gap-1 text-red-600 text-xs">
+                                    <input type="checkbox" 
+                                        name="delete_additional_files[]" 
+                                        value="{{ $path }}">
+                                    Remove
+                                </label>
+
+                            </div>
+                        @endforeach
+                    @endif
+
+
+                    {{-- Upload Inputs --}}
                     <div class="file-upload-item text-sm relative">
-                        <label for="file_1" class="block mt-4">
-                            Additional Files (3 max):      
-                        </label>
-                        <input type="file" name="additional_files[]" id="file_1" accept="application/pdf"
+                        <input type="file" name="additional_files[]" accept="application/pdf"
                             class="block w-full text-sm text-gray-600
                                 file:mr-4 file:py-2 file:px-4
                                 file:border-0
                                 file:text-sm file:font-semibold
                                 file:bg-blue-50 file:text-blue-700
-                                hover:file:bg-blue-100">                
+                                hover:file:bg-blue-100">
                     </div>
-            
+
                     <button type="button" id="add-file-button"
                         class="w-full inline-flex justify-start text-purple-700 underline text-sm">
                         + Additional File
                     </button>
+
                 </div>
             </div>
         

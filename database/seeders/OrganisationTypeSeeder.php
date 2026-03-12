@@ -34,21 +34,21 @@ class OrganisationTypeSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            [
-                'name' => 'Private Sector',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Non-Governmental Organisation',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Community Based Organisation',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+            // [
+            //     'name' => 'Private Sector',
+            //     'created_at' => now(),
+            //     'updated_at' => now(),
+            // ],
+            // [
+            //     'name' => 'Non-Governmental Organisation',
+            //     'created_at' => now(),
+            //     'updated_at' => now(),
+            // ],
+            // [
+            //     'name' => 'Community Based Organisation',
+            //     'created_at' => now(),
+            //     'updated_at' => now(),
+            // ],
             [
                 'name' => 'Religious Organisation',
                 'created_at' => now(),

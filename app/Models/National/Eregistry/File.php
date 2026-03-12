@@ -11,10 +11,12 @@ use DB;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes; 
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class File extends Model
 {
-    use SoftDeletes, HasFactory;
+    use SoftDeletes, HasFactory, LogsActivity;
 
     protected $table = 'files';
 
@@ -25,28 +27,31 @@ class File extends Model
         'file_type_id',
         'category_id',
         'file_reference',
-        'name',
+        'subject',
         'main_file_path',
-        'additional_file1_path',
-        'additional_file2_path',
-        'additional_file3_path',
         'letter_date',
         'letter_ref_no',
         'status',
-        'requires_response', // Added
-        'response_deadline', // Added
+        'requires_response', 
+        'response_deadline',
         'is_active',
         'created_by',
         'updated_by',
-        'initial_type'
-
+        'initial_type',
+        'additional_file_paths',
     ];
-    
 
-    // public function folder()
-    // {
-    //     return $this->belongsTo(Folder::class);
-    // }
+    protected $casts = [
+        'additional_file_paths' => 'array',
+    ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->setDescriptionForEvent(fn(string $eventName) => "File is {$eventName}");
+    }
 
     public function organisation()
     {
@@ -94,6 +99,15 @@ class File extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function dispatches()
+    {
+        return $this->hasMany(Dispatch::class);
+    }
+
+    public function circulations()
+    {
+        return $this->hasMany(FileCirculation::class);
+    }
     // public function scopeVisibleToOrganisation($query, int $organisationId)
     // {
     //     return $query->where(function ($q) use ($organisationId) {
@@ -105,62 +119,62 @@ class File extends Model
     // }
 
 
-    public function scopeForType($query,  $selectedType, int $organisationId)
-    {
-            //if dispatched is selected, then show files archived by the organisation
-            if ($selectedType === 'dispatch') {
-                return $query
-                    ->where('organisation_id', $organisationId)
-                    ->whereHas('archivedByOrganisation', function ($q) use ($organisationId) {
-                        $q->where('organisations.id', $organisationId); 
-                    });
-            }
+    // public function scopeForType($query,  $selectedType, int $organisationId)
+    // {
+    //         //if dispatched is selected, then show files archived by the organisation
+    //         if ($selectedType === 'dispatch') {
+    //             return $query
+    //                 ->where('organisation_id', $organisationId)
+    //                 ->whereHas('archivedByOrganisation', function ($q) use ($organisationId) {
+    //                     $q->where('organisations.id', $organisationId); 
+    //                 });
+    //         }
             
-            //if received is selected, then show all received files archived by the organisation
-            if ($selectedType === 'received') {
-                return $query
-                    ->whereHas('archivedByOrganisation', function ($q) use ($organisationId) {
-                        $q->where('organisations.id', $organisationId); 
-                    })
-                    ->whereHas('recipientMinistries', function ($q) use ($organisationId) {
-                        $q->where('organisations.id', $organisationId);
-                    });
-            }
+    //         //if received is selected, then show all received files archived by the organisation
+    //         if ($selectedType === 'received') {
+    //             return $query
+    //                 ->whereHas('archivedByOrganisation', function ($q) use ($organisationId) {
+    //                     $q->where('organisations.id', $organisationId); 
+    //                 })
+    //                 ->whereHas('recipientMinistries', function ($q) use ($organisationId) {
+    //                     $q->where('organisations.id', $organisationId);
+    //                 });
+    //         }
 
-            //if none or all is selected, then show all files archived by the organisation
-            if ($selectedType === 'all' || !$selectedType) {
-                return $query
-                    ->whereHas('archivedByOrganisation', function ($q) use ($organisationId) {
-                        $q->where('organisations.id', $organisationId); 
-                    })
-                    ->groupby('files.id');
+    //         //if none or all is selected, then show all files archived by the organisation
+    //         if ($selectedType === 'all' || !$selectedType) {
+    //             return $query
+    //                 ->whereHas('archivedByOrganisation', function ($q) use ($organisationId) {
+    //                     $q->where('organisations.id', $organisationId); 
+    //                 })
+    //                 ->groupby('files.id');
 
-            }
-    }
+    //         }
+    // }
 
 
-    public function scopeForOrganisation($query, array $filterOrgIds = [])
-    {
-        if (!empty($filterOrgIds)) {
-            return $query
-                ->whereIn('organisation_id', $filterOrgIds)
-                ->orWhereHas('recipientMinistries', function ($q) use ($filterOrgIds) {
-                    $q->whereIn('organisations.id', $filterOrgIds);
-                });
-        }
-        return $query;
-    }
+    // public function scopeForOrganisation($query, array $filterOrgIds = [])
+    // {
+    //     if (!empty($filterOrgIds)) {
+    //         return $query
+    //             ->whereIn('organisation_id', $filterOrgIds)
+    //             ->orWhereHas('recipientMinistries', function ($q) use ($filterOrgIds) {
+    //                 $q->whereIn('organisations.id', $filterOrgIds);
+    //             });
+    //     }
+    //     return $query;
+    // }
 
-    public function scopeForDateRange($query, $fromDate = null, $toDate = null)
-    {
-        if ($fromDate) {
-            $query->whereDate('letter_date', '>=', $fromDate);
-        }
-        if ($toDate) {
-            $query->whereDate('letter_date', '<=', $toDate);
-        }
-        return $query;
-    }
+    // public function scopeForDateRange($query, $fromDate = null, $toDate = null)
+    // {
+    //     if ($fromDate) {
+    //         $query->whereDate('letter_date', '>=', $fromDate);
+    //     }
+    //     if ($toDate) {
+    //         $query->whereDate('letter_date', '<=', $toDate);
+    //     }
+    //     return $query;
+    // }
 
 
     // protected static function boot()
@@ -196,9 +210,8 @@ class File extends Model
 
 
     // Add this to your existing File model
-    public function dispatches()
-    {
-        return $this->hasMany(Dispatch::class);
-    }
+    
+
+
 
 }

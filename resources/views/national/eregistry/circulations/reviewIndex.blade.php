@@ -45,6 +45,7 @@
         <table id="reviewsTable" class="table table-striped w-full mt-6">
             <thead>
                 <tr>
+                    <th>ID</th>
                     <th>From</th>
                     <th>Status</th>
                     <th>File Date</th>
@@ -189,9 +190,11 @@ $(document).ready(function() {
             }
         },
         columns: [
-            { data: 'file_organisation_code' },
+            { data:'id'},
+            { data: 'organisation_code'},
             { 
                 data: 'file_recipient_status',
+                name: 'file_recipient_status',
                 render: function(data, type, row) {
                     let badgeClass = '';
 
@@ -209,7 +212,7 @@ $(document).ready(function() {
                     const date = new Date(data);
                     return date.toLocaleDateString('en-US', {
                         year: 'numeric',
-                        month: 'long',   
+                        month: 'short',   
                         day: 'numeric'
                     });
                 }  

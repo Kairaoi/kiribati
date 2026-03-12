@@ -1,12 +1,21 @@
 @extends('layouts.app')
 
 @section('content')
-{{-- <div class="container  mx-auto font-montserrat px-4 py-8 max-w-7xl mt-3 rounded-md min-h-screen"> --}}
+{{-- <div class="container mx-auto font-montserrat px-4 py-8 max-w-6xl mt-3 rounded-md min-h-screen"> --}}
 
-<div class="container mx-auto font-poppins px-8 max-w-5xl mt-1"> {{ Breadcrumbs::render('files.create.withType', $createType) }} </div>
+{{-- <div class="container mx-auto font-poppins px-8 max-w-5xl mt-1"> {{ Breadcrumbs::render('files.create.withType', $createType) }} </div> --}}
 
 <div class="container bg-white mx-auto font-poppins px-6 py-10 max-w-5xl mt-4 rounded-md min-h-screen border border-gray-600">
-    
+    @if($createType === 'dispatch')
+        <h1 class="flex items-center justify-center text-m font-semibold text-gray-800 tracking-wide mb-4">
+            Create New Dispatch File
+        </h1>
+    @elseif($createType === 'internal')
+        <h1 class="flex items-center justify-center text-m font-semibold text-gray-800 tracking-wide mb-4">
+            Create New Internal File
+        </h1>
+    @endif
+
     @if ($errors->any())
         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             <ul class="list-disc pl-5">
@@ -21,14 +30,14 @@
         @csrf
  
         <!-- <label for="name" class="block text-sm font-medium text-gray-700">Division</label> -->
+            <div class="text-gray-700 text-sm grid grid-cols-1">
+                <label for="subject" class="block">File Subject: <span class="text-red-600">*</span></label>
+                <input type="text" name="subject" id="subject" value="{{ old('subject') }}" class="mt-1 mb-4 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+            </div>
     
             <div class="text-gray-700 text-sm grid grid-cols-1 md:grid-cols-2 gap-6">
-
                 <!-- File Name -->
-                <div>
-                    <label for="name" class="block">Main File Name: <span class="text-red-600">*</span></label>
-                    <input type="text" name="name" id="name" value="{{ old('name') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
-                </div>
+                
 
                 <!-- Division -->
 
@@ -53,6 +62,7 @@
                         @endif
                     </div>
                 @else
+            
                     {{-- 1) Type --}}
                     <div>
                         <label for="organisation_type">From Organisation Type</label>
@@ -68,7 +78,7 @@
                     </div>
 
                     {{-- 2) Organisation (select) --}}
-                    <div id="org-select-container" style="margin-top: .75rem;">
+                    <div id="org-select-container">
                         <label for="organisation">Organisation Name</label>
                         <select id="organisation" 
                                 name="organisation_id" 
@@ -80,7 +90,7 @@
                     </div>
 
                     {{-- 2b) Organisation (text input when no orgs available) --}}
-                    <div id="org-input-container" style="display:none; margin-top: .75rem;">
+                    <div id="org-input-container" style="display:none;">
                         <label for="organisation_name">Organisation Name</label>
                         <input type="text" 
                                id="organisation_name" 
@@ -91,7 +101,7 @@
                     </div>
 
                     {{-- 3) Division (depends on organisation) --}}
-                    <div id="division-container" style="display:none; margin-top: .75rem;">
+                    <div id="division-container" style="display:none;">
                         <label for="division_id">From Division</label>
                         <select id="division_id" 
                                 name="division_id" 
@@ -158,7 +168,7 @@
                 <div id="file-upload-container" class="space-y-4">
                     <div class="file-upload-item text-sm relative">
                         <label for="file_1" class="block mt-4">
-                            Additional Files (3 max):      
+                            Additional Files:      
                         </label>
                         <input type="file" name="additional_files[]" id="file_1" accept="application/pdf"
                             class="block w-full text-sm text-gray-600
@@ -220,7 +230,6 @@
                 Create File
             </button>
         </div>
-        
     </form>
 
     <script>
@@ -230,8 +239,8 @@
             const addButton = document.getElementById('add-file-button');
 
             addButton.addEventListener('click', function () {
-                if (fileCounter >= 3) {
-                    alert('You can only add up to 3 files.');
+                if (fileCounter >= 5) {
+                    alert('You can only add up to 5 files.');
                     return;
                 }
 
@@ -297,6 +306,8 @@
             const ORGANISATIONS = @json($organisations); // [{id,name,code,organisation_type_id}, ...]
             const DIVISIONS     = @json($allDivisions);     // [{id,name,organisation_id}, ...]
 
+            const OTHER_TYPE_ID = {{ $otherTypeId }};
+
             const typeSelect         = document.getElementById("organisation_type");
             const orgSelect          = document.getElementById("organisation");
             const orgSelectContainer = document.getElementById("org-select-container");
@@ -309,18 +320,41 @@
             }
 
             function resetDivisionSelect() {
-                divisionSelect.innerHTML = '<option value="">Select Division</option>';
+                divisionSelect.innerHTML = '<option value="">Select Division</optio>';
             }
 
             function populateOrganisationsByType(typeId) {
                 resetOrgSelect();
-                const filtered = ORGANISATIONS.filter(o => String(o.organisation_type_id) === String(typeId));
+
+                // Filter organisations by type
+                const filtered = ORGANISATIONS.filter(o =>
+                    String(o.organisation_type_id) === String(typeId)
+                );
+
+                // Populate the dropdown
                 filtered.forEach(o => {
                     const opt = document.createElement('option');
                     opt.value = o.id;
                     opt.textContent = o.name + (o.code ? ` (${o.code})` : '');
                     orgSelect.appendChild(opt);
                 });
+
+                // If type = OTHER, add the "Add new" option
+                if (String(typeId) === String(OTHER_TYPE_ID)) {
+                    const addNew = document.createElement('option');
+                    addNew.value = '__add_new__';
+                    addNew.textContent = '+ Add new organisation';
+                    orgSelect.appendChild(addNew);
+
+                    // Show dropdown AND input
+                    orgSelectContainer.style.display = 'block';
+                    orgInputContainer.style.display = 'block';
+                } else {
+                    // Normal type: only show dropdown
+                    orgSelectContainer.style.display = 'block';
+                    orgInputContainer.style.display = 'none';
+                }
+
                 return filtered.length;
             }
 
@@ -336,32 +370,28 @@
                 return filtered.length;
             }
 
-            // When Type changes → populate organisations OR switch to manual input
+            // 1️⃣ Populate organisations when type changes
             typeSelect.addEventListener("change", function () {
-                const typeId = this.value;
+                populateOrganisationsByType(this.value);
+            });
 
-                // Always reset division on type change
-                divisionContainer.style.display = "none";
-                resetDivisionSelect();
-
-                if (!typeId) {
-                    // No type selected → show org select (empty), hide input
-                    resetOrgSelect();
-                    orgSelectContainer.style.display = "block";
-                    orgInputContainer.style.display = "none";
-                    return;
-                }
-
-                const count = populateOrganisationsByType(typeId);
-
-                if (count > 0) {
-                    orgSelectContainer.style.display = "block";
-                    orgInputContainer.style.display = "none";
+            // 2️⃣ Handle showing input / divisions when organisation changes
+            orgSelect.addEventListener("change", function () {
+                const value = this.value;
+                if (String(typeSelect.value) === String(OTHER_TYPE_ID) && value === '__add_new__') {
+                    orgInputContainer.style.display = 'block';
+                    divisionContainer.style.display = 'none';
+                    resetDivisionSelect();
                 } else {
-                    // No orgs: allow manual typing; also hide divisions (no parent)
-                    orgSelectContainer.style.display = "none";
-                    orgInputContainer.style.display = "block";
-                    divisionContainer.style.display = "none";
+                    orgInputContainer.style.display = String(typeSelect.value) === String(OTHER_TYPE_ID) ? 'block' : 'none';
+                    document.getElementById('organisation_name').value = '';
+                    if (!value) {
+                        divisionContainer.style.display = 'none';
+                        resetDivisionSelect();
+                        return;
+                    }
+                    const count = populateDivisionsByOrganisation(value);
+                    divisionContainer.style.display = count > 0 ? 'block' : 'none';
                 }
             });
 

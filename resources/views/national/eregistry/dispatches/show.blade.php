@@ -1,199 +1,273 @@
 @extends('layouts.app')
 
 @section('content')
-<style>
-        .metadata-card {
-            background: #0f4c75;
-            color: #fff;
-            padding: 20px;
-            border-radius: 12px;
-            width: 100%;
-            max-width: 700px;
-        }
+    <style>
+            .metadata-card {
+                background: #0f4c75;
+                color: #fff;
+                padding: 20px;
+                border-radius: 10px;
+                width: 100%;
+                max-width: 700px;
+            }
 
-        .metadata-card .title {
-            text-align: center;
-            margin-bottom: 15px;
-        }
+            .metadata-card .title {
+                text-align: center;
+                margin-bottom: 15px;
+            }
 
-        .metadata-section {
-            margin-bottom: 15px;
-        }
+            .metadata-section {
+                margin-bottom: 15px;
+            }
 
-        .metadata-section h4 {
-            margin-bottom: 8px;
-            color: #b8f1ff;
-        }
+            .metadata-section h4 {
+                margin-bottom: 8px;
+                color: #b8f1ff;
+            }
 
-        .metadata-grid {
-            display: grid;
-            grid-template-columns: 200px 1fr;
-            border: 1px dashed rgba(255,255,255,0.3);
-        }
+            .metadata-grid {
+                display: grid;
+                grid-template-columns: 200px 1fr;
+                border: 1px dashed rgba(255,255,255,0.3);
+            }
 
-        .meta-label {
-            padding: 8px;
-            border-bottom: 1px dashed rgba(255,255,255,0.2);
-            font-weight: bold;
-        }
+            .meta-label {
+                padding: 8px;
+                border-bottom: 1px dashed rgba(255,255,255,0.2);
+                font-weight: bold;
+            }
 
-        .meta-value {
-            padding: 8px;
-            border-bottom: 1px dashed rgba(255,255,255,0.2);
-            background: rgba(255,255,255,0.08);
-        }
-</style>
+            .meta-value {
+                padding: 8px;
+                border-bottom: 1px dashed rgba(255,255,255,0.2);
+                background: rgba(255,255,255,0.08);
+            }
+    </style>
 
-{{-- <div class="container mx-auto font-poppins px-8 max-w-5xl mt-1"> {{ Breadcrumbs::render('dispatches.show', $file) }} </div> --}}
-<div class="mx-w-5xl mx-auto">
+    {{-- <div class="container mx-auto font-poppins px-8 max-w-5xl mt-1"> {{ Breadcrumbs::render('dispatches.show', $file) }} </div> --}}
+    <div class="mx-w-5xl mx-auto">
+                    @php
+                        $status = $file->status; // 'Dispatched' or 'Pending Dispatch'
+                        $isDispatched = strcasecmp($status, 'Dispatched') === 0;
 
-     <div class="font-roboto mx-w-5xl px-4 sm:px-6 lg:px-8 mt-4 justify-center items-center">
-        <section>
-            <div class="metadata-card mx-auto">
-                <h3 class="title">Dispatch File Metadata</h3>
-                @php
-                    $status = $file->status; // 'Dispatched' or 'Pending Dispatch'
-                    $isDispatched = strcasecmp($status, 'Dispatched') === 0;
+                        // Dark card colors (like your example)
+                        $pill = $isDispatched
+                            ? 'bg-emerald-300 text-white ring-1 ring-emerald-400/30'
+                            : 'bg-amber-100 ring-1 ring-amber-500/50';
+                    @endphp
 
-                    // Dark card colors (like your example)
-                    $pill = $isDispatched
-                        ? 'bg-emerald-600/20 text-emerald-300 ring-1 ring-emerald-400/30'
-                        : 'bg-amber-500/20 text-amber-300 ring-1 ring-amber-400/30';
-                @endphp
+        <div class="mx-auto mt-6 bg-white justify-center border border-gray-200 rounded-xl shadow-sm p-5 max-w-3xl">
+            {{-- Subject --}}
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500">File Subject</p>
+                    <p class="mb-3 text-gray-900 font-semibold">
+                        {{ $file->subject ?? 'N/A' }}
+                    </p>
+                </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
 
-            <!-- FILE DETAILS -->
-            <div class="metadata-section text-sm">
-                <h4>File Details</h4>
-                <div class="metadata-grid">
-                    <div class="meta-label">Name:</div>
-                    <div class="meta-value">{{ $file->name ?? 'Better Man' }}</div>
+                {{-- File Status --}}
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500">File Status</p>
+                    <p> <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium {{ $pill }}">
+                        {{ $status }}
+                    </span></p>
+                </div>
+                
 
-                    <div class="meta-label">File Status:</div>
-                    <div class="meta-value">
-                        <span class="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium {{ $pill }}">
-                            {{ $status }}
-                        </span>
+                {{-- Organisation --}}
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500">Organisation</p>
+                    <p class="text-gray-900 font-semibold">
+                        {{ $file->organisation->name ?? 'N/A' }}
+                    </p>
+                </div>
+
+                @isset($file->division)
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Division</p>
+                        <p class="text-gray-900 font-semibold">
+                            {{ $file->division->name ?? 'N/A' }}
+                        </p>
                     </div>
+                @endisset
+                
+                {{-- Created At --}}
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500">Date</p>
+                    <p class="text-gray-900 font-semibold">
+                        {{ $file->created_at->format('d/m/Y') ?? 'N/A' }}
+                    </p>
+                </div>
 
-                    <div class="meta-label">Organisation:</div> 
-                    <div class="meta-value">{{ $file->organisation->name ?? 'N/A' }}</div>
-
-                    @isset($file->division)
-                        <div class="meta-label">Division:</div>
-                        <div class="meta-value">{{ $file->division->name ?? 'N/A' }}</div>
-                    @endisset
-
-                    <div class="meta-label">File Type:</div>
-                    <div class="meta-value">{{ $file->fileType->name ?? 'N/A' }}</div>
-
-                    <div class="meta-label">Date:</div>
-                    <div class="meta-value">{{ $file->created_at->format('d/m/Y') ?? '1994' }}</div>
+                {{-- File Type --}}
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500">File Type</p>
+                    <p class="text-gray-900 font-semibold">
+                        {{ $file->fileType->name ?? 'N/A' }}
+                    </p>    
                 </div>
             </div>
-                <!-- RECIPIENT MINISTRIES -->
-            <div class="metadata-section text-sm">
-                <h4>Recipient Ministries | Status</h4>
-                <div id="ministries-container">
-                    @foreach($file->recipientMinistries as $index => $m)
-                        <div class="grid grid-cols-2 border-b border-dashed border-white/30 py-2 
-                            {{ $index >= 1 ? 'hidden extra-ministry' : '' }}">
-                            <div class="text-sm">
-                                {{ $m->name }} -> 
-                            </div>
-                            <div>
-                                {{ ucfirst($m->pivot->status) }}
-                            </div>
+
+            <div class="grid grid-cols-1 mt-4 gap-y-4 gap-x-8">
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-gray-500">Recipient Ministries | Status</p>
+                        <div id="ministries-container">
+                            @foreach($file->recipientMinistries as $index => $m)
+                                <div class="border-b border-dashed border-white/30 py-2 
+                                    {{ $index >= 1 ? 'hidden extra-ministry' : '' }}">
+                                    <p class="text-gray-900 font-semibold">
+                                        {{ $m->name }} : {{ ucfirst($m->pivot->status) }}
+                                    </p>
+                                    @php
+                                        $circulation = $fileCirculations
+                                            ->where('to_organisation_id', $m->id)
+                                            ->first();
+                                    @endphp
+
+                                    @if($circulation && $circulation->assignedOfficers->isNotEmpty())
+                                        <p class="text-sm text-gray-600 mt-1">Officers assigned:</p>
+                                        @foreach($circulation->assignedOfficers as $officer)
+                                           <span class="inline-block mr-2 text-sm text-gray-700"> {{ $officer->first_name }} {{ $officer->last_name }}</span>
+                                        @endforeach
+                                    @endif
+                                </div>
+                            @endforeach
+                            @if($file->recipientMinistries->count() > 1)
+                                <button 
+                                    id="toggle-ministries"
+                                    class="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1"
+                                >
+                                    <span id="toggle-text">Show all</span>
+                                    <span id="toggle-arrow">▼</span>
+                                </button>
+                            @endif
                         </div>
-                    @endforeach
                 </div>
-                @if($file->recipientMinistries->count() > 1)
-                    <button 
-                        id="toggle-ministries"
-                        class="mt-3 text-sm text-blue-200 hover:text-white flex items-center gap-1"
-                    >
-                        <span id="toggle-text">Show all</span>
-                        <span id="toggle-arrow">▼</span>
-                    </button>
-                @endif
             </div>
-        </section>
-    </div>
+        </div>
 
-    <!-- Container for PDF -->
-    <div id="pdf-container" class="mt-5 flex font-roboto mx-auto px-4 sm:px-6 lg:px-8 mt-4 justify-center items-center" style="display:none;">
-    <!-- PDF will be injected here -->
-    </div>
+    {{-- <div class="px-6 py-4 flex justify-center"> --}}
+        {{-- <a href="#" id="view-file-btn" class="flex justify-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-md shadow">
+            📄 View File
+        </a> --}}
 
-    <div class="flex justify-center mt-6">
-        <button id="view-file-btn" class="w-72 bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition">
-            <span>View File</span>
-        </button>
-    </div>
-    
-    
-    
-</div>
+        {{-- Additional file 1 --}}
+        {{-- @if($file->additional_file1_path)
+            <a href="{{ asset('storage/'.$file->additional_file1_path) }}" target="_blank" class="text-cyan-700 hover:underline">
+                Additional File 1
+            </a>
+        @endif --}}
 
-{{-- Stored as a Dispatch Instance when Dispatch button is clicked --}}
-<div class="flex justify-center font-roboto text-lg border border-t">
+        {{-- Additional file 2 --}}
+        {{-- @if($file->additional_file2_path)
+            <a href="{{ asset('storage/'.$file->additional_file2_path) }}" target="_blank" class="text-cyan-700 hover:underline">
+                Additional File 2
+            </a>
+        @endif --}}
 
-        <form method="POST" action="{{ route('registry.dispatches.store') }}">
-            @csrf
+        {{-- Additional file 3 --}}
+        {{-- @if($file->additional_file3_path)
+            <a href="{{ asset('storage/'.$file->additional_file3_path) }}" target="_blank" class="text-cyan-700 hover:underline">
+                Additional File 3
+            </a>
+        @endif --}}
+    {{-- </div> --}}
+   
+    <div class="px-6 py-4 flex flex-col items-center gap-4">
 
-            <input type="hidden" name="file_id" value="{{ $file->id }}">
-            <input type="hidden" name="from_organisation_id" value="{{ $file->organisation_id }}">
-            <input type="hidden" name="from_division_id" value="{{ $file->division_id }}">
-            <input type="hidden" name="dispatch_date" value="{{ now()->format('Y-m-d H:i:s') }}">
+        {{-- Main file --}}
+        <a href="{{ asset('storage/'.$file->main_file_path) }}"
+            target="_blank"
+            class="flex items-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white px-5 py-2 rounded-lg shadow">
+                📄 View Main File
+        </a>
 
-            @if($file->status === 'Pending Dispatch')
-                <button type="submit" 
-                    onclick="return confirm('Are you sure you want to dispatch this file?');"
-                    class="w-72 mt-4 mb-8 inline-flex items-center justify-center bg-green-700 hover:bg-green-900 text-white font-semibold py-2 px-10 text-base rounded-xl shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed">
-                    <x-heroicon-o-paper-airplane class="w-5 h-5 -rotate-45" />
-                    <span>DISPATCH FILE</span>
-                </button>
+        {{-- Additional files --}}
+        <div class="flex flex-col items-center gap-2">
+            @if($file->additional_file1_path)
+                <a href="{{ asset('storage/'.$file->additional_file1_path) }}" target="_blank"
+                class="text-cyan-700 hover:underline flex items-center gap-1">
+                    {{ $file->additional_file1_name ?? 'Attachment 1' }}
+                </a>
             @endif
 
-        </form>
-</div>
+            @if($file->additional_file2_path)
+                <a href="{{ asset('storage/'.$file->additional_file2_path) }}" target="_blank"
+                class="text-cyan-700 hover:underline flex items-center gap-1">
+                    {{ $file->additional_file2_name ?? 'Attachment 2' }}
+                </a>
+            @endif
 
-<script>
-    document.getElementById('view-file-btn').addEventListener('click', function() {
-        const container = document.getElementById('pdf-container');
+            @if($file->additional_file3_path)
+                <a href="{{ asset('storage/'.$file->additional_file3_path) }}" target="_blank"
+                class="text-cyan-700 hover:underline flex items-center gap-1">
+                    {{ $file->additional_file3_name ?? 'Attachment 3' }}
+                </a>
+            @endif
+        </div>
 
-        // Toggle PDF visibility
-        if (container.style.display !== 'none') {
-            container.style.display = 'none';
-            container.innerHTML = '';
-            return;
-        }
+         {{-- Dispatch Button / Form --}}
+        <div class="px-6 py-2 flex justify-center">    
+            <form method="POST" action="{{ route('registry.dispatches.store') }}">
+                @csrf
+                <input type="hidden" name="file_id" value="{{ $file->id }}">
+                <input type="hidden" name="from_organisation_id" value="{{ $file->organisation_id }}">
+                <input type="hidden" name="from_division_id" value="{{ $file->division_id }}">
+                <input type="hidden" name="dispatch_date" value="{{ now()->format('Y-m-d H:i:s') }}">
 
-        // Show container
-        container.style.display = '';
-
-        // Embed PDF inline
-        const pdfUrl = "{{ route('registry.files.view', $file->id) }}";
-        container.innerHTML = `<embed src="${pdfUrl}" type="application/pdf" width="100%" height="600px" />`;
-    });
-</script>
-
-<script>
-document.getElementById('toggle-ministries')?.addEventListener('click', function () {
-    const extras = document.querySelectorAll('.extra-ministry');
-    const text = document.getElementById('toggle-text');
-    const arrow = document.getElementById('toggle-arrow');
-
-    extras.forEach(el => el.classList.toggle('hidden'));
-
-    if (text.innerText === 'Show all') {
-        text.innerText = 'Show less';
-        arrow.innerText = '▲';
-    } else {
-        text.innerText = 'Show all';
-        arrow.innerText = '▼';
-    }
-});
-</script>
+                @if($file->status === 'Pending Dispatch')
+                    <button type="submit" 
+                        onclick="return confirm('Are you sure you want to dispatch this file?');"
+                        class="flex bg-cyan-600 hover:bg-cyan-700 text-white px-10 py-2 rounded-md font-semibold">
+                        Dispatch File
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+                            viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 12l18-9-4 18-5-5-6 4 2-6z"/>
+                        </svg>
+                    </button>
+                @endif
+            </form>
+    </div>
+    </div>
 
 
+    {{-- Stored as a Dispatch Instance when Dispatch button is clicked --}}
+    <script>
+        document.getElementById('view-file-btn').addEventListener('click', function() {
+            const container = document.getElementById('pdf-container');
+
+            // Toggle PDF visibility
+            if (container.style.display !== 'none') {
+                container.style.display = 'none';
+                container.innerHTML = '';
+                return;
+            }
+
+            // Show container
+            container.style.display = '';
+
+            // Embed PDF inline
+            const pdfUrl = "{{ route('registry.files.view', $file->id) }}";
+            container.innerHTML = `<embed src="${pdfUrl}" type="application/pdf" width="70%" height="700px" />`;
+        });
+    </script>
+
+    <script>
+        document.getElementById('toggle-ministries')?.addEventListener('click', function () {
+            const extras = document.querySelectorAll('.extra-ministry');
+            const text = document.getElementById('toggle-text');
+            const arrow = document.getElementById('toggle-arrow');
+
+            extras.forEach(el => el.classList.toggle('hidden'));
+
+            if (text.innerText === 'Show all') {
+                text.innerText = 'Show less';
+                arrow.innerText = '▲';
+            } else {
+                text.innerText = 'Show all';
+                arrow.innerText = '▼';
+            }
+        });
+    </script>
 @endsection

@@ -30,7 +30,7 @@
     @endif
 
     {{-- <div class="container mx-auto font-montserrat px-4 max-w-7xl mt-2"> {{ Breadcrumbs::render('circulations.index') }} </div> --}}
-    <div class="container mx-auto font-poppins px-4 py-8 max-w-6xl mt-3 rounded-md min-h-screen ">
+    <div class="container mx-auto font-poppins px-4 py-8 max-w-7xl mt-3 rounded-md min-h-screen ">
         <div class="mb-4 flex items-start justify-between">
             <div>
                 <h1 class="text-3xl font-bold tracking-wide">Circulations</h1>
@@ -51,11 +51,11 @@
                 <thead>
                     <tr>
                         <th>From</th>
-                        <th>File Name</th>
                         <th>File ID</th>
                         <th>File Date</th>
                         <th>Status</th>
                         <th>Review Officer</th>
+                        <th>Assigned Officer(s)</th>
                         <th class="w-29">Actions</th>
                     </tr>
                 </thead>
@@ -250,10 +250,8 @@
                         }
                     },
                     columns: [
-                        { data: 'file_organisation_code' },
-                        { data: 'file_name' },
+                        { data: 'file_organisation_name' },
                         { data: 'file_id', visible: false },
-                        // { data: 'file_type_name' },
                         { 
                             data: 'letter_date',
                             render: function (data) {
@@ -261,7 +259,7 @@
                                 const date = new Date(data);
                                 return date.toLocaleDateString('en-US', {
                                     year: 'numeric',
-                                    month: 'long',   
+                                    month: 'short',   
                                     day: 'numeric'
                                 });
                             }  
@@ -272,19 +270,20 @@
                                 let badgeClass = '';
 
                                 if (data === 'Dispatched') {
-                                    badgeClass = 'bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium';
+                                    badgeClass = 'bg-green-300 text-slate-800 text-xs px-2 py-1 rounded-full font-medium';
                                 } else if (data === 'Pending Review') {
-                                    badgeClass = 'bg-yellow-500 text-white text-xs px-2 py-1 rounded-full font-medium';
+                                    badgeClass = 'bg-yellow-300 text-slate-800 text-xs px-2 py-1 rounded-full font-medium';
                                 } else if (data === 'Assigned') {
-                                    badgeClass = 'bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-medium';
+                                    badgeClass = 'bg-emerald-300 text-slate-800 text-xs px-2 py-1 rounded-full font-medium';
                                 } else {
-                                    badgeClass = 'bg-gray-400 text-white text-xs px-2 py-1 rounded-full font-medium';
+                                    badgeClass = 'bg-gray-300 text-slate-800 text-xs px-2 py-1 rounded-full font-medium';
                                 }
 
                                 return `<span class="${badgeClass}">${data}</span>`;
                             }
                         },
                         { data: 'reviewer_name'},
+                        { data: 'officers' },
                         {
                             data: null, // means we'll render manually
                             name: 'actions',
@@ -293,16 +292,35 @@
 
                             render: function (data, type, row) {
 
-                                let buttons = `<a href="/registry/file-circulations/${row.id}" class="btn btn-sm btn-info text-white me-1">View</a>`;
+                                let buttons = `<a href="/registry/file-circulations/${row.id}" 
+                                    class="btn btn-sm btn-outline-info" 
+                                    title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </a>`;
 
                                 if (row.file_initial_type === 'internal' ) //if file is uploaded from users ministry, then file can be edited
                                 {
-                                    buttons += `<a href="/registry/files/${row.id}/edit-type/internal" class="btn btn-sm btn-primary text-white me-1">Edit </a>`;
-                                    buttons += `<button class="btn btn-sm btn-danger delete-action" data-id="${row.id}">Delete</button>`;
+                                    buttons += `<a href="/registry/files/${row.id}/edit-type/internal" 
+                                        class="btn btn-sm btn-outline-primary" 
+                                        title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    `;
+                                    buttons += `<button class="btn btn-sm btn-outline-danger delete-action" 
+                                            data-id="${row.id}" 
+                                            title="Delete">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                `;
                                 }
 
                                 if (row.file_recipient_status === 'Assigned') { //if file is assigned, allow archiving
-                                    buttons += `<button class="btn btn-sm btn-warning archive-action" data-file-id="${row.file_id}">Archive</button>`;
+                                    buttons += `<button class="btn btn-sm btn-outline-warning archive-action" 
+                                                data-file-id="${row.file_id}" 
+                                                title="Archive">
+                                            <i class="fas fa-archive"></i>
+                                        </button>
+                                    `;
                                 }   
 
                                 console.log('Row file id:', row.file_id);
@@ -339,7 +357,6 @@
                     ]
                 });
             });
-
 
                 // Handle delete action
                 $(document).on('click', '.delete-action', function(e) {

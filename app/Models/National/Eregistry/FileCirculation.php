@@ -27,8 +27,7 @@ class FileCirculation extends Model
         'action_taken',
         'updated_by',
         'assigned_division_id',
-        // 'comments',
-
+        'review_comment',
     ];
 
 

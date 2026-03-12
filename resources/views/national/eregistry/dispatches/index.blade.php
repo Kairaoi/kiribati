@@ -29,7 +29,7 @@
         </div>
     @endif
 
-    <div class="container mx-auto font-poppins px-4 py-8 max-w-7xl mt-3 rounded-md min-h-screen">
+    <div class="container mx-auto font-poppins px-4 py-8 max-w-6xl mt-3 rounded-md min-h-screen">
 
         <div class="mt-4 mb-6 flex items-start justify-between">
             <div>
@@ -220,7 +220,6 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
         <script src="https://cdn.datatables.net/buttons/2.3.5/js/buttons.html5.min.js"></script>
-
         <script>
             $(document).ready(function() {
                 let activeDropdown = null;
@@ -261,13 +260,12 @@
                                 let badgeClass = '';
 
                                 if (data === 'Pending Dispatch') {
-                                    badgeClass = 'bg-gray-500 text-white text-xs px-2 py-1 rounded-full font-medium';
+                                    badgeClass = 'bg-gray-300 text-xs px-2 py-1 rounded-full font-medium';
                                 } else if (data === 'Dispatched') {
-                                    badgeClass = 'bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium';
+                                    badgeClass = 'bg-green-300 text-xs px-2 py-1 rounded-full font-medium';
                                 } else {
-                                    badgeClass = 'bg-gray-300 text-white text-xs px-2 py-1 rounded-full font-medium';
+                                    badgeClass = 'bg-gray-300 text-xs px-2 py-1 rounded-full font-medium';
                                 }
-
                                 return `<span class="${badgeClass}">${data}</span>`;
                             }
                         },
@@ -292,19 +290,41 @@
                             render: function (data, type, row) {
 
                                 let buttons = `
-                                    <a href="/registry/dispatches/${row.id}" class="btn btn-sm btn-info text-white">View</a>
-                                    <button class="btn btn-sm btn-danger delete-action" data-id="${row.id}">Delete</button>
+                                    <a href="/registry/dispatches/${row.id}" 
+                                    class="btn btn-sm btn-outline-info" 
+                                    title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+
+                                    <button class="btn btn-sm btn-outline-danger delete-action" 
+                                            data-id="${row.id}" 
+                                            title="Delete">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
                                 `;
 
                                 if (row.status === 'Pending Dispatch') {
-                                     buttons += `<a href="/registry/files/${row.id}/edit-type/dispatch" class="btn btn-sm btn-primary">Edit</a>`;
+                                    buttons += `
+                                        <a href="/registry/files/${row.id}/edit-type/dispatch" 
+                                        class="btn btn-sm btn-outline-primary" 
+                                        title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    `;
                                 }
-                                
-                                if (row.status === 'Dispatched') { //if file is dispatched, allow archiving
-                                    buttons += `<button class="btn btn-sm btn-warning archive-action" data-file-id="${row.file_id}">Archive</button>`;
+
+                                if (row.status === 'Dispatched') { 
+                                    buttons += `
+                                        <button class="btn btn-sm btn-outline-warning archive-action" 
+                                                data-file-id="${row.file_id}" 
+                                                title="Archive">
+                                            <i class="fas fa-archive"></i>
+                                        </button>
+                                    `;
                                 }
-                                // console.log('Row file id:', row.file_id);
+
                                 return buttons;
+
                             }
                         }
                     ],

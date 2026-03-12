@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
+use Spatie\Activitylog\Models\Activity;
 
 
 class DispatchController extends Controller
@@ -170,6 +171,11 @@ class DispatchController extends Controller
                 ]);
             }
 
+            activity()
+                ->causedBy(auth()->user())
+                ->performedOn($file)
+                ->log('File dispatched');
+
             if(auth()->user()->hasRole('user') || (auth()->user()->hasRole('admin')) ){
                 return redirect()->route('registry.dispatches.user.index')->with('success', 'File dispatched successfully!');
             }
@@ -199,6 +205,7 @@ class DispatchController extends Controller
     {
         
         $file = $this->files->getById($dispatch->file_id);
+        $fileId = $file->id;
         $fileOrganisations = $file->recipientMinistries()->pluck('organisations.id')->toArray();
         $fileOrganisation = $file->organisation_id;
         $userOrgId = Auth()->user()->organisation_id;
@@ -209,8 +216,10 @@ class DispatchController extends Controller
         }
 
         $organisations = $this->organisations->pluck(); 
+        $fileCirculations = $file->circulations()->with('fromOrganisation', 'assignedOfficers')->get();
+
         
-        return view('national.eregistry.dispatches.show', compact('file', 'organisations', 'dispatch'));
+        return view('national.eregistry.dispatches.show', compact('file', 'organisations', 'dispatch', 'fileCirculations'));
     }
 
 

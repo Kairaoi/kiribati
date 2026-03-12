@@ -89,7 +89,7 @@ class DispatchRepository extends BaseRepository
             ->select([
                 'dispatches.id', 
                 'files.id as file_id',
-                'files.name as file_name',  // Include file name
+                'files.subject as file_subject',  // Include file name
                 'file_types.name as file_type_name',
                 DB::raw("CONCAT(creators.first_name, ' ', creators.last_name) as file_created_by"),
                 'divisions.name as owning_division_name', 

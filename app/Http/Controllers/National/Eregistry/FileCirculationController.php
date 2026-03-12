@@ -70,7 +70,10 @@ class FileCirculationController extends Controller
         if (is_array($search)) {
             $search = $search['value'];
         }
-        $query = $this->fileCirculations->getForReviewDataTable($search);
+
+        $userId = Auth::id();
+
+        $query = $this->fileCirculations->getForReviewDataTable($search, $userId);
         
         $datatables = DataTables::of($query)->make(true);
                     
@@ -90,7 +93,19 @@ class FileCirculationController extends Controller
                         
         return $datatables;            
     }      
- 
+
+    public function getActivityDataTables(Request $request)
+    {
+        $search = $request->get('search', '');
+        if (is_array($search)) {
+            $search = $search['value'];
+        }
+        $query = $this->fileCirculations->getForActivityDataTable($search);
+
+        $datatables = DataTables::of($query)->make(true);
+                        
+        return $datatables;            
+    }
  
 
     /**
@@ -100,7 +115,15 @@ class FileCirculationController extends Controller
      */
     public function index()
     {   
-        return view('national.eregistry.circulations.index');         //this displays the list of received files and their circulation status
+        // if (!Auth::user()->) {
+        //     abort(403, 'Unauthorized action.');
+        // }
+
+        if (Auth::user()->hasRole('registry')) {
+            return view('national.eregistry.circulations.index');         //this displays the list of received files and their circulation status
+        }   
+
+        abort(403, 'Unauthorized action.'); // For non-registry users, we can either show an error or redirect to a different page
     }
 
 
@@ -125,7 +148,6 @@ class FileCirculationController extends Controller
         if (!in_array($loggedInOrganisation->id, $fileRecipientOrganisations)) {
             abort(403, 'Unauthorized access to this file circulation');
         }
-
 
         if (!$fileCirculation) {
             return redirect()->back()->withErrors(['error' => 'File circulation not found.']);
@@ -159,6 +181,14 @@ class FileCirculationController extends Controller
         return view('national.eregistry.circulations.assignedIndex');
     }
 
+    public function activityIndex()  // This method is used to display the activity page for file circulations
+    {
+        // if (!Auth::user()->can('division.create')) {
+        //     abort(403, 'Unauthorized action.');
+        // }
+
+        return view('national.eregistry.circulations.activityIndex');
+    }
     /**
      * Store a newly created resource in storage.
      *
@@ -218,6 +248,13 @@ class FileCirculationController extends Controller
             'file_id' => 'required|exists:files,id',
             'assignedOfficers' => 'required|array',
             'assignedOfficers.*' => 'exists:users,id',
+            'review_comment' => 'nullable|string',
+        ]);
+
+        $fileCirculation->update([
+            'review_comment' => $validated['review_comment'] ?? null,
+            'status' => 'Assigned',
+            'updated_by' => auth()->id(),
         ]);
 
         $fileCirculation->assignedOfficers()->sync($validated['assignedOfficers']);

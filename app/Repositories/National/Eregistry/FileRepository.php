@@ -26,7 +26,7 @@ class FileRepository extends BaseRepository
             // 'folder_id' => $input['folder_id'],
             'organisation_id' => $input['organisation_id'],
             'file_reference' => $input['file_reference'] ?? 'FILE-' . time() . '-' . Auth::id(),
-            'name' => $input['name'],
+            'subject' => $input['subject'],
             'main_file_path' => $input['main_file_path'],
             'additional_file1_path' => $input['additional_file1_path'] ?? null,
             'additional_file2_path' => $input['additional_file2_path'] ?? null,
@@ -78,11 +78,10 @@ class FileRepository extends BaseRepository
     }
 
 
-
     public function getForDataTable(string $search = '')
     {
         return $this->model->query()
-            ->select('files.id', 'files.name')
+            ->select('files.id', 'files.subject')
             ->when($search, function ($q) use ($search) {
                 $q->where('files.name', 'like', "%{$search}%");
             });

@@ -21,6 +21,7 @@ class Organisation extends Model
         'created_by',
         'updated_by',
         'review_officer_id',
+        'organisation_type_id'
     ];
 
     public function organisationType()

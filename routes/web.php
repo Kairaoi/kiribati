@@ -9,6 +9,7 @@ use App\Http\Controllers\National\Eregistry\FileController;
 use App\Http\Controllers\National\Eregistry\FileTypeController;
 use App\Http\Controllers\National\Eregistry\OrganisationController;
 use App\Http\Controllers\National\Eregistry\UserController;
+use App\Http\Controllers\National\Eregistry\ActivityLogController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -24,11 +25,12 @@ Route::middleware([
     Route::get('dashboard', function () {
         $user = auth()->user();
 
-        if ($user->hasRole('admin') || $user->hasRole('user')) {
-            return view('national.eregistry.circulations.reviewIndex');
+        if ($user->hasRole('registry')) {
+            return view('national.eregistry.circulations.index');
         }
 
-        return view('national.eregistry.index');
+        return view('national.eregistry.circulations.reviewIndex');
+
     })->name('dashboard');
 });
 
@@ -53,7 +55,7 @@ Route::group([
     // File Routes
     // Route for serving the actual file content
     Route::get('files/{id}/view', [FileController::class, 'viewFile'])->name('files.view');
-    Route::get('files/{id}/download', [FileController::class, 'downloadMain'])->name('files.download.main');
+    Route::get('files/{id}/download', [FileController::class, 'download'])->name('files.download.main');
     Route::get('files/{id}/download-additional/{number}', [FileController::class, 'downloadAdditionalFile'])->name('files.download.additional');
     
     Route::get('files/create-type/{createType}', [FileController::class, 'createType'])->name('files.create.withType');
@@ -64,7 +66,7 @@ Route::group([
     Route::match(['get', 'post'], 'files/datatables', [FileController::class, 'getArchiveFiles'])->name('files.archive.datatables');
     Route::resource('files', FileController::class);
     Route::post('files/archive', [FileController::class, 'archive'])->name('files.archive');
-
+    Route::get('files/archives/by-organisation/{id}', [FileController::class, 'filesByOrganisation']);
 
     // File Type Routes
     Route::get('/registry/file-types/{fileTypeId}/dynamic-form', [
@@ -93,19 +95,24 @@ Route::group([
     Route::match(['get', 'post'], 'file-circulations/initial/datatables', [FileCirculationController::class, 'getDataTables'])->name('file-circulations.datatables');
     Route::match(['get', 'post'], 'file-circulations/review/datatables', [FileCirculationController::class, 'getReviewDataTables'])->name('file-circulations.reviews.datatables');
     Route::match(['get', 'post'], 'file-circulations/assigned/datatables', [FileCirculationController::class, 'getAssignedDataTables'])->name('file-circulations.assigned.datatables');
+    Route::match(['get', 'post'], 'file-circulations/activity/datatables', [FileCirculationController::class, 'getActivityDataTables'])->name('file-circulations.activity.datatables');
     
     Route::resource('file-circulations', FileCirculationController::class);
     Route::get('/file-circulations/review/index', [FileCirculationController::class, 'reviewIndex'])->name('file-circulations.review.index');
     Route::get('/file-circulations/{fileCirculation}/review', [FileCirculationController::class, 'reviewFile'])->name('file-circulations.review.file');
     Route::patch('/file-circulations/{fileCirculation}/store/assigned-officers/', [FileCirculationController::class, 'storeAssignedOfficers'])->name('file-circulations.store.assigned-officers');
     Route::get('/file-circulations/assigned/index', [FileCirculationController::class, 'assignedIndex'])->name('file-circulations.assigned.index');
+    Route::get('/file-circulations/activity/index', [FileCirculationController::class, 'activityIndex'])->name('file-circulations.activity.index');
     Route::patch('/file-circulations/{fileCirculation}/store/complete', [FileCirculationController::class, 'storeComplete'])->name('file-circulations.store.complete');
+
 
 
     // User Routes
     Route::match(['get', 'post'], 'users/datatables', [UserController::class, 'getDataTables'])->name('users.datatables');
     Route::resource('users', UserController::class);
 
+    // Activity Log Routes
+    Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity.logs');
 
     // Eregistry Board Routes
     Route::get('boards', [EregistryBoradController::class, 'index'])->name('boards.index');

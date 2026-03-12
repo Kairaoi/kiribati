@@ -33,9 +33,9 @@
 <div class="container mx-auto font-poppins px-4 py-8 max-w-5xl mt-3 rounded-md min-h-screen ">
     <div class="mb-4 flex items-start justify-between">
         <div>
-            <h1 class="text-3xl font-bold tracking-wide">Assigned Files</h1>
+            <h1 class="text-3xl font-bold tracking-wide">File Activity</h1>
             <p class="text-base text-gray-500 mt-1">
-                Files assigned for your review and action.
+                View your history and details of file circulations and actions taken.
             </p>
         </div>
 
@@ -47,19 +47,20 @@
     </div>
 
     <div class="p-4 bg-white rounded-lg shadow-lg overflow-hidden">
-        <table id="assignedTable" class="table table-striped w-full mt-6">
+        <table id="activityTable" class="table table-striped w-full mt-6">
             <thead>
                 <tr>
-                    <th>From</th>
+                    <th>ID</th>
+                    <th>Activity</th>
+                    <th>Date</th>
                     <th>File Subject</th>
-                    <th>File Date</th>
+                    {{-- <th>Activity</th> --}}
                     <th class="w-28">Actions</th>
                 </tr>
             </thead>
             <tbody></tbody> <!-- DataTable will populate this -->
         </table>
     </div>
-
 </div>
 
 @endsection
@@ -186,32 +187,44 @@
 $(document).ready(function() {
 
     // Initialize DataTable
-    $('#assignedTable').DataTable({
+    $('#activityTable').DataTable({
         processing: true,
         serverSide: true,
         ajax: {
-            url: "{{ route('registry.file-circulations.assigned.datatables') }}",  // Updated route
+            url: "{{ route('registry.file-circulations.activity.datatables') }}",  // Updated route
             type: 'POST',
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') 
             }
         },
         columns: [
-            { data: 'file_organisation_code' },
-            { data: 'file_subject' },
-            { 
+            { data: 'id'},
+            { data: 'activity_type'},
+            // {
+            //     data: 'activity_type',
+            //     render: function(data) {
+            //         if (data === 'review') {
+            //         return '<span class="badge bg-yellow-500">Review</span>';
+            //         }
+            //         if (data === 'assigned') {
+            //         return '<span class="badge bg-green-500">Assigned</span>';
+            //         }
+            //         return data;
+            //     }
+            // },
+            {
                 data: 'file_date',
                 render: function (data) {
                     if (!data) return '';
                     const date = new Date(data);
                     return date.toLocaleDateString('en-US', {
                         year: 'numeric',
-                        month: 'long',   
+                        month: 'short',   
                         day: 'numeric'
                     });
                 }  
             },
-
+            { data: 'file_subject' },
             {
                 data: null, // means we'll render manually
                 name: 'actions',
@@ -219,11 +232,10 @@ $(document).ready(function() {
                 searchable: false,
                 render: function (data, type, row) {
                     return `
-                        <a href="/registry/file-circulations/${row.id}" class="btn btn-sm btn-info text-white">Review</a>
+                        <a href="/registry/file-circulations/${row.id}" class="btn btn-sm btn-info text-slate-900">View details</a>
                     `;
                 }
             }
-         
         ],
         pageLength: 10,
         responsive: true,

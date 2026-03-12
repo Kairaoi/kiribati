@@ -8,7 +8,6 @@ class CreateEregistryFilingSystemTables extends Migration
 {
     public function up()
     {
-
         // Create file_types table
         Schema::create('file_types', function (Blueprint $table) {
             $table->id();
@@ -40,14 +39,16 @@ class CreateEregistryFilingSystemTables extends Migration
         Schema::create('organisations', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('code')->unique();
-            $table->text('location');
+            $table->string('code')->unique()->nullable();
+            $table->text('location')->nullable();
             $table->foreignId('review_officer_id')->nullable()->constrained('users');
             $table->boolean('is_active')->default(true);
-            $table->foreignId('created_by')->constrained('users');
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('updated_by')->constrained('users');
-            $table->foreignId('organisation_type_id')->constrained('organisation_types')->nullable();
+            $table->foreignId('organisation_type_id')->constrained('organisation_types');
             $table->timestamps();
+
+            $table->unique(['name', 'organisation_type_id']);
         });
 
 
@@ -64,16 +65,15 @@ class CreateEregistryFilingSystemTables extends Migration
         // Create files table
         Schema::create('files', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('organisation_id')->constrained();
+            $table->foreignId('organisation_id')->nullable()->constrained();
             $table->foreignId('division_id')->nullable()->constrained('divisions');
             $table->string('file_reference')->unique()->nullable();
             $table->foreignId('file_type_id')->constrained('file_types');
             $table->foreignId('category_id')->constrained('categories');
-            $table->string('name'); //File name
+            $table->string('subject');
             $table->string('main_file_path'); //File path
-            $table->string('additional_file1_path')->nullable(); //Additional file path
-            $table->string('additional_file2_path')->nullable(); //Additional file path
-            $table->string('additional_file3_path')->nullable(); //Additional file path
+            $table->json('additional_file_paths')->nullable(); // JSON column to store paths of additional files
+            $table->string('main_file_name')->nullable(); // Original file name for download purposes
             $table->enum('initial_type', ['dispatch','internal']);
             $table->date('letter_date'); 
             $table->string('letter_ref_no')->nullable()->unique();
@@ -81,7 +81,7 @@ class CreateEregistryFilingSystemTables extends Migration
             $table->dateTime('response_deadline')->nullable();
             $table->boolean('is_active')->default(true);
             $table->boolean('is_archived')->default(false);
-            $table->foreignId('created_by')->constrained('users');
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('updated_by')->constrained('users');
             $table->timestamps();
             $table->softDeletes();
@@ -149,7 +149,7 @@ class CreateEregistryFilingSystemTables extends Migration
             // $table->foreignId('assigned_officer')->nullable()->constrained('users'); 
             $table->datetime('read_at')->nullable();                     // Changed to read_at timestamp
             $table->boolean('read_status')->default(false);
-            $table->text('comments')->nullable();                        // Added comments field
+            $table->text('review_comment')->nullable();                        // Added comments field
             $table->boolean('requires_action')->default(false);          // Added action required flag
             $table->text('action_taken')->nullable();                    // Added action taken field
             $table->timestamps();
@@ -183,17 +183,17 @@ class CreateEregistryFilingSystemTables extends Migration
         });
 
 
-        Schema::create('audit_logs', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained('users'); // User who performed the action
-            $table->string('action'); // e.g., 'create', 'update', 'delete'
-            $table->ipAddress('ip_address')->nullable(); // IP address of the user
-            $table->string('user_agent')->nullable(); // from what device/browser the action was performed
-            $table->morphs('auditable'); // Polymorphic relation to the model being audited
-            $table->json('old_values')->nullable(); // Old values before the action
-            $table->json('new_values')->nullable(); // New values after the action
-            $table->timestamps();
-        });
+        // Schema::create('audit_logs', function (Blueprint $table) {
+        //     $table->id();
+        //     $table->foreignId('user_id')->constrained('users'); // User who performed the action
+        //     $table->string('action'); // e.g., 'create', 'update', 'delete'
+        //     $table->ipAddress('ip_address')->nullable(); // IP address of the user
+        //     $table->string('user_agent')->nullable(); // from what device/browser the action was performed
+        //     $table->morphs('auditable'); // Polymorphic relation to the model being audited
+        //     $table->json('old_values')->nullable(); // Old values before the action
+        //     $table->json('new_values')->nullable(); // New values after the action
+        //     $table->timestamps();
+        // });
     }
 
 

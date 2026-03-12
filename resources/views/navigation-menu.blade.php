@@ -19,7 +19,7 @@
 
                 {{-- E-Registry --}}
                 @hasanyrole(['registry'])
-                    <div class="hidden space-x-8 sm:ms-10 text-2xl font-montserrat font-bold sm:flex items-center">
+                    {{-- <div class="hidden space-x-8 sm:ms-10 text-2xl font-montserrat font-bold sm:flex items-center">
                         <div x-data="{ open: false }" 
                             class="relative flex items-center h-16"
                             @mouseenter="open = true"
@@ -36,6 +36,44 @@
                                  <span class="leading-none">{{ __('E-REGISTRY') }}</span>
                             </x-nav-link>
                         </div>
+                    </div> --}}
+
+                    <div class="hidden space-x-8 sm:ms-10 text-2xl font-montserrat font-bold sm:flex items-center">
+                        <div x-data="{ open: false }" 
+                            class="relative flex items-center h-16"
+                            @mouseenter="open = true"
+                            @mouseleave="open = false">
+
+                            <x-nav-link href="{{ route('registry.dispatches.index') }}"
+                                :active="request()->routeIs('registry.dispatches.*')"
+                                class="flex items-center h-full">
+                                {{-- <svg class="w-5 h-5 inline-block mr-1 text-blue-900" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 9l9-7 9 7v11a2 2 0 01-2 2h-4a2 2 0 01-2-2V13H9v7a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                                </svg> --}}
+                                 <span class="leading-none">{{ __('DISPATCHES') }}</span>
+                            </x-nav-link>
+                        </div>
+                    </div>
+
+                    <div class="hidden space-x-8 sm:ms-10 text-2xl font-montserrat font-bold sm:flex items-center">
+                        <div x-data="{ open: false }" 
+                            class="relative flex items-center h-16"
+                            @mouseenter="open = true"
+                            @mouseleave="open = false">
+
+                            <x-nav-link href="{{ route('registry.file-circulations.index') }}"
+                                :active="request()->routeIs('registry.file-circulations.*')"
+                                class="flex items-center h-full">
+                                {{-- <svg class="w-5 h-5 inline-block mr-1 text-blue-900" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 9l9-7 9 7v11a2 2 0 01-2 2h-4a2 2 0 01-2-2V13H9v7a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                                </svg> --}}
+                                 <span class="leading-none">{{ __('CIRCULATIONS') }}</span>
+                            </x-nav-link>
+                        </div>
                     </div>
 
 
@@ -49,9 +87,9 @@
                             <x-nav-link href="{{ route('registry.boards.management') }}" 
                                 :active="request()->routeIs('registry.boards.management')"
                                 class="flex items-center h-full">
-                                <svg class="w-5 h-5 inline-block mr-1 text-blue-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                {{-- <svg class="w-5 h-5 inline-block mr-1 text-blue-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a2 2 0 012-2h2a2 2 0 012 2v2m-6 0h6M4 6h16M4 10h16M4 14h16" />
-                                </svg>
+                                </svg> --}}
                                 {{ __('MANAGEMENT') }}
                             </x-nav-link>
                         </div>
@@ -67,9 +105,9 @@
                             <x-nav-link href="{{ route('registry.files.index') }}" 
                                 :active="request()->routeIs('registry.files.index')"
                                 class="flex items-center h-full">
-                                <svg class="w-5 h-5 inline-block mr-1 text-blue-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                {{-- <svg class="w-5 h-5 inline-block mr-1 text-blue-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4a2 2 0 001-1.73zM12 3v5M3.27 8l8.73 5 8.73-5M3.27 16l8.73 5 8.73-5" />
-                                </svg>
+                                </svg> --}}
                                 {{ __('ARCHIVE') }}
                             </x-nav-link>
                         </div>
@@ -107,6 +145,23 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M5 6h14M5 6v12a2 2 0 002 2h10a2 2 0 002-2V6H5z" />
                                     </svg>
                                     {{ __('ASSIGNED') }}
+                                </x-nav-link>
+                            </div>
+                    </div>
+
+                    <div class="hidden space-x-8 sm:ms-10 text-2xl font-montserrat font-bold sm:flex items-center">                        
+                            <div x-data="{ open: false }" 
+                                class="relative flex items-center h-16"
+                                @mouseenter="open = true"
+                                @mouseleave="open = false">
+
+                                <x-nav-link href="{{ route('registry.file-circulations.activity.index') }}" 
+                                    :active="request()->routeIs('registry.file-circulations.activity.index')"
+                                    class="flex items-center h-full">
+                                    <svg class="w-5 h-5 inline-block mr-1 text-blue-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M5 6h14M5 6v12a2 2 0 002 2h10a2 2 0 002-2V6H5z" />
+                                    </svg>
+                                    {{ __('FILE ACTIVITY') }}
                                 </x-nav-link>
                             </div>
                     </div>
@@ -238,8 +293,8 @@
                                 </button>
                             @else
                                 <span class="inline-flex rounded-md">
-                                    <button type="button" class="inline-flex font-roboto items-center px-3 py-2 text-m leading-4 font-bold rounded-md text-gray-800 bg-white hover:text-gray-700 focus:outline-none focus:bg-gray-50 active:bg-gray-50 transition ease-in-out duration-150">
-                                        {{ Auth::user()->first_name }}
+                                    <button type="button" class="inline-flex font-roboto items-center px-3 py-2 text-sm leading-4 font-light rounded-md text-gray-800 bg-white hover:text-gray-700 focus:outline-none focus:bg-gray-50 active:bg-gray-50 transition ease-in-out duration-150">
+                                        {{ Auth::user()->first_name }} | {{ Auth::user()->roles->pluck('name')->first() }}
 
                                         <svg class="ms-2 -me-0.5 size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />

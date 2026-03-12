@@ -7,6 +7,7 @@ use App\Models\National\Eregistry\Dispatch;
 use App\Models\National\Eregistry\File;
 use App\Models\National\Eregistry\FileCirculation;
 use App\Models\National\Eregistry\Organisation;
+use App\Models\National\Eregistry\OrganisationType;
 use App\Repositories\National\Eregistry\CategoryRepository;
 use App\Repositories\National\Eregistry\DispatchRepository;
 use App\Repositories\National\Eregistry\DivisionRepository;
@@ -128,15 +129,14 @@ class FileController extends Controller
         $officers = $this->fileCirculations->listOfficers();
         $organisations = $this->organisations->list();
 
-        $archives = DB::table('organisation_archived_files')
-            ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, COUNT(*) as total')
-            ->where('organisation_id', auth()->user()->organisation_id)
-            ->groupBy('year', 'month')
-            ->orderBy('year', 'desc')
-            ->orderBy('month', 'desc')
-            ->get()
-            ->groupBy('year');
-
+        // $archives = DB::table('organisation_archived_files')
+        //     ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, COUNT(*) as total')
+        //     ->where('organisation_id', auth()->user()->organisation_id)
+        //     ->groupBy('year', 'month')
+        //     ->orderBy('year', 'desc')
+        //     ->orderBy('month', 'desc')
+        //     ->get()
+        //     ->groupBy('year');
 
         $orgFilters = DB::table('organisation_archived_files as oaf')
             ->join('organisations as o', 'o.id', '=', 'oaf.organisation_id')
@@ -145,7 +145,48 @@ class FileController extends Controller
             ->orderBy('o.code')
             ->get();
 
-        return view('national.eregistry.files.index', compact('divisions', 'officers', 'organisations', 'archives', 'orgFilters'));
+        $files= DB::table('organisation_archived_files as oaf')
+            ->join('files as f', 'f.id', '=', 'oaf.file_id')
+            ->join('organisations as o', 'o.id', '=', 'f.organisation_id') // sender ministry
+            ->where('oaf.organisation_id', auth()->user()->organisation_id)
+            ->select(
+                'f.id as file_id',
+                'f.subject as file_subject', 
+                'o.name as organisation_name',
+                'o.id as organisation_id',
+                'o.code as organisation_code',
+                'oaf.created_at as archived_date'
+            )
+            ->orderBy('oaf.created_at', 'desc')
+            ->get();
+
+        $organisations = DB::table('organisation_archived_files as oaf')
+            ->join('files as f', 'f.id', '=', 'oaf.file_id')
+            ->join('organisations as o', 'o.id', '=', 'f.organisation_id') // sender ministry
+            ->where('oaf.organisation_id', auth()->user()->organisation_id)
+            ->select('o.id', 'o.name', DB::raw('COUNT(*) as total'))
+            ->groupBy('o.id', 'o.name')
+            ->orderBy('o.name')
+            ->get();
+
+        $monthlyArchives = DB::table('organisation_archived_files as oaf')
+            ->join('files as f', 'f.id', '=', 'oaf.file_id')
+            ->join('organisations as o', 'o.id', '=', 'f.organisation_id') // sender ministry
+            ->where('oaf.organisation_id', auth()->user()->organisation_id)
+            ->select(
+                DB::raw('YEAR(oaf.created_at) as year'),
+                DB::raw('MONTH(oaf.created_at) as month'),
+                DB::raw('COUNT(*) as total')
+            )
+            ->groupBy('year', 'month')
+            ->orderBy('year', 'desc')
+            ->orderBy('month', 'desc')
+            ->get()
+            ->groupBy('year', 'month');
+
+
+        return view('national.eregistry.files.index', compact('divisions', 
+        'officers', 'organisations', 'orgFilters', 'files', 'monthlyArchives'));
     }
 
 
@@ -168,6 +209,7 @@ class FileController extends Controller
     
         $ministries = $this->organisations->listMinistries(); // Fetch all ministries using the list method from OrganisationRepository
         
+        $otherTypeId = OrganisationType::where('name', 'Other')->value('id');        
 
         $organisationId = Auth::user()->organisation_id;
         $file_types = $this->file_types->listWithDescriptions(); 
@@ -183,7 +225,8 @@ class FileController extends Controller
                                                                 'allDivisions',
                                                                 'categories',
                                                                 'file_types',
-                                                                'createType'
+                                                                'createType',
+                                                                'otherTypeId'
             
         ));
     }
@@ -202,10 +245,41 @@ class FileController extends Controller
      */
     public function store(Request $request)
     {
+
+        $otherTypeId = OrganisationType::where('name', 'Other')->value('id');
+
+        $request->validate([
+            'organisation_id'   => 'nullable|exists:organisations,id',
+            // 'organisation_name' => 'required_if:organisation_id,__add_new__|string|max:255',
+            // 'organisation_name' => 'nullable|string|max:255',
+            'organisation_name' => 'nullable|string|required_if:organisation_id,__add_new__|max:255',
+        ]);
+
+        if ($request->filled('organisation_id')) {
+            $fromOrganisationId = $request->organisation_id;
+        } else {
+            // create new organisation from text input
+            $organisation = Organisation::firstOrCreate(
+                [
+                    'name' => trim($request->organisation_name),
+                    'organisation_type_id' => $otherTypeId, // 'Other' is a valid organisation type for manually entered organisations
+                ],
+                [
+                    'created_by' => auth()->id(),
+                    'updated_by' => auth()->id(),
+                ]
+            );
+            $fromOrganisationId = $organisation->id;
+        }
+
+        $request->merge([
+            'fromOrganisationId' => $fromOrganisationId,
+        ]);
+
         $validated = $request->validate([
-            'organisation_id' => 'required|exists:organisations,id',
+            'fromOrganisationId' => 'required|exists:organisations,id',
             'division_id' => 'nullable|exists:divisions,id',
-            'name' => 'required|string|max:255',
+            'subject' => 'required|string|max:255',
             'initial_type' => 'required|in:dispatch,internal',
             'main_file' => 'required|file|mimes:pdf|max:10240',
             'additional_files' => 'nullable|array|max:3',
@@ -217,19 +291,20 @@ class FileController extends Controller
             'recipient_organisations.*' => 'exists:organisations,id',
         ]);
 
-        // dd($validated);
+        // dd($request);
 
         try {
-            // Store main file in local disk.
             $mainFile = $request->file('main_file');
-            $mainFilePath = $mainFile->store('uploads/main_files', 'local');
+            $mainFilePath = $mainFile->store('uploads/main_files', 'public');
+            $mainFileName = $mainFile->getClientOriginalName(); // save original name
 
             // Store up to 3 additional files
-            $additionalPaths = [null, null, null];
+            $additionalFilePaths = [];
+
             if ($request->hasFile('additional_files')) {
-                $files = $request->file('additional_files');
-                foreach (array_slice($files, 0, 3) as $index => $file) {
-                    $additionalPaths[$index] = $file->store('uploads/additional_files', 'local');	
+                foreach ($request->file('additional_files') as $uploadedFile) {
+                    $path = $uploadedFile->store('uploads/additional_files', 'public');
+                    $additionalFilePaths[] = $path;
                 }
             }
 
@@ -238,9 +313,7 @@ class FileController extends Controller
                 Arr::except($validated, ['recipient_organisations']),
                 [
                     'main_file_path' => $mainFilePath,
-                    'additional_file1_path' => $additionalPaths[0],
-                    'additional_file2_path' => $additionalPaths[1],
-                    'additional_file3_path' => $additionalPaths[2],
+                    'additional_file_paths' => $additionalFilePaths, // Store as JSON
                     'file_reference' => null,
                     'file_index' => null,
                     'status' => $validated['initial_type'] === 'internal' ? 'Pending Circulation' : 'Pending Dispatch',
@@ -248,6 +321,7 @@ class FileController extends Controller
                     'created_by' => auth()->id(),
                     'updated_by' => auth()->id(),
                     'letter_date' => now()->toDateString(),
+                    'organisation_id' => $fromOrganisationId,
                 ]
             );
 
@@ -263,7 +337,7 @@ class FileController extends Controller
                     //and a new FileCirculation record is created for the logged in organisation
                     FileCirculation::create([                                                       
                         'file_id' => $file->id,
-                        'from_organisation_id' => $validated['organisation_id'], 
+                        'from_organisation_id' => $fromOrganisationId, 
                         'to_organisation_id' => $organisationId,
                         'to_review_file' => $organisation->reviewOfficer ? $organisation->reviewOfficer->id : null,         
                     ]);
@@ -281,7 +355,7 @@ class FileController extends Controller
                 // Create initial dispatch record
                 Dispatch::create([
                     'file_id' => $file->id,
-                    'from_organisation_id' => $validated['organisation_id'],
+                    'from_organisation_id' => $fromOrganisationId,
                     'from_division_id' => $validated['division_id'],
                     'updated_by' => auth()->id(),
                 ]);
@@ -454,7 +528,7 @@ class FileController extends Controller
             'organisation_id' => 'required|exists:organisations,id',
             'organisation_name' => 'required_if:organisation_id,null|string|max:255',
             'division_id' => 'nullable|exists:divisions,id',
-            'name' => 'required|string|max:255',
+            'subject' => 'required|string|max:255',
             'main_file' => 'nullable|file|mimes:pdf|max:10240',
             'additional_files' => 'nullable|array|max:3',
             'additional_files.*' => 'file|mimes:pdf,xls,xlsx,png,jpg,jpeg,doc,docx,ppt,pptx|max:10240',
@@ -471,23 +545,30 @@ class FileController extends Controller
                 if ($file->main_file_path && \Storage::exists($file->main_file_path)) {
                     \Storage::delete($file->main_file_path);
                 }
-                $mainFilePath = $request->file('main_file')->store('uploads/main_files');
+                $mainFilePath = $request->file('main_file')->store('uploads/main_files', 'public');
             } else {
                 $mainFilePath = $file->main_file_path;
             }
 
             // Handle additional files (keep existing, add new)
-            $additionalPaths = [
-                $file->additional_file1_path,
-                $file->additional_file2_path,
-                $file->additional_file3_path,
-            ];
+            $existingFiles = $file->additional_file_paths ?? [];
+
+            // Remove selected files
+            if ($request->filled('delete_additional_files')) {
+                foreach ($request->delete_additional_files as $fileToDelete) {
+
+                    // delete from storage
+                    Storage::disk('public')->delete($fileToDelete);
+
+                    // remove from array
+                    $existingFiles = array_values(array_diff($existingFiles, [$fileToDelete]));
+                }
+            }
 
             if ($request->hasFile('additional_files')) {
-                $newFiles = $request->file('additional_files');
-                foreach (array_slice($newFiles, 0, 3) as $index => $newFile) {
-                    $newPath = $newFile->store('uploads/additional_files');
-                    $additionalPaths[$index] = $newPath;
+                foreach ($request->file('additional_files') as $uploadedFile) {
+                    $path = $uploadedFile->store('uploads/additional_files', 'public');
+                    $existingFiles[] = $path; //append new files to the existing array of additional files
                 }
             }
 
@@ -496,9 +577,7 @@ class FileController extends Controller
                 Arr::except($validated, ['recipient_organisations']),
                 [
                     'main_file_path' => $mainFilePath,
-                    'additional_file1_path' => $additionalPaths[0],
-                    'additional_file2_path' => $additionalPaths[1],
-                    'additional_file3_path' => $additionalPaths[2],
+                    'additional_file_paths' => $existingFiles, 
                     'updated_by' => auth()->id(),
                 ]
             );
@@ -513,7 +592,18 @@ class FileController extends Controller
             }
             $file->recipientMinistries()->sync($syncData);
 
-            return redirect()->route('registry.files.index')->with('success', 'File updated successfully!');
+            if($file->initial_type === 'dispatch') {
+                if(auth()->user()->hasRole('user') || (auth()->user()->hasRole('admin')) ){
+                    return redirect()->route('registry.dispatches.user.index')->with('success', 'Dispatch file edited successfully!');
+                }
+
+                if(auth()->user()->hasRole('registry')) {
+                    return redirect()->route('registry.dispatches.index')->with('success', 'Dispatch file edited successfully!');
+                }
+
+            }else{
+                return redirect()->route('registry.file-circulations.index')->with('success', 'Circulation file edited successfully!');
+            }
 
         } catch (\Exception $e) {
             \Log::error('Error updating file', ['message' => $e->getMessage(), 'file_id' => $file->id]);
