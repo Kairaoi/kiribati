@@ -1,41 +1,42 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mx-auto px-4 py-6 max-w-7xl">
-    <div class="flex justify-between items-center mb-4">
-        <h1 class="text-3xl font-bold text-gray-900 tracking-wide">File Types Registry</h1>
-        <a href="{{ route('registry.file-types.create') }}" class="btn btn-primary transition duration-300 transform hover:scale-105">
-            <i class="fas fa-plus mr-2"></i> Add New File Type
+<div class="container mx-auto px-4 py-8 max-w-5xl mt-3 rounded-md min-h-screen ">
+    <div class="mb-4 flex items-start justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">File Types</h1>
+            <p class="text-gray-500 text-sm mb-2">Manage file types used in file reference numbers:</p>
+            
+            {{-- <label class="block text-m text-slate-900"></label> --}}
+            <select id="fileTypeFilter" class="filter-input w-full text-sm text-gray-600 border px-3 py-2 focus:ring focus:ring-cyan-200">
+                <option value="">All file types</option>
+                <option value="ministry">Ministry</option>
+                <option value="global">Global</option>
+            </select>
+        </div>
+        <div>
+            
+        </div>
+        <a href="{{ route('registry.file-types.create') }}"
+                class="inline-flex items-center mt-5 gap-2 px-4 py-2 bg-cyan-600 text-white text-sm rounded-md hover:bg-cyan-700 transition">
+                <i class="fas fa-plus"></i>
+                Add ministry file type
         </a>
     </div>
 
-    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-        <table id="fileTypesTable" class="table w-full">
-            <thead class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">        
+        <table id="fileTypesTable" class="w-full text-sm text-left">
+            <thead class="bg-gray-50 text-gray-600 text-sm uppercase tracking-wide">
                 <tr>
-                    <th class="w-16">ID</th>
-                    <th>Name</th>
-                    <th>Description</th>
+                    <th>ID</th>
+                    <th>FILE TYPE NAME</th>
+                    <th>CODE</th>
+                    <th>SCOPE</th>
                     <th class="w-28">Actions</th>
                 </tr>
             </thead>
-            <tbody></tbody> <!-- DataTable will populate this -->
+            <tbody class="divide-y"></tbody> <!-- DataTable will populate this -->
         </table>
-    </div>
-</div>
-
-<!-- Action Dropdown Template (Hidden) -->
-<div id="actionDropdownTemplate" class="hidden">
-    <div class="dropdown-menu">
-        <a class="dropdown-item view-btn" href="#">
-            <i class="fas fa-eye text-blue-500 mr-2"></i> View
-        </a>
-        <a class="dropdown-item edit-btn" href="#">
-            <i class="fas fa-edit text-green-500 mr-2"></i> Edit
-        </a>
-        <a class="dropdown-item delete-btn" href="#">
-            <i class="fas fa-trash text-red-500 mr-2"></i> Delete
-        </a>
     </div>
 </div>
 @endsection
@@ -43,44 +44,79 @@
 @push('styles')
 <style>
     /* Table Styles */
-    table {
+   table.dataTable {
         width: 100%;
         border-collapse: collapse;
+        /* font-size: 0.85rem; */
+        border-left: 0.5px solid #d3d3d8;
+        border-right: 0.5px solid #d3d3d8;
     }
 
-    .table thead th {
-        background-color: #f8f9fa;
-        border-bottom: 2px solid #dee2e6;
-        color: #495057;
-        font-weight: 600;
-        padding: 1rem;
+    /* Header */
+    #fileTypesTable thead {
+        background-color: #f9fafb;
+        color: #6b7280;
+        text-transform: uppercase;
+        font-size: 12px;
     }
 
-    .table td {
-        vertical-align: middle;
-        padding: 0.75rem;
-        color: #555;
-        font-size: 0.95rem;
+    /* Cells */
+    #fileTypesTable th,
+    #fileTypesTable td {
+        padding: 14px 16px;
     }
 
-    /* Action Button Styles */
-    .action-btn {
+    /* Row divider */
+    #fileTypesTable tbody tr {
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    /* Hover effect */
+    #fileTypesTable tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    /* Fix long text */
+    #fileTypesTable td {
+        white-space: normal !important;
+        /* word-break: break-word; */
+    }
+    .dataTables_filter input {
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        padding: 6px 10px;
+        outline: none;
+    }
+
+    .dataTables_filter input:focus {
+        ring: 2px solid #93c5fd;
+    }
+
+    .dataTables_length select {
+        border-radius: 8px;
+        padding: 4px 8px;
+        padding-right: 30px; /* space for arrow */
+        border: 1px solid #d1d5db;
+    }
+
+    /* Action Button Styles */ 
+     /* .action-btn {
         cursor: pointer;
         padding: 0.5rem 1rem;
-        border-radius: 0.375rem;
+        border-radius: 9999px;
         font-size: 0.875rem;
         transition: background-color 0.3s, transform 0.2s;
     }
 
     .action-btn:hover {
         background-color: #e5e7eb;
-    }
+    } */
 
     /* Dropdown Menu Styles */
     .dropdown-menu {
         position: absolute;
         background-color: white;
-        border-radius: 0.375rem;
+        /* border-radius: 9999px; */
         box-shadow: 0 2px 5px rgba(0,0,0,0.15);
         min-width: 160px;
         z-index: 1000;
@@ -95,6 +131,85 @@
     .dropdown-item:hover {
         background-color: #f3f4f6; 
     }
+
+
+  
+    .dataTables_filter input {
+        padding: 0.375rem 0.75rem !important;
+        border-radius: 0.375rem !important;
+        border: 1px solid #ced4da !important;
+        font-size: 0.8rem !important;
+        margin-top: 1rem !important; 
+        font-family: 'Poppins', sans-serif !important;
+    }
+
+    .dataTables_info {
+        font-size: 0.85rem !important;
+        font-family: 'Poppins', sans-serif !important;
+        color: #4b5563 !important; /* Tailwind gray-700 */
+    }
+
+    .dataTables_paginate {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+    }
+
+    .dataTables_paginate .paginate_button {
+        padding: 6px 10px;
+        border-radius: 6px;
+        background: #f3f4f6;
+        cursor: pointer;
+    }
+
+    .dataTables_paginate .current {
+        background: #4f46e5 !important;
+        color: white !important;
+    }
+
+
+            /* Force green Excel button */
+            .excel-export-btn {
+                border: none !important;       /* Ensures no border, overrides any border below */
+                border-radius: 6px !important;
+                background-color: rgb(32, 180, 39) !important;
+                color: #ffffff;
+                padding: 0.25rem 0.75rem !important;   /* smaller padding */
+                box-shadow: none !important;          /* removes inner or outer shadow */
+                background-image: none !important;    /* removes gradient */
+                /* padding: 0.5rem 2rem; */
+                font-size: 0.7rem !important;
+                display: inline-flex;
+                align-items: center;
+            }
+
+            .excel-export-btn:hover {
+                background-color: #f3f4f6;  
+                transform: translateY(-1px);
+                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .pdf-export-btn {
+                border: none !important;       /* Ensures no border, overrides any border below */
+                border-radius: 6px !important;
+                background-color: rgb(238, 45, 45) !important;
+                color: #ffffff;
+                padding: 0.25rem 0.75rem !important;   /* smaller padding */
+                box-shadow: none !important;          /* removes inner or outer shadow */
+                background-image: none !important;    /* removes gradient */
+                /* padding: 0.5rem 2rem; */
+                font-size: 0.7rem !important;
+                display: inline-flex !important;
+                align-items: center;
+            }
+
+            .pdf-export-btn:hover {
+                background-color: #f3f4f6;  
+                transform: translateY(-1px);
+                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+            }
+
+
 </style>
 @endpush
 
@@ -125,54 +240,105 @@ $(document).ready(function() {
        }
    }
 
-   $('#fileTypesTable').DataTable({
+   var table = $('#fileTypesTable').DataTable({
        processing: true,
-       serverSide: true,
-       ajax: {
+        serverSide: true,  
+        searching: true,
+        paging: true,
+        info: true,
+        autoWidth: false,
+        responsive: true,
+        order: [[0, 'desc']],
+        ajax: {
            url: "{{ route('registry.file-types.datatables') }}",
            type: 'POST',
            headers: {
                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') 
-           } 
+           },
+           data: function (d) {
+                d.selected_type = $('#fileTypeFilter').val();
+            },
+            dataSrc: 'data'
        },
        columns: [
-           { data: 'id' },
+           { data: 'id', visible: false },
            { data: 'name' },
-           { data: 'description' },
-           { 
-               data: null,
-               orderable:false,
-               render(data, type, row) {
-                   return `<button class="action-btn action-dropdown" data-id="${row.id}">
-                       Actions <i class="fas fa-chevron-down ml-2"></i></button>`;
-               }
-           }
+           { data: 'code'},
+           {
+                data: 'is_global',
+                render: function (data, type, row) {
+                    return data
+                        ? '<span class="px-2 py-1 text-xs bg-cyan-100 text-cyan-700 rounded">Global</span>'
+                        : '<span class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded">Ministry</span>';
+                }
+            },
+           {
+                data: null,
+                orderable: false,
+                name: 'actions',
+                searchable: false,
+                render: function (data, type, row) {
+                    let buttons = `
+                        <a href="/registry/file-types/${row.id}/edit" 
+                        class="btn btn-sm btn-outline-info" 
+                        title="View">
+                            <i class="fas fa-eye"></i>
+                        </a>
+
+                    `;
+                    if (!row.is_global) {
+                        buttons += `
+                            <a href="/registry/file-types/${row.id}/edit" 
+                            class="btn btn-sm btn-outline-success" 
+                            title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <button data-id="${row.id}" 
+                                class="btn btn-sm btn-outline-danger delete-btn" 
+                                title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        `;
+                    }
+                    return buttons;
+                }
+            },
        ],
-       pageLength :10,
-       responsive :true,
-       order:[[0,'desc']],
-       dom: 'Bfrtip', // Enable Buttons
+        dom: "<'row mb-3'<'col-md-6 d-flex align-items-center'B><'col-12 col-md-6 text-md-end text-start'f>>" +
+             "<'row'<'col-sm-12'tr>>" +
+             "<'row mt-3'<'col-sm-5'i><'col-sm-7'p>>",
+        language: {
+                        paginate: {
+                            previous: "←",
+                            next: "→"
+                        }
+                    },
        buttons: [
-           {
-               extend: 'excelHtml5',
-               text: '<i class="fas fa-file-excel"></i> Excel',
-               className: 'btn btn-success',
-               title: 'File Types Registry',
-               exportOptions: {
-                   columns: ':not(:last-child)' // Exclude the last column (Actions)
-               }
-           },
-           {
-               extend: 'pdfHtml5',
-               text: '<i class="fas fa-file-pdf"></i> PDF',
-               className: 'btn btn-danger',
-               title: 'File Types Registry',
-               exportOptions: {
-                   columns: ':not(:last-child)' // Exclude the last column (Actions)
-               }
-           }
-       ]
+                        {
+                            extend: 'excelHtml5',
+                            text: '<i class="fas fa-download"></i>EXCEL',
+                            className: 'excel-export-btn',
+                            title: 'File types',
+                            exportOptions: {
+                                columns: ':not(:last-child)'
+                            }
+                        },
+                        {
+                            extend: 'pdfHtml5',
+                            text: '<i class="fas fa-download"></i>PDF',
+                            className: 'pdf-export-btn',
+                            title: 'File types',
+                            exportOptions: {
+                                columns: ':not(:last-child)'
+                            }
+                        }
+                    ]
    });
+
+   // Reload table when initial type changes
+    $('#fileTypeFilter').on('change', function() {
+        table.ajax.reload();
+    });
 
    // Handle action button click
    $('#fileTypesTable').on('click', '.action-dropdown', function(e) {
@@ -187,10 +353,10 @@ $(document).ready(function() {
        const dropdown = $(` 
            <div class="dropdown-menu" style="display:none;">
                <a class="dropdown-item" href="${route('registry.file-types.show', rowId)}">
-                   <i class="fas fa-eye text-blue-500 mr-2"></i> View
+                   <i class="fas fa-eye text-cyan-500 mr-2"></i> View
                </a>
                <a class="dropdown-item" href="${route('registry.file-types.edit', rowId)}">
-                   <i class="fas fa-edit text-green-500 mr-2"></i> Edit
+                   <i class="fas fa-edit text-cyan-500 mr-2"></i> Edit
                </a>
                <a class="dropdown-item delete-action" href="#" data-id="${rowId}">
                    <i class="fas fa-trash text-red-500 mr-2"></i> Delete

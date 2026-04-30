@@ -7,21 +7,22 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Organisation extends Model
+class Ministry extends Model
 {
     use HasFactory;
 
-    protected $table = 'organisations';
+    protected $table = 'ministries';
 
     protected $fillable = [
         'name',
         'code',
-        'description',
         'is_active',
         'created_by',
         'updated_by',
-        'review_officer_id',
-        'organisation_type_id'
+        'organisation_type_id',
+        'identity_organisation_id',
+        'location',
+        'status'
     ];
 
     public function organisationType()
@@ -29,11 +30,17 @@ class Organisation extends Model
         return $this->belongsTo(OrganisationType::class, 'organisation_type_id');
     }
 
+    public function identityOrganisation()
+    {
+        return $this->belongsTo(IdentityOrganisation::class, 'identity_organisation_id');
+    }
+
 
     public function divisions()
     {
         return $this->hasMany(Division::class);
     }
+
 
     public function users()
     {
@@ -50,7 +57,7 @@ class Organisation extends Model
 
     public function archivedFiles()
     {
-        return $this->belongsToMany(File::class, 'organisation_archived_files', 'organisation_id', 'file_id')
+        return $this->belongsToMany(File::class, 'ministry_archived_files', 'ministry_id', 'file_id')
             ->withPivot('archived_by', 'archived_at')
             ->withTimestamps();
     }
@@ -58,7 +65,7 @@ class Organisation extends Model
 
     public function files()
     {
-        return $this->hasMany(File::class, 'organisation_id');
+        return $this->hasMany(File::class, 'ministry_id');
     }
 
     // public function fileAccess()
@@ -76,10 +83,10 @@ class Organisation extends Model
         return $this->hasMany(Dispatch::class);
     }
 
-    public function reviewOfficer()
-    {
-        return $this->belongsTo(User::class, 'review_officer_id');
-    }
 
+    public function sourcedFiles()
+    {
+        return $this->morphMany(File::class, 'source');
+    }
 
 }

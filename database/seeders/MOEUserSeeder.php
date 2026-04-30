@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\National\Eregistry\Division;
-use App\Models\National\Eregistry\Organisation;
+use App\Models\National\Eregistry\Ministry;
 use App\Models\Role;
 use App\Models\User;
 use Carbon\Carbon;
@@ -26,19 +26,19 @@ class MOEUserSeeder extends Seeder
 
 
         //GET THE MFED MINISTRY
-        $organisation = Organisation::where('code', 'MOE')->first();
+        $ministry = Ministry::where('code', 'MOE')->first();
         $headquartersDivision = Division::where('name', 'Headquarters')
-            ->where('organisation_id', $organisation->id)->first();
+            ->where('ministry_id', $ministry->id)->first();
         $primaryDivision = Division::where('name', 'Primary Division')
-            ->where('organisation_id', $organisation->id)->first();
+            ->where('ministry_id', $ministry->id)->first();
         $jssDivision = Division::where('name', 'Junior Secondary School Division')
-            ->where('organisation_id', $organisation->id)->first();
+            ->where('ministry_id', $ministry->id)->first();
         $sssDivision = Division::where('name', 'Scholarship and Senior Secondary Unit')
-            ->where('organisation_id', $organisation->id)->first();   
+            ->where('ministry_id', $ministry->id)->first();   
 
 
-        if (!$organisation) {
-            $this->command->error('MFED organisation not found. Please run Organisation Seeder first.');
+        if (!$ministry) {
+            $this->command->error('MOE ministry not found. Please run Ministry Seeder first.');
             return;
         }
 
@@ -58,14 +58,14 @@ class MOEUserSeeder extends Seeder
                 'first_name' => 'Roreti',
                 'last_name' => 'David',
                 'password' => Hash::make('sec'),
-                'organisation_id' => $organisation->id,
+                'ministry_id' => $ministry->id,
                 'division_id' => $headquartersDivision->id,
                 'deleted_at' => null
             ]
         );
         $user1->assignRole('admin');
-        $organisation->review_officer_id = $user1->id;
-        $organisation->save();
+        // $ministry->review_officer_id = $user1->id;
+        // $ministry->save();
 
         $user2 = User::withTrashed()->updateOrCreate(
             ['email' => 'ds@moe.gov.ki'],
@@ -73,7 +73,7 @@ class MOEUserSeeder extends Seeder
                 'first_name' => 'Jane',
                 'last_name' => 'Austin',
                 'password' => Hash::make('ds'),
-                'organisation_id' => $organisation->id,
+                'ministry_id' => $ministry->id,
                 'division_id' => $headquartersDivision->id,
                 'deleted_at' => null
             ]
@@ -86,7 +86,7 @@ class MOEUserSeeder extends Seeder
                 'first_name' => 'Tematang',
                 'last_name' => 'Tekanene',
                 'password' => Hash::make('ds'),
-                'organisation_id' => $organisation->id,
+                'ministry_id' => $ministry->id,
                 'division_id' => $sssDivision->id,
                 'deleted_at' => null
             ]
@@ -99,7 +99,7 @@ class MOEUserSeeder extends Seeder
                 'first_name' => 'Turia',
                 'last_name' => 'Toabwa',
                 'password' => Hash::make('custom'),
-                'organisation_id' => $organisation->id,
+                'ministry_id' => $ministry->id,
                 'division_id' => $jssDivision->id,
                 'deleted_at' => null
             ]
@@ -112,7 +112,7 @@ class MOEUserSeeder extends Seeder
                 'first_name' => 'Anre',
                 'last_name' => 'Toabwa',
                 'password' => Hash::make('om'),
-                'organisation_id' => $organisation->id,
+                'ministry_id' => $ministry->id,
                 'division_id' => $headquartersDivision->id,
                 'deleted_at' => null
             ]

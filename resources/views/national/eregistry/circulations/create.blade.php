@@ -25,8 +25,8 @@
                 <dt class="font-medium text-gray-700">Security Level</dt>
                 <dd class="sm:col-span-2 text-gray-900">
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                        {{ $file->security_level === 'public' ? 'bg-green-100 text-green-800' : 
-                           ($file->security_level === 'internal' ? 'bg-blue-100 text-blue-800' : 
+                        {{ $file->security_level === 'public' ? 'bg-cyan-100 text-cyan-800' : 
+                           ($file->security_level === 'internal' ? 'bg-cyan-100 text-cyan-800' : 
                            ($file->security_level === 'confidential' ? 'bg-yellow-100 text-yellow-800' : 
                            'bg-red-100 text-red-800')) }}">
                         {{ ucfirst($file->security_level) }}
@@ -47,7 +47,7 @@
                 <embed src="{{ asset('storage/' . $file->path) }}" type="application/pdf" width="100%" height="600px">
             @else
                 <div class="flex items-center justify-center py-6">
-                    <a href="{{ route('registry.files.download', $file->id) }}" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition duration-150 ease-in-out">
+                    <a href="{{ route('registry.files.download', $file->id) }}" class="bg-cyan-500 hover:bg-cyan-600 text-white py-2 px-4 rounded-md transition duration-150 ease-in-out">
                         <span>Download {{ strtoupper($extension) }} File</span>
                     </a>
                 </div>
@@ -58,7 +58,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
                 <p class="mt-2 text-gray-600">This file type cannot be previewed</p>
-                <a href="{{ route('registry.files.download', $file->id) }}" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition duration-150 ease-in-out">
+                <a href="{{ route('registry.files.download', $file->id) }}" class="mt-4 bg-cyan-500 hover:bg-cyan-600 text-white py-2 px-4 rounded-md transition duration-150 ease-in-out">
                     <span>Download File</span>
                 </a>
             </div>
@@ -70,7 +70,7 @@
         <form method="POST" action="{{ route('registry.file-circulations.store') }}">
             @csrf
             <button type="submit"
-                class="bg-blue-600 hover:bg-blue-700 text-black font-semibold py-2 px-4 rounded shadow">
+                class="bg-cyan-600 hover:bg-cyan-700 text-black font-semibold py-2 px-4 rounded shadow">
                 Forward to Admin
             </button>
 

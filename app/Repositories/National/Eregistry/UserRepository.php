@@ -111,16 +111,30 @@ class UserRepository extends BaseRepository
      */
     public function pluck($column = 'first_name', $key = 'id')
     {
-        $organisationId = auth()->user()->organisation_id;
+        $ministry_id = auth()->user()->ministry_id;
 
         //return users name and id for the logged in organisation 
         //and with the role of 'admin'
         return $this->model->query()
-            ->where('organisation_id', $organisationId)
+            ->where('ministry_id', $ministry_id)
             ->orderBy($column)
             ->pluck($column, $key);
     }
 
+     /**
+     * Get a full list of users for dropdowns
+     * 
+     * @param string $column
+     * @param string $key
+     * @return \Illuminate\Support\Collection
+     */
+    public function list($column = 'name', $key = 'id') //return all organisations with only their id, name, code, location and organisation_type_id
+    {
+        return $this->model()::query()
+            ->orderBy('id')
+            ->orderBy($column)
+            ->get(['id', 'first_name', 'last_name']);
+    }
 
     /**
      * Get users with their division in a organisation
@@ -129,16 +143,18 @@ class UserRepository extends BaseRepository
      */
     public function getUsersDivision()
     {
-        // dd(Auth::user()->organisation_id);
+        // dd(Auth::user()->ministry_id);
 
         return $this->model->query()
-            ->select('users.id', 'users.first_name', 'users.last_name', 'divisions.name as division_name')
+            ->select('users.id', 'users.division_id', 'users.first_name', 'users.last_name', 'divisions.name as division_name')
             ->join('divisions', 'users.division_id', '=', 'divisions.id')
-            ->where('users.organisation_id', Auth::user()->organisation_id)
+            ->where('users.ministry_id', Auth::user()->ministry_id)
             ->orderBy('divisions.name')
             ->orderBy('users.first_name')
             ->orderBy('users.last_name')
             ->get();
     }
+
+
 
 }

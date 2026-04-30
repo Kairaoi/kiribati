@@ -107,6 +107,8 @@ class OrganisationTypeRepository extends BaseRepository
     {
         return $this->model->query()
             ->orderBy('id', 'asc')
+            ->where('name', '!=', 'Ministry')
+            ->where('name', '!=', 'State Owned Enterprise') 
             ->get(['id', 'name']);
 
     }

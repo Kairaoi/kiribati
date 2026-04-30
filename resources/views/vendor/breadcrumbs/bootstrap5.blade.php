@@ -1,5 +1,5 @@
 @unless ($breadcrumbs->isEmpty())
-    <nav aria-label="breadcrumb" class="mt-3 text-md text-blue-600">
+    <nav aria-label="breadcrumb" class="mt-3 text-md text-cyan-600">
         <ol class="breadcrumb">
             @foreach ($breadcrumbs as $breadcrumb)
 

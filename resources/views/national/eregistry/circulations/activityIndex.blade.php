@@ -8,7 +8,7 @@
         x-show="show"
         x-transition.opacity.scale.80
         x-init="setTimeout(() => show = false, 4000)" 
-        class="fixed right-0 bg-green-400 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 z-50">
+        class="fixed right-0 bg-cyan-400 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 z-50">
         <!-- Icon -->
         <svg xmlns="http://www.w3.org/2000/svg" 
              fill="none" 
@@ -30,17 +30,17 @@
 @endif
 
 {{-- <div class="container mx-auto font-montserrat px-4 max-w-7xl mt-2"> {{ Breadcrumbs::render('circulations.index') }} </div> --}}
-<div class="container mx-auto font-poppins px-4 py-8 max-w-5xl mt-3 rounded-md min-h-screen ">
+<div class="container mx-auto font-poppins px-4 py-8 max-w-6xl mt-3 rounded-md min-h-screen ">
     <div class="mb-4 flex items-start justify-between">
         <div>
             <h1 class="text-3xl font-bold tracking-wide">File Activity</h1>
             <p class="text-base text-gray-500 mt-1">
-                View your history and details of file circulations and actions taken.
+    
             </p>
         </div>
 
         {{-- <a href="{{ route('registry.files.create.withType',['createType' => 'internal']) }}"
-            class="inline-flex items-center mt-5 gap-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition">
+            class="inline-flex items-center mt-5 gap-2 px-4 py-2 bg-cyan-600 text-white text-sm rounded-md hover:bg-cyan-700 transition">
             <i class="fas fa-plus"></i>
             Create file circulation
         </a> --}}
@@ -53,9 +53,9 @@
                     <th>ID</th>
                     <th>Activity</th>
                     <th>Date</th>
-                    <th>File Subject</th>
+                    <th>Subject</th>
                     {{-- <th>Activity</th> --}}
-                    <th class="w-28">Actions</th>
+                    <th class="w-30">Actions</th>
                 </tr>
             </thead>
             <tbody></tbody> <!-- DataTable will populate this -->
@@ -93,7 +93,7 @@
         border-top: 0.5px solid #d3d3d8;
         color: #000000;
         font-family: 'Poppins', sans-serif;
-        padding: 0.5rem;
+        padding: 1.5rem;
         padding-top: 0.5rem; 
         padding-bottom: 1rem; 
         font-size: 0.9rem;
@@ -102,7 +102,7 @@
 
     .table.dataTable td {
         vertical-align: middle;
-        padding: 0.5rem;
+        padding: 1.5rem;
         color: #4c4c53;
         font-size: 0.9rem;
         
@@ -171,6 +171,48 @@
     }
 
 
+            /* Force green Excel button */
+            .excel-export-btn {
+                border: none !important;       /* Ensures no border, overrides any border below */
+                border-radius: 6px !important;
+                background-color: rgb(32, 180, 39) !important;
+                color: #ffffff;
+                padding: 0.25rem 0.75rem !important;   /* smaller padding */
+                box-shadow: none !important;          /* removes inner or outer shadow */
+                background-image: none !important;    /* removes gradient */
+                /* padding: 0.5rem 2rem; */
+                font-size: 0.7rem !important;
+                display: inline-flex;
+                align-items: center;
+            }
+
+            .excel-export-btn:hover {
+                background-color: #f3f4f6;  
+                transform: translateY(-1px);
+                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .pdf-export-btn {
+                border: none !important;       /* Ensures no border, overrides any border below */
+                border-radius: 6px !important;
+                background-color: rgb(238, 45, 45) !important;
+                color: #ffffff;
+                padding: 0.25rem 0.75rem !important;   /* smaller padding */
+                box-shadow: none !important;          /* removes inner or outer shadow */
+                background-image: none !important;    /* removes gradient */
+                /* padding: 0.5rem 2rem; */
+                font-size: 0.7rem !important;
+                display: inline-flex !important;
+                align-items: center;
+            }
+
+            .pdf-export-btn:hover {
+                background-color: #f3f4f6;  
+                transform: translateY(-1px);
+                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+            }
+
+
 </style>
 @endpush
 
@@ -190,6 +232,12 @@ $(document).ready(function() {
     $('#activityTable').DataTable({
         processing: true,
         serverSide: true,
+        language: {
+            paginate: {
+                previous: 'Previous ',
+                next: ' Next'
+            }
+        },
         ajax: {
             url: "{{ route('registry.file-circulations.activity.datatables') }}",  // Updated route
             type: 'POST',
@@ -198,7 +246,7 @@ $(document).ready(function() {
             }
         },
         columns: [
-            { data: 'id'},
+            { data: 'id', visible: false},
             { data: 'activity_type'},
             // {
             //     data: 'activity_type',
@@ -207,7 +255,7 @@ $(document).ready(function() {
             //         return '<span class="badge bg-yellow-500">Review</span>';
             //         }
             //         if (data === 'assigned') {
-            //         return '<span class="badge bg-green-500">Assigned</span>';
+            //         return '<span class="badge bg-cyan-500">Assigned</span>';
             //         }
             //         return data;
             //     }
@@ -232,7 +280,7 @@ $(document).ready(function() {
                 searchable: false,
                 render: function (data, type, row) {
                     return `
-                        <a href="/registry/file-circulations/${row.id}" class="btn btn-sm btn-info text-slate-900">View details</a>
+                        <a href="/registry/file-circulations/${row.id}" class="btn btn-sm btn-info text-slate-900">View</a>
                     `;
                 }
             }
@@ -243,6 +291,26 @@ $(document).ready(function() {
         dom: "<'row mb-3'<'col-md-6 d-flex align-items-center'B><'col-12 col-md-6 text-md-end text-start'f>>" +
                "<'row'<'col-sm-12'tr>>" +
                "<'row mt-3'<'col-sm-5'i><'col-sm-7'p>>",
+        buttons: [
+                        {
+                            extend: 'excelHtml5',
+                            text: '<i class="fas fa-download"></i> EXCEL',
+                            className: 'excel-export-btn',
+                            title: 'Circulations',
+                            exportOptions: {
+                                columns: ':not(:last-child)'
+                            }
+                        },
+                        {
+                            extend: 'pdfHtml5',
+                            text: '<i class="fas fa-download"></i> PDF',
+                            className: 'pdf-export-btn',
+                            title: 'Circulations',
+                            exportOptions: {
+                                columns: ':not(:last-child)'
+                            }
+                        }
+                    ]
       
     });
 

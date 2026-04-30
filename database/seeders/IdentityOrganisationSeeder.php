@@ -6,14 +6,14 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class OrganisationSeeder extends Seeder
+class IdentityOrganisationSeeder extends Seeder
 {
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
-        DB::table('organisations')->insert([
+        DB::table('identity_organisations')->insert([
 
             //ministries
             ['organisation_type_id' => '1',   'name' => 'Office of Te Beretitenti',                                'code' => 'OB',    'location' => 'Bairiki',  'created_by' => '1', 'updated_by' => '1'],
@@ -72,21 +72,19 @@ class OrganisationSeeder extends Seeder
             ['organisation_type_id' => '2',   'name' => 'Kiribati Coconut Development Limited',                   'code' => 'KCDL',   'location' => 'Betio',  'created_by' => '1', 'updated_by' => '1'],
             ['organisation_type_id' => '2',   'name' => 'Tourism Authority of Kiribati',                          'code' => 'TAK',    'location' => 'Betio',  'created_by' => '1', 'updated_by' => '1'],
 
-
-
-
-            //Diplomatic Missions
+            
+            // Diplomatic Missions
             ['organisation_type_id' => '3',   'name' => 'Australian High Commision',                              'code' => 'AHC',   'location' => 'Bairiki',  'created_by' => '1', 'updated_by' => '1'],
             ['organisation_type_id' => '3',   'name' => 'New Zealand High Commision',                             'code' => 'NZHC',   'location' => 'Bairiki',  'created_by' => '1', 'updated_by' => '1'],
             ['organisation_type_id' => '3',   'name' => "Embassy of the People's Republic of China",              'code' => 'EC',   'location' => 'Bairiki',  'created_by' => '1', 'updated_by' => '1'],
 
 
 
-            //International Organisations
+            // International Organisations
             ['organisation_type_id' => '4',   'name' => 'United Nations Development Programme',                   'code' => 'UNDP',  'location' => 'Bairiki',  'created_by' => '1', 'updated_by' => '1'],
             ['organisation_type_id' => '4',   'name' => 'World Health Organisation',                              'code' => 'WHO',   'location' => 'Bairiki',  'created_by' => '1', 'updated_by' => '1'],
             ['organisation_type_id' => '4',   'name' => 'Food and Agriculture Organisation',                      'code' => 'FAO',   'location' => 'Bairiki',  'created_by' => '1', 'updated_by' => '1'],
-            ['organisation_type_id' => '4',   'name' => 'Pacific Community (SPC)',                                'code' => 'SPC',   'location' => 'Bairiki',  'created_by' => '1', 'updated_by' => '1'],
+            ['organisation_type_id' => '4',   'name' => 'Pacific Community',                                      'code' => 'SPC',   'location' => 'Bairiki',  'created_by' => '1', 'updated_by' => '1'],
             ['organisation_type_id' => '4',   'name' => 'United Nations International Children\'s Emergency Fund','code' => 'UNICEF','location' => 'Bairiki',  'created_by' => '1', 'updated_by' => '1'],
             ['organisation_type_id' => '4',   'name' => "World Bank Group",                                      'code' => 'WBG',   'location' => 'Bairiki',  'created_by' => '1', 'updated_by' => '1'],
             ['organisation_type_id' => '4',   'name' => "Asian Development Bank",                                'code' => 'ADB',   'location' => 'Bairiki',  'created_by' => '1', 'updated_by' => '1'],
@@ -94,13 +92,12 @@ class OrganisationSeeder extends Seeder
             ['organisation_type_id' => '4',   'name' => "Other International Organisation",                      'code' =>  'OTG',  'location' =>  'Bairiki',  'created_by' =>  '1',  'updated_by' =>  '1'],
 
 
-
-            //Religious Organisations
+            // Religious Organisations
             ['organisation_type_id' => '5',   'name' => 'Catholic Church',                                       'code' =>  'RM',  'location' =>  'Bairiki',  'created_by' =>  '1',  'updated_by' =>  '1'],
             ['organisation_type_id' => '5',   'name' => 'Kiribati Uniting Church',                               'code' =>  'KUC',  'location' =>  'Bairiki',  'created_by' =>  '1',  'updated_by' =>  '1'],
             ['organisation_type_id' => '5',   'name' => 'Kiribati Protestant Church',                            'code' =>  'KPC',  'location' =>  'Bairiki',  'created_by' =>  '1',  'updated_by' =>  '1'],
             ['organisation_type_id' => '5',   'name' => 'The Church of Jesus Christ of Latter-day Saints',       'code' =>  'LDS',  'location' =>  'Bairiki',  'created_by' =>  '1',  'updated_by' =>  '1'],
-            ['organisation_type_id' => '5',   'name' => 'Bahai Faith',                                           'code' =>  'BF',  'location' =>  'Bairiki',  'created_by' =>  '1',  'updated_by' =>  '1'],
+            ['organisation_type_id' => '5',   'name' => 'Bahai Faith',                                           'code' =>  'BF',  'location' =>   'Bairiki', 'created_by' =>  '1',  'updated_by' =>  '1'],
             ['organisation_type_id' => '5',   'name' => 'Seventh-day Adventist Church',                          'code' =>  'SDA',  'location' =>  'Bairiki',  'created_by' =>  '1',  'updated_by' =>  '1'],
             ['organisation_type_id' => '5',   'name' => 'Other Religion',                                        'code' =>  'OR',  'location' =>  'Bairiki',  'created_by' =>  '1',  'updated_by' =>  '1'],
 

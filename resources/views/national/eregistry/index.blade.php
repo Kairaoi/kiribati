@@ -1,226 +1,151 @@
+
 @extends('layouts.app')
 
-@push('styles')
-<style>
-    body {
-        font-family: 'Montserrat', sans-serif;
-        color: #f3e8e8;
-        background-color: #154970;
-        line-height: 1.6;
-    }
-
-    /* General Container */
-    .container {
-        max-width: 1200px;
-        margin: 60px auto 0 auto; /* Top margin increased to 60px */
-        padding: 40px 20px;
-        
-    }
-
-
-    /* Tabs Styling */
-    .tabs {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 15px;
-        margin-bottom: 30px;
-    }
-
-    .tab {
-        padding: 12px 25px;
-        background-color: #ffffff;
-        border-radius: 30px;
-        cursor: pointer;
-        font-weight: 600;
-        color: #060e0e;
-        transition: all 0.3s ease;
-        font-family: 'Montserrat', sans-serif;
-        
-    }
-
-    .tab:hover {
-        background-color: #d3d6db;
-    }
-
-    .tab.active {
-        background-color: #0f58a7;
-        color: #ffffff;
-        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-    }
-
-    /* Tab Content */
-    .tab-content {
-        display: none;
-        background-color: #ffffff;
-        border-radius: 12px;
-        padding: 30px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-        font-family: 'Montserrat', sans-serif;
-        width: 80%;
-        margin: 0 auto;
-    }
-
-    .tab-content.active {
-        display: block;
-    }
-
-    /* Card Styling */
-    .card {
-        background: #ffffff;
-        border: 1px solid #e0e0e0;
-        border-radius: 12px;
-        padding: 30px;
-        text-align: center;
-        transition: transform 0.3s, box-shadow 0.3s;
-    }
-
-    .card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
-    }
-
-    .card-title {
-        font-size: 1.8rem;
-        font-weight: 600;
-        font-family: 'Montserrat', sans-serif;
-        color: #184f8a;
-        margin-bottom: 15px;
-    }
-
-    .card-text {
-        color: #6c757d;
-        font-size: 1rem;
-        margin-bottom: 20px;
-    }
-
-    .btn-primary {
-        background-color: #43b988;
-        border: none;
-        border-radius: 50px;
-        padding: 12px 30px;
-        font-weight: bold;
-        font-size: 1rem;
-        font-family: 'Montserrat', sans-serif;
-        color: #ffffff;
-        cursor: pointer;
-        transition: background-color 0.3s ease, transform 0.2s ease;
-        display: inline-block;
-        text-decoration: none;
-        width: 30%;
-        margin: 0 auto;
-    }
-
-    .btn-primary:hover {
-        background-color: #1c916e;
-        transform: scale(1.05);
-    }
-
-    /* Responsiveness */
-    @media (max-width: 768px) {
-        .tabs {
-            flex-direction: column;
-            align-items: center;
-        }
-    }
-
-</style>
-@endpush
-
 @section('content')
-{{-- <x-app-layout> --}}
+<div class="p-6 bg-gray-100 min-h-screen">
 
-<div class="container">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-700">E-Registry Dashboard</h1>
+        {{-- <div class="text-sm text-gray-500">Welcome back, {{ auth()->user()->name ?? 'User' }}</div> --}}
+    </div>
 
-    @role('registry')
-        <!-- Tabs Navigation -->
-        <div class="tabs" id="tabs">
-            @foreach ([ 
-                ['id' => 'dispatches', 'title' => 'Dispatches', 'icon' => '', 'route' => 'registry.dispatches.index'],
-                ['id' => 'circulations', 'title' => 'Circulations', 'icon' => '', 'route' => 'registry.file-circulations.index'],
-                // ['id' => 'files', 'title' => 'Archived Files', 'icon' => '', 'route' => 'registry.files.index'],
-        
-            ] as $tab)
-                <div class="tab {{ $loop->first ? 'active' : '' }}" data-tab="{{ $tab['id'] }}">
-                    <i class="{{ $tab['icon'] }}"></i> {{ $tab['title'] }}
-                </div>
-            @endforeach
+    <!-- Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+        <!-- Current Review Officer Card -->
+        <div class="bg-white p-4 rounded-2xl shadow border-l-4 border-cyan-500">
+            <p class="text-gray-500 text-sm">Current Review Officer</p>
+            <h2 class="text-lg font-semibold text-gray-700">
+                {{ optional($reviewOfficer)->name() ?? 'N/A' }}
+            </h2>
+            {{-- <a href="{{ route('registry.users.edit-review-officer' }}" --}}
+            <a href="{{ route('registry.users.edit-review-officer') }}"
+                class="inline-block mt-2 text-sm text-cyan-500 hover:underline">
+                Change
+            </a>
+        </div>
+        <div class="bg-white p-4 rounded-2xl shadow">
+            <p class="text-gray-500 text-sm">Total Files</p>
+            <h2 class="text-2xl font-bold text-cyan-500">{{ $totalFiles ?? 0 }}</h2>
+        </div>
+        <div class="bg-white p-4 rounded-2xl shadow">
+            <p class="text-gray-500 text-sm">Pending Review</p>
+            <h2 class="text-2xl font-bold text-yellow-500">{{ $pendingFiles ?? 0 }}</h2>
+        </div>
+        <div class="bg-white p-4 rounded-2xl shadow">
+            <p class="text-gray-500 text-sm">Reviewed and Officers</p>
+            <h2 class="text-2xl font-bold text-green-500">{{ $approvedFiles ?? 0 }}</h2>
+        </div>
+        <div class="bg-white p-4 rounded-2xl shadow">
+            <p class="text-gray-500 text-sm">Filed</p>
+            <h2 class="text-2xl font-bold text-blue-500">{{ $rejectedFiles ?? 0 }}</h2>
+        </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+
+        <!-- Recent Files Table -->
+        <div class="md:col-span-3 bg-white shadow p-4">
+            <div class="flex justify-between mb-4">
+                {{-- <h2 class="">Recent Files</h2> --}}
+                {{-- <a href="{{ route('registry.files.index') }}" class="text-cyan-500 text-sm">View All</a> --}}
+                <div class="flex mb-4 bg-gray-200 p-1 rounded-xl w-fit">
+    
+            <button 
+                onclick="switchTable('due')" 
+                id="tab-due"
+                class="tab-btn px-4 py-2 rounded-lg text-sm font-medium bg-cyan-700 text-white shadow">
+                Due Soon
+            </button>
+
+            <button 
+                onclick="switchTable('pending')" 
+                id="tab-pending"
+                class="tab-btn px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-cyan-600 hover:text-white transition">
+                Pending Actions
+            </button>
+
+        </div>
+            </div>
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left text-gray-500 border-b">
+                        <th class="pb-2">File Name</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($recentFiles ?? [] as $file)
+                        <tr class="border-b">
+                            <td class="py-2">{{ $file->name }}</td>
+                            <td>
+                                <span class="
+                                    @if($file->status == 'pending') text-yellow-500
+                                    @elseif($file->status == 'approved') text-green-500
+                                    @else text-red-500 @endif">
+                                    {{ ucfirst($file->status) }}
+                                </span>
+                            </td>
+                            <td>{{ $file->created_at->format('M d') }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="3" class="text-center py-3 text-gray-400">No files found</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
 
-        <!-- Tab Content -->
-        @foreach ([ 
-            ['id' => 'dispatches', 'title' => 'Dispatches', 'btn-title' => 'Manage Dispatches', 'description' => 'Manage all dispatches in your organisation', 'route' => 'registry.dispatches.index'],
-            ['id' => 'circulations', 'title' => 'Circulations', 'btn-title' => 'Manage Circulations', 'description' => 'Manage Circulations in your organisation', 'route' => 'registry.file-circulations.index'],
-            // ['id' => 'files', 'title' => 'Files', 'btn-title' => 'Manage All Files', 'description' => 'Manage All Files in your organisation', 'route' => 'registry.files.index'],
-        ] as $tab)
-            <div class="tab-content {{ $loop->first ? 'active' : '' }}" id="{{ $tab['id'] }}">
-                <div class="card">
-                    <h3 class="card-title">{{ $tab['title'] }}</h3>
-                    <p class="card-text">{{ $tab['description'] }}</p>
-                    <a href="{{ route($tab['route']) }}" class="btn btn-primary">{{ $tab['btn-title'] }}</a>
-                </div>
+        <!-- Quick Links -->
+        <div class="bg-white rounded-2xl text-sm shadow p-4">
+            <h2 class="font-semibold text-gray-700 mb-4">Quick Actions</h2>
+            <div class="space-y-2">
+                <a href="{{ route('registry.files.create', ['createType' => 'dispatch']) }}" class="block bg-gray-200 text-gray-700 text-center py-2 rounded-xl hover:bg-cyan-500">Create Dispatch</a>
+                {{-- <a href="{{ route('registry.files.create', ['createType' => 'internal']) }}" class="block bg-gray-200 text-gray-700 text-center py-2 rounded-xl hover:bg-cyan-500">Create Internal File</a> --}}
+                <a href="{{ route('registry.dispatches.index') }}" class="block bg-gray-200 text-gray-700 text-center py-2 rounded-xl hover:bg-cyan-500">Dispatches</a>
+                <a href="{{ route('registry.file-circulations.index') }}" class="block bg-gray-200 text-gray-700 text-center py-2 rounded-xl hover:bg-cyan-500">Incoming Files</a>
             </div>
-        @endforeach
-    @endrole
-
-    @role('user')
-        <!-- Tabs Navigation -->
-        <div class="tabs" id="tabs">
-            @foreach ([ 
-                // ['id' => 'filetypes', 'title' => 'File Types', 'icon' => 'bi bi-folder', 'route' => 'registry.file-types.create'],
-                ['id' => 'user-dispatches', 'title' => 'Dispatches', 'icon' => '', 'route' => 'registry.dispatches.user.index'],
-                ['id' => 'files-review', 'title' => 'Files For Review', 'icon' => 'bi bi-file-earmark', 'route' => 'registry.files.index'],
-                // ['id' => 'files-assigned', 'title' => 'Assigned Files', 'icon' => 'bi bi-file-earmark', 'route' => 'registry.files.index'],
-                // ['id' => 'organisations', 'title' => 'Ministries', 'icon' => 'bi bi-house-door', 'route' => 'registry.organisations.index'],
-                // ['id' => 'divisions', 'title' => 'Divisions', 'icon' => 'bi bi-building', 'route' => 'registry.divisions.index'],
-        
-            ] as $tab)
-                <div class="tab {{ $loop->first ? 'active' : '' }}" data-tab="{{ $tab['id'] }}">
-                    <i class="{{ $tab['icon'] }}"></i> {{ $tab['title'] }}
-                </div>
-            @endforeach
         </div>
 
-        <!-- Tab Content -->
-        @foreach ([ 
-            // ['id' => 'filetypes', 'title' => 'File Types', 'description' => 'View and manage the boards in the national registry.', 'route' => 'registry.file-types.create'], 
-            ['id' => 'dispatches', 'title' => 'Dispatches', 'description' => 'View and manage your file dispatches in the national registry', 'route' => 'registry.dispatches.user.index'],
-            ['id' => 'organisations', 'title' => 'Ministries', 'description' => 'View and manage the boards in the national registry.', 'route' => 'registry.organisations.index'],
-            // ['id' => 'divisions', 'title' => 'Divisions', 'description' => 'View and manage the boards in the national registry.', 'route' => 'registry.divisions.index'],
-        
-        ] as $tab)
-            <div class="tab-content {{ $loop->first ? 'active' : '' }}" id="{{ $tab['id'] }}">
-                <div class="card">
-                    <h3 class="card-title">{{ $tab['title'] }}</h3>
-                    <p class="card-text">{{ $tab['description'] }}</p>
-                    <a href="{{ route($tab['route']) }}" class="btn btn-primary">Go to {{ $tab['title'] }}</a>
-                </div>
-            </div>
-        @endforeach
-    @endrole
+    </div>
+
+    <!-- Secondary Tables -->
+    {{-- <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+
+        <!-- Pending Assignments -->
+        <div class="bg-white rounded-2xl shadow p-4">
+            <h2 class="font-semibold text-gray-700 mb-4">Pending Assignments</h2>
+            <ul class="text-sm space-y-2">
+                @forelse($pendingAssignments ?? [] as $item)
+                    <li class="flex justify-between border-b pb-1">
+                        <span>{{ $item->file->name ?? 'File' }}</span>
+                        <span class="text-yellow-500">Waiting</span>
+                    </li>
+                @empty
+                    <li class="text-gray-400">No pending assignments</li>
+                @endforelse
+            </ul>
+        </div>
+
+        <!-- Recently Approved -->
+        <div class="bg-white rounded-2xl shadow p-4">
+            <h2 class="font-semibold text-gray-700 mb-4">Recently Approved</h2>
+            <ul class="text-sm space-y-2">
+                @forelse($recentApproved ?? [] as $file)
+                    <li class="flex justify-between border-b pb-1">
+                        <span>{{ $file->name }}</span>
+                        <span class="text-green-500">Approved</span>
+                    </li>
+                @empty
+                    <li class="text-gray-400">No approved files</li>
+                @endforelse
+            </ul>
+        </div>
+
+    </div> --}}
 
 </div>
-
-@push('scripts')
-<script>
-    // JavaScript for switching between tabs
-    document.addEventListener('DOMContentLoaded', function() {
-        const tabs = document.querySelectorAll('.tab');
-        const tabContents = document.querySelectorAll('.tab-content');
-
-        tabs.forEach(tab => {
-            tab.addEventListener('click', function() {
-                // Remove active class from all tabs and content
-                tabs.forEach(t => t.classList.remove('active'));
-                tabContents.forEach(content => content.classList.remove('active'));
-
-                // Add active class to the clicked tab and its corresponding content
-                tab.classList.add('active');
-                const activeTabContent = document.getElementById(tab.getAttribute('data-tab'));
-                activeTabContent.classList.add('active');
-            });
-        });
-    });
-</script>
-@endpush
 @endsection

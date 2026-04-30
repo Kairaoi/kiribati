@@ -69,14 +69,14 @@ class DivisionRepository extends BaseRepository
      * @param string $sort
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function getForDataTable($search = '', $order_by = 'id', $sort = 'asc', $organisationId = null)
+    public function getForDataTable($search = '', $order_by = 'id', $sort = 'asc', $ministryId = null)
     {
         $query = $this->model->query()
-            ->select(['id', 'organisation_id', 'name', 'location', 'is_active']);
+            ->select(['id', 'ministry_id', 'name', 'location', 'is_active']);
 
-        // Apply organisation filter if provided
-        if (!is_null($organisationId)) {
-            $query->where('organisation_id', $organisationId);
+        // Apply ministry filter if provided
+        if (!is_null($ministryId)) {
+            $query->where('ministry_id', $ministryId);
         }
 
         // Apply search filter if provided
@@ -125,11 +125,11 @@ class DivisionRepository extends BaseRepository
 
     //Get the list of divisions for a specific organisation
     //used in create function in file controller
-    public function listWithOrganisation($organisationId)
+    public function listWithMinistry($ministryId)
     {
         return $this->model->query()
-            ->with('organisation') // Eager load the organisation relationship
-            ->where('organisation_id', $organisationId)
+            ->with('ministry') // Eager load the organisation relationship
+            ->where('ministry_id', $ministryId)
             ->orderBy('name')
             ->get();
     }

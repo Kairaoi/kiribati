@@ -4,7 +4,7 @@ namespace App\Http\Controllers\National\Eregistry;
 
 use App\Http\Controllers\Controller;
 use App\Models\National\Eregistry\Organisation;
-use App\Repositories\National\Eregistry\OrganisationRepository;
+use App\Repositories\National\Eregistry\MinistryRepository;
 use App\Repositories\National\Eregistry\UserRepository;
 use DB;
 use Illuminate\Http\Request;
@@ -12,17 +12,17 @@ use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\Facades\DataTables;
 
 
-class OrganisationController extends Controller
+class MinistryController extends Controller
 {
-    private $organisations;
+    private $ministries;
     private $users;
 
-    public function __construct(OrganisationRepository $organisations,
+    public function __construct(MinistryRepository $ministries,
                                 UserRepository $users
                                 )
     {
         $this->users = $users;
-        $this->organisations = $organisations;
+        $this->ministries = $ministries;
     }   
    
 
@@ -154,7 +154,7 @@ class OrganisationController extends Controller
             'review_officer_id' => 'required|exists:users,id',
         ]);
 
-        $organisation = Organisation::find($organisationId);
+        $organisation = Ministry::find($organisationId);
         $organisation->review_officer_id = $validated['review_officer_id'];
         $organisation->save();
 

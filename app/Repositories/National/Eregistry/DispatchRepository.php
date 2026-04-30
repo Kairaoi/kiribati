@@ -91,6 +91,8 @@ class DispatchRepository extends BaseRepository
                 'files.id as file_id',
                 'files.subject as file_subject',  // Include file name
                 'file_types.name as file_type_name',
+                'files.reference_no as reference_no',
+                'files.due_date as due_date',
                 DB::raw("CONCAT(creators.first_name, ' ', creators.last_name) as file_created_by"),
                 'divisions.name as owning_division_name', 
                 DB::raw("CONCAT(users.first_name, ' ', users.last_name) as dispatched_by_name"),

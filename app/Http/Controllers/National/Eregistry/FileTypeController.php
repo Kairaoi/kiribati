@@ -3,31 +3,32 @@
 namespace App\Http\Controllers\National\Eregistry;
 
 use App\Http\Controllers\Controller;
-use App\Repositories\National\Eregistry\FileTypeRepository;
+use App\Models\National\Eregistry\FileType;
 // use App\Repositories\National\Eregistry\FolderRepository;
-use App\Repositories\National\Eregistry\OrganisationRepository;
 use App\Repositories\National\Eregistry\DivisionRepository;
-
+use App\Repositories\National\Eregistry\FileTypeRepository;
+use App\Repositories\National\Eregistry\MinistryRepository;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Yajra\DataTables\Facades\DataTables;
 
 
 class FileTypeController extends Controller {
 
     private $fileTypes;
-    // private $folders;
-    private $organisations;
+    private $ministries;
     private $divisions;
 
     public function __construct(FileTypeRepository $fileTypes,
-    OrganisationRepository $organisations,
-    DivisionRepository $divisions)
+                                MinistryRepository $ministries,
+                                DivisionRepository $divisions)
     {
         $this->fileTypes = $fileTypes;
         // $this->folders = $folders;
-        $this->organisations = $organisations;
+        $this->ministries = $ministries;
         $this->divisions = $divisions;
     }
 
@@ -39,12 +40,23 @@ class FileTypeController extends Controller {
      */
     public function getDataTables(Request $request)
     {
+        $selectedType = $request->get('selected_type');
+
+        $ministryId = auth()->user()?->ministry_id;
+
+        if (!$ministryId) {
+            abort(403, 'Ministry not found');
+        }
+
         $search = $request->get('search', '') ;
         if (is_array($search)) {
             $search = $search['value'];
         }
-        $query = $this->fileTypes->getForDataTable($search);
+        
+        $query = $this->fileTypes->getForDataTable($selectedType, $ministryId, $search);
+        
         $datatables = DataTables::make($query)->make(true);
+        
         return $datatables;
     }
 
@@ -55,6 +67,7 @@ class FileTypeController extends Controller {
      */
     public function index()
     {
+
         return view('national.eregistry.file_types.index');
     }
 
@@ -68,34 +81,34 @@ class FileTypeController extends Controller {
         // if (!Auth::user()->can('file_type.create')) {
         //     abort(403, 'Unauthorized action.');
         // }
-        $fileTypes = $this->fileTypes->pluck();
+        $fileTypes = $this->fileTypes->getFileTypes();
         // dd($fileTypes); 
         return view('national.eregistry.file_types.create')->with('fileTypes', $fileTypes);
     }
 
     public function dynamicForm($fileTypeId)
-{ 
-    \Log::info('Dynamic form called with ID: ' . $fileTypeId);
+    { 
+        \Log::info('Dynamic form called with ID: ' . $fileTypeId);
 
-    $fileType = $this->fileTypes->getById($fileTypeId);
-    
-    if (!$fileType) {
-        return response()->json(['message' => 'File type not found'], 404);
+        $fileType = $this->fileTypes->getById($fileTypeId);
+        
+        if (!$fileType) {
+            return response()->json(['message' => 'File type not found'], 404);
+        }
+        
+        if ($fileType->type === 'Outward') {
+            return view('national.eregistry.outward_files.create', [
+                // 'folders' => $this->folders->pluck(),
+                'organisations' => $this->organisations->pluck(),
+                'divisions' => $this->divisions->pluck(),
+                'fileTypes' => $this->fileTypes->pluck(),
+            ])->render();
+        } elseif ($fileType->type === 'Inward') {
+            return view('national.eregistry.file_types.inward_create')->render();
+        }
+        
+        return response()->json(['message' => 'Invalid file type'], 400);
     }
-    
-    if ($fileType->type === 'Outward') {
-        return view('national.eregistry.outward_files.create', [
-            // 'folders' => $this->folders->pluck(),
-            'organisations' => $this->organisations->pluck(),
-            'divisions' => $this->divisions->pluck(),
-            'fileTypes' => $this->fileTypes->pluck(),
-        ])->render();
-    } elseif ($fileType->type === 'Inward') {
-        return view('national.eregistry.file_types.inward_create')->render();
-    }
-    
-    return response()->json(['message' => 'Invalid file type'], 400);
-}
     
 
     /**
@@ -106,21 +119,59 @@ class FileTypeController extends Controller {
      */
     public function store(Request $request)
     {
-        if (!Auth::user()->can('file_type.store')) {
-            abort(403, 'Unauthorized action.');
-        }
+        // if (!Auth::user()->can('file_type.store')) {
+        //     abort(403, 'Unauthorized action.');
+        // }
 
-        $input = $request->all();
+        $validated = $request->validate([
+            'name' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
 
-        // Validate the input here, for example:
-        // $request->validate([
-        //     'name' => 'required|string|unique:file_types',
-        //     'description' => 'nullable|string',
-        // ]);
+                    $orgId = auth()->user()->ministry_id;
 
-        $this->fileTypes->create($input);
+                    $exists = DB::table('file_types')
+                        ->where('name', $value)
+                        ->where(function ($q) use ($orgId) {
+                            $q->where('is_global', 1)
+                            ->orWhere('ministry_id', $orgId);
+                        })
+                        ->exists();
 
-        return redirect()->route('file_type.index')->with('message', 'File Type created successfully.');
+                    if ($exists) {
+                        $fail('The name is already taken.');
+                    }
+                },
+            ],
+            'description' => 'nullable|string',
+            'code' => [
+                'required',
+                'string',
+                'min:2',
+                'max:3',
+                'regex:/^[A-Z]{2,3}$/',
+                Rule::unique('file_types')->where(function ($query) {
+                    $orgId = auth()->user()->ministry_id;
+
+                    $query->where(function ($q) use ($orgId) {
+                        $q->where('is_global', 1)
+                        ->orWhere('ministry_id', $orgId);
+                    });
+                }),
+            ],
+        ]);
+
+        FileType::create([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'code' => $validated['code'],
+            'ministry_id' => auth()->user()->ministry_id,
+            'is_global' => false,
+        ]);
+
+        return redirect()->route('registry.file-types.index')->with('message', 'File Type created successfully.');
+    
     }
 
      /**
@@ -138,6 +189,37 @@ class FileTypeController extends Controller {
         $fileType = $this->fileTypes->getById($id);
 
         return view('national.eregistry.file_types.show')->with('fileType', $fileType);
+    }
+
+
+    public function suggestions(Request $request)
+    {
+        $query = $request->q;
+        $orgId = auth()->user()->ministry_id;
+
+        return FileType::where('name', 'LIKE', "%{$query}%")
+            ->where(function ($q) use ($orgId) {
+                $q->where('ministry_id', $orgId)
+                ->orWhere('is_global', 1);
+            })
+            ->distinct()
+            ->pluck('name');
+        // Log::info('suggestions called by user: ' . auth()->id());
+        // return ['Test1', 'Test2', 'Test3'];
+    }
+
+    public function codeSuggestions(Request $request)
+    {
+        $query = $request->q;
+        $orgId = auth()->user()->ministry_id;
+
+        return FileType::where('code', 'LIKE', "%{$query}%")
+            ->where(function ($q) use ($orgId) {
+                $q->where('ministry_id', $orgId)
+                ->orWhere('is_global', 1);
+            })
+            ->distinct()
+            ->pluck('code');
     }
 
     /**

@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\National\Eregistry\Division;
-use App\Models\National\Eregistry\Organisation;
+use App\Models\National\Eregistry\Ministry;
 use App\Models\Role;
 use App\Models\User;
 use Carbon\Carbon;
@@ -38,24 +38,24 @@ class MICTUserSeeder extends Seeder
         $admin = User::where('email', 'admin@system.gov.ki')->first();
 
         // get the MICT organisation
-        $organisation = Organisation::where('code', 'MICT')->first();
+        $ministry = Ministry::where('code', 'MICT')->first();
         $dtoDivision = Division::where('name', 'Digital Transformation Office')->first();
         $marineDivision = Division::where('name', 'Marine Division')->first();
         $corporateDivision = Division::where('name', 'Corporate Services')->first();
 
 
-        $admin->update(['organisation_id' => $organisation->id]);
+        $admin->update(['ministry_id' => $ministry->id]);
         $admin->update(['division_id' => $dtoDivision->id]);
         $admin->save();
 
-        if (!$organisation) {
-            $this->command->error('MICT organisation not found. Please run Organisation Seeder first.');
+        if (!$ministry) {
+            $this->command->error('MICT ministry not found. Please run Ministry Seeder first.');
             return;
         }
 
 
-        // Now update the admin user with the organisation_id
-        $adminUser->organisation_id = $organisation->id;
+        // Now update the admin user with the ministry_id
+        $adminUser->ministry_id = $ministry->id;
         $adminUser->save();
 
         // Assign admin role to the system admin
@@ -68,14 +68,14 @@ class MICTUserSeeder extends Seeder
                 'first_name' => 'Mitateti',
                 'last_name' => 'Mote',
                 'password' => Hash::make('secretary'),
-                'organisation_id' => $organisation->id,
+                'ministry_id' => $ministry->id,
                 'division_id' => $corporateDivision->id,
                 'deleted_at' => null
             ]
         );
-        $user1->assignRole('admin');
-        $organisation->review_officer_id = $user1->id;
-        $organisation->save();
+        $user1->assignRole('sro');
+        $user1->assignRole('review-officer');
+        $ministry->save();
 
         $user2 = User::withTrashed()->updateOrCreate(
             ['email' => 'ds@mict.gov.ki'],
@@ -83,7 +83,7 @@ class MICTUserSeeder extends Seeder
                 'first_name' => 'Aoniba',
                 'last_name' => 'Riare',
                 'password' => Hash::make('ds'),
-                'organisation_id' => $organisation->id,
+                'ministry_id' => $ministry->id,
                 'division_id' => $corporateDivision->id,
                 'deleted_at' => null
             ]
@@ -96,7 +96,7 @@ class MICTUserSeeder extends Seeder
                 'first_name' => 'Betty',
                 'last_name' => 'Mapuola',
                 'password' => Hash::make('sas'),
-                'organisation_id' => $organisation->id,
+                'ministry_id' => $ministry->id,
                 'division_id' => $corporateDivision->id,
                 'deleted_at' => null
             ]
@@ -107,15 +107,16 @@ class MICTUserSeeder extends Seeder
         $user4 = User::withTrashed()->updateOrCreate(
             ['email' => 'om@mict.gov.ki'],
             [
-                'first_name' => 'Tebikia',
-                'last_name' => 'John',
+                'first_name' => 'Tiiro',
+                'last_name' => 'Tongaiaba',
                 'password' => Hash::make('om'),
-                'organisation_id' => $organisation->id,
+                'ministry_id' => $ministry->id,
                 'division_id' => $corporateDivision->id,
                 'deleted_at' => null
             ]
         );
         $user4->assignRole('registry');
+
 
         $user5 = User::withTrashed()->updateOrCreate(
             ['email' => 'alice@mict.gov.ki'],
@@ -123,7 +124,7 @@ class MICTUserSeeder extends Seeder
                 'first_name' => 'Alice',
                 'last_name' => 'Wonderland',
                 'password' => Hash::make('alice'),
-                'organisation_id' => $organisation->id,
+                'ministry_id' => $ministry->id,
                 'division_id' => $marineDivision->id,
                 'deleted_at' => null
             ]
@@ -136,7 +137,7 @@ class MICTUserSeeder extends Seeder
                 'first_name' => 'Rheisel',
                 'last_name' => 'Teataa',
                 'password' => Hash::make('rheisel'),
-                'organisation_id' => $organisation->id,
+                'ministry_id' => $ministry->id,
                 'division_id' => $dtoDivision->id,
                 'deleted_at' => null
             ]

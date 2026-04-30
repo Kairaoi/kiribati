@@ -6,6 +6,15 @@
 {{-- <div class="container mx-auto font-poppins px-8 max-w-5xl mt-1"> {{ Breadcrumbs::render('files.create.withType', $createType) }} </div> --}}
 
 <div class="container bg-white mx-auto font-poppins px-6 py-10 max-w-5xl mt-4 rounded-md min-h-screen border border-gray-600">
+    @if($editType === 'dispatch')
+        <h1 class="flex items-center justify-center text-m font-semibold text-gray-800 tracking-wide mb-4">
+            Edit Dispatch
+        </h1>
+    @elseif($editType === 'internal')
+        <h1 class="flex items-center justify-center text-m font-semibold text-gray-800 tracking-wide mb-4">
+            Edit Internal File
+        </h1>
+    @endif
     
     @if ($errors->any())
         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -157,7 +166,7 @@
                     <div class="mb-2">
                         <a href="{{ asset('storage/' . $file->main_file_path) }}" 
                         target="_blank"
-                        class="text-blue-600 text-sm hover:text-blue-800 underline">
+                        class="text-cyan-600 text-sm hover:text-cyan-800 underline">
                             {{ basename($file->main_file_path) }}
                         </a>
                     </div>
@@ -171,11 +180,9 @@
                             file:mr-4 file:py-2 file:px-4
                             file:border-0
                             file:text-sm file:font-semibold
-                            file:bg-blue-50 file:text-blue-700
-                            hover:file:bg-blue-100">
+                            file:bg-cyan-50 file:text-cyan-700
+                            hover:file:bg-cyan-100">
             
-        
-        
                 <!-- Additional Files Section -->
                 <div id="file-upload-container" class="space-y-4">
 
@@ -187,9 +194,8 @@
                     @if(!empty($file->additional_file_paths))
                         @foreach($file->additional_file_paths as $index => $path)
                             <div class="flex items-center gap-3 text-sm mb-1">
-
                                 <!-- View File -->
-                                <a href="{{ asset('storage/' . $path) }}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">
+                                <a href="{{ asset('storage/' . $path) }}" target="_blank" class="text-cyan-600 hover:text-cyan-800 underline">
                                     {{ basename($path) }}
                                 </a>
 
@@ -200,11 +206,9 @@
                                         value="{{ $path }}">
                                     Remove
                                 </label>
-
                             </div>
                         @endforeach
                     @endif
-
 
                     {{-- Upload Inputs --}}
                     <div class="file-upload-item text-sm relative">
@@ -213,19 +217,17 @@
                                 file:mr-4 file:py-2 file:px-4
                                 file:border-0
                                 file:text-sm file:font-semibold
-                                file:bg-blue-50 file:text-blue-700
-                                hover:file:bg-blue-100">
+                                file:bg-cyan-50 file:text-cyan-700
+                                hover:file:bg-cyan-100">
                     </div>
 
                     <button type="button" id="add-file-button"
                         class="w-full inline-flex justify-start text-purple-700 underline text-sm">
                         + Additional File
                     </button>
-
                 </div>
             </div>
         
-
         <!-- Recipient Ministries Section -->
         @if($editType === 'dispatch')
             <input type="hidden" name="initial_type" value="dispatch">
@@ -270,7 +272,7 @@
         <div class="mt-6 border-t border-gray-300"></div>
 
         <div class="text-center">
-            <button type="submit" class="mt-10 mb-2 w-1/4 bg-green-700 text-white py-2 px-8 rounded-lg hover:bg-green-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+            <button type="submit" class="mt-10 mb-2 w-1/4 bg-cyan-700 text-white py-2 px-8 rounded-lg hover:bg-cyan-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                 Save changes
             </button>
         </div>
@@ -302,8 +304,8 @@
                             file:mr-4 file:py-2 file:px-4
                             file:border-0
                             file:text-sm file:font-semibold
-                            file:bg-blue-50 file:text-blue-700
-                            hover:file:bg-blue-100">                
+                            file:bg-cyan-50 file:text-cyan-700
+                            hover:file:bg-cyan-100">                
                         </div>                    
                         <button type="button" class="remove-file-button mt-2 inline-flex items-center px-3 py-1 bg-red-600 text-white text-sm rounded-md hover:bg-red-700">
                         Remove File

@@ -10,7 +10,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                 <p class="text-xs text-gray-500">Name</p>
-                <p class="text-lg font-medium text-blue-600">
+                <p class="text-lg font-medium text-cyan-600">
                     {{ $organisation->reviewOfficer ? $organisation->reviewOfficer->first_name . ' ' . 
                                                                                         $organisation->reviewOfficer->last_name : 'N/A' 
                     }}
@@ -18,7 +18,7 @@
             </div>
             <div>
                 <p class="text-xs text-gray-500">Division</p>
-                <p class="text-lg font-medium text-blue-600">
+                <p class="text-lg font-medium text-cyan-600">
                     {{ $organisation->reviewOfficer ? $organisation->reviewOfficer->division->name : 'N/A'}}
                 </p>
             </div>
@@ -29,7 +29,7 @@
             @csrf
             @method('PATCH')
 
-            <select name="review_officer_id" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:ring focus:ring-blue-200">
+            <select name="review_officer_id" class="w-full border border-gray-300 rounded-md px-4 py-2 focus:ring focus:ring-cyan-200">
 
                 <option value="">Select review officer</option>
                     @foreach ($usersWithDivision as $user)

@@ -3,10 +3,10 @@
 namespace App\Repositories\National\Eregistry;
 
 use App\Repositories\BaseRepository;
-use App\Models\National\Eregistry\Organisation;
+use App\Models\National\Eregistry\Ministry;
 use Illuminate\Support\Facades\Auth;
 
-class OrganisationRepository extends BaseRepository
+class MinistryRepository extends BaseRepository
 {
     protected $auth;
 
@@ -26,14 +26,14 @@ class OrganisationRepository extends BaseRepository
      */
     public function model()
     {
-        return Organisation::class;
+        return Ministry::class;
     }
 
     /**
-     * Create a new organisation record
+     * Create a new global organisation record
      * 
      * @param array $input
-     * @return Organisation
+     * @return IdentityOrganisation
      */
     public function create(array $input)
     {
@@ -50,13 +50,13 @@ class OrganisationRepository extends BaseRepository
     }
 
     /**
-     * Update an existing organisation record
+     * Update an existing global organisation record
      * 
-     * @param Organisation $model
+     * @param Ministry $model
      * @param array $input
      * @return bool
      */
-    public function update(Organisation $model, array $input)
+    public function update(Ministry $model, array $input)
     {
         $data = [
             'name' => $input['name'],
@@ -108,73 +108,26 @@ class OrganisationRepository extends BaseRepository
     public function pluck($column = 'name', $key = 'id')
     {
         return $this->model()::query()
-
             ->orderBy($column)
-            ->pluck($column, $key);
+            ->pluck($column, $key, 'code');
     }
 
     /**
-     * Get a full list of organisations for dropdowns
+     * Get a full list of ministries for dropdowns
      * 
      * @param string $column
      * @param string $key
      * @return \Illuminate\Support\Collection
      */
     public function list($column = 'name', $key = 'id') //return all organisations with only their id, name, code, location and organisation_type_id
-
     {
         return $this->model()::query()
             ->orderBy('id')
             ->orderBy($column)
-            ->get(['id', 'name', 'code', 'location', 'organisation_type_id']);
-
+            ->get(['id', 'name', 'code']);
     }
 
-
-    public function listMinistries($column = 'name', $key = 'id') //Get only ministries
-    {
-        return $this->model()::query()
-            ->where('organisation_type_id', 1) // '1' is the ID for ministries
-            ->orderBy($column)
-            ->pluck($column, $key);
-    }
+    
 
 
-    //Get only SOEs
-    public function listSoes($column = 'name', $key = 'id') 
-    {
-        return $this->model()::query()
-            ->where('organisation_type_id', 2) 
-            ->orderBy($column)
-            ->pluck($column, $key);
-    }
-
-
-    //Get only Diplomatics Missions
-    public function listDiplomatics($column = 'name', $key = 'id')
-    {
-        return $this->model()::query()
-            ->where('organisation_type_id', 3) 
-            ->orderBy($column)
-            ->pluck($column, $key);
-    }
-
-
-    //Get only Religious Organisations
-    public function listReligions($column = 'name', $key = 'id') 
-    {
-        return $this->model()::query()
-            ->where('organisation_type_id', 8)
-            ->orderBy($column)
-            ->pluck($column, $key);
-    }
-
-
-
-    public function getLoggedInOrganisation()
-    {
-        return $this->model()::query()
-            ->where('id', $this->auth->organisation_id)
-            ->first();
-    }
 }

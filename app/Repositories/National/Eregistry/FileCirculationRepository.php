@@ -77,22 +77,19 @@ class FileCirculationRepository extends BaseRepository
             $query = $this->model->query()
                 ->select([
                     'file_circulations.id as id',
+                    'file_circulations.status as circulation_status',
+                    'files.initial_type as initial_status',
                     'files.subject as file_subject',  
                     'files.id as file_id',           
-                    'files.letter_date',
-                    'files.letter_ref_no',
-                    // 'organisations.code as file_organisation_code',  
-                    'organisations.name as file_organisation_name',  
-                    'file_types.name as file_type_name', 
+                    'files.letter_date as file_date' ,
+                    'files.reference_no as reference_no',
                     'file_recipients.status as file_recipient_status',
-                    'dispatches.dispatch_date as dispatch_date',
                     'file_circulations.to_review_file as file_reviewer',
                     DB::raw("CONCAT(reviewers.first_name, ' ', reviewers.last_name) as reviewer_name"),
-                    'files.initial_type as file_initial_type',
                     DB::raw('GROUP_CONCAT(officers.first_name, " ", officers.last_name SEPARATOR ", ") as officers')
                 ])
                 ->join('files', 'file_circulations.file_id', '=', 'files.id')
-                ->join('file_recipients', function ($join) use ($userOrgId)  {
+                ->leftJoin('file_recipients', function ($join) use ($userOrgId)  {
                     $join->on('files.id', '=', 'file_recipients.file_id')
                         ->where('file_recipients.organisation_id', $userOrgId);
                 })
@@ -108,15 +105,13 @@ class FileCirculationRepository extends BaseRepository
                         ->where('archives.organisation_id', $userOrgId);
                 })
                 ->whereNull('archives.file_id')
-                //
-                ->leftJoin('file_circulation_officer', function ($join) {
-                    $join->on('file_circulations.id', '=', 'file_circulation_officer.file_circulation_id');
+                ->leftJoin('file_assignments', function ($join) {
+                    $join->on('file_circulations.id', '=', 'file_assignments.file_circulation_id');
                  })
-                ->leftJoin('users as officers', 'file_circulation_officer.officer_id', '=', 'officers.id')
+                ->leftJoin('users as officers', 'file_assignments.officer_id', '=', 'officers.id')
                 ->where('file_circulations.to_organisation_id', $userOrgId)
                 ->groupBy('file_circulations.id', 'file_recipients.status', 'dispatches.dispatch_date', 'reviewers.first_name', 'reviewers.last_name');
         
-                
 
             if (!empty($search)) {
                 $search = '%' . strtolower($search) . '%';
@@ -131,16 +126,18 @@ class FileCirculationRepository extends BaseRepository
 
     }
 
-    public function getForReviewDataTable($search = '', $userId, $order_by = 'file_circulations.id', $sort = 'desc')
+    public function getForReviewDataTable($search = '', $order_by = 'file_circulations.id', $sort = 'desc')
     {
 
             $query = $this->model->query()
                 ->select([
                     'file_circulations.id as id',
-                    // 'files.name as file_name',                
+                    'files.subject as file_subject',                
                     'files.letter_date as file_date',
+                    'files.reference_no as reference_no',
                     'organisations.code as organisation_code',  
                     'file_recipients.status as file_recipient_status',
+                    
                 ])
                 ->join('files', 'file_circulations.file_id', '=', 'files.id')
                 ->join('file_recipients', function ($join) {
@@ -155,7 +152,43 @@ class FileCirculationRepository extends BaseRepository
             if (!empty($search)) {
                 $search = '%' . strtolower($search) . '%';
                 $query->where(function ($q) use ($search) {
-                    $q->whereRaw('LOWER(files.name) LIKE ?', [$search])
+                    $q->whereRaw('LOWER(files.subject) LIKE ?', [$search])
+                    ->orWhereRaw('LOWER(files.letter_ref_no) LIKE ?', [$search])
+                    ->orWhereRaw('LOWER(organisations.name) LIKE ?', [$search]); // fixed this
+                });
+            }
+
+            return $query->orderBy($order_by, $sort);
+    }
+
+    public function getForSecretaryDataTable($search = '', $order_by = 'file_circulations.id', $sort = 'desc')
+    {
+            $query = $this->model->query()
+                ->select([
+                    'file_circulations.id as id',
+                    'files.subject as file_subject',                
+                    'files.letter_date as file_date',
+                    'file_circulations.status as circulation_status',
+                    'files.initial_type as initial_status',
+                    'files.reference_no as reference_no',
+                    'organisations.code as organisation_code',  
+                    'file_recipients.status as file_recipient_status',
+                    DB::raw("CONCAT(reviewers.first_name, ' ', reviewers.last_name) as reviewer_name"),
+
+                ])
+                ->join('files', 'file_circulations.file_id', '=', 'files.id')
+                ->leftJoin('file_recipients', function ($join) {
+                    $join->on('files.id', '=', 'file_recipients.file_id')
+                        ->where('file_recipients.organisation_id', Auth::user()->organisation_id);
+                })
+                ->join('users as reviewers', 'file_circulations.to_review_file', '=', 'reviewers.id') // Join to get reviewer details
+                ->join('organisations', 'files.organisation_id', '=', 'organisations.id')
+                ->where('file_circulations.to_organisation_id', Auth::user()->organisation_id);
+                
+            if (!empty($search)) {
+                $search = '%' . strtolower($search) . '%';
+                $query->where(function ($q) use ($search) {
+                    $q->whereRaw('LOWER(files.subject) LIKE ?', [$search])
                     ->orWhereRaw('LOWER(files.letter_ref_no) LIKE ?', [$search])
                     ->orWhereRaw('LOWER(organisations.name) LIKE ?', [$search]); // fixed this
                 });
@@ -173,6 +206,8 @@ class FileCirculationRepository extends BaseRepository
                     'file_circulations.id as id',
                     'files.subject as file_subject',
                     'files.letter_date as file_date',
+                    'files.reference_no as reference_no',
+
                     // DB::raw("'review' as activity_type")
                 ])
                 ->selectRaw("'review' as activity_type")
@@ -189,6 +224,8 @@ class FileCirculationRepository extends BaseRepository
                     'file_circulations.id as id',
                     'files.subject as file_subject',
                     'files.letter_date as file_date',
+                    'files.reference_no as reference_no',
+
                     // DB::raw("'assigned' as activity_type")
                 ])
                 ->selectRaw("'assigned' as activity_type")
@@ -225,10 +262,10 @@ class FileCirculationRepository extends BaseRepository
                         ->where('file_recipients.organisation_id', Auth::user()->organisation_id)
                         ->where('file_recipients.status', 'Assigned');
                 })
-                ->join('file_circulation_officer', function ($join) {
-                    $join->on('file_circulations.id', '=', 'file_circulation_officer.file_circulation_id')
-                        ->where('file_circulation_officer.officer_id', Auth::user()->id)
-                        ->where('file_circulation_officer.status', 'pending');
+                ->join('file_assignments', function ($join) {
+                    $join->on('file_circulations.id', '=', 'file_assignments.file_circulation_id')
+                        ->where('file_assignments.officer_id', Auth::user()->id);
+                        // ->where('file_assignments.status', 'pending');
                 })
                 ->join('organisations', 'files.organisation_id', '=', 'organisations.id')
                 ->where('file_circulations.to_organisation_id', Auth::user()->organisation_id);
@@ -290,11 +327,11 @@ class FileCirculationRepository extends BaseRepository
      */
     public function pluck($column = 'name', $key = 'id')
     {
-        $organisationId = auth()->user()->organisation_id;
+        $ministryId = auth()->user()->ministry_id;
     
         return $this->model()::query()
-                ->where('organisation_id', $organisationId)
-                ->where('is_active', true) 
+                ->where('to_ministry_id', $ministryId)
+                ->where('is_active', true)
                 ->orderBy($column)
                 ->pluck($column, $key);
     }
@@ -307,8 +344,23 @@ class FileCirculationRepository extends BaseRepository
             ->pluck($column, $key);
     }    
 
- 
-        
+    
+    public function ministryCirculations($fileId, $ministryId)
+    {
+        return $this->model()::query()
+            ->where('file_id', $fileId)
+            ->where('to_ministry_id', '!=', $ministryId);
+    }
+
+    public function thisCirculation($fileId, $ministryId)
+    {
+        return $this->model()::query()
+            ->where('file_id', $fileId)
+            ->where('to_ministry_id', $ministryId)
+            ->latest()
+            ->first();
+    }
+    
 
 }
 

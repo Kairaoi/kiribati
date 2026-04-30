@@ -15,25 +15,30 @@ class FileCirculation extends Model
 
     protected $fillable = [
         'file_id',
-        'from_organisation_id',
-        'to_organisation_id',
+        'dispatch_id',
+        'to_ministry_id',
         'circulated_by',
         'circulated_at',
         'to_review_file',
-        'assigned_officer',
         'read_at',
         'read_status',
         'requires_action',
         'action_taken',
         'updated_by',
-        'assigned_division_id',
         'review_comment',
-    ];
+        'date_reviewed',
+        'status',
+        ];
 
 
     public function file()
     {
         return $this->belongsTo(File::class);
+    }
+
+    public function dispatch()
+    {
+        return $this->belongsTo(Dispatch::class);
     }
 
     public function recipientMinistries()
@@ -43,7 +48,12 @@ class FileCirculation extends Model
 
     public function fromOrganisation()
     {
-        return $this->belongsTo(Organisation::class);
+        return $this->morphTo(null, 'from_type', 'from_id');
+    }
+
+    public function toMinistry()
+    {
+        return $this->belongsTo(Ministry::class, 'to_ministry_id');
     }
 
     public function circulatedBy()
@@ -56,17 +66,17 @@ class FileCirculation extends Model
         return $this->belongsTo(User::class, 'to_review_file');
     }
 
-    public function assignedOfficers()
+    public function assignments()
     {
-        return $this->belongsToMany(User::class, 'file_circulation_officer', 'file_circulation_id', 'officer_id')
-                    ->withPivot('status', 'date_assigned', 'date_completed')
-                    ->withTimestamps();
+        return $this->hasMany(FileAssignment::class, 'file_circulation_id');
     }
 
-    // public function assignedDivision()
-    // {
-    //     return $this->belongsTo(Division::class, 'assigned_division_id');
-    // }
+    public function activeAssignments()
+    {
+        return $this->hasMany(FileAssignment::class, 'file_circulation_id')->where('is_active', true);
+    }
+
+   
 
     public function createdBy()
     {
@@ -82,9 +92,7 @@ class FileCirculation extends Model
     public function scopeOfType($query, int $userOrgId, array $filterOrgIds = [])
     {
 
-        //Remove "All" if present
         $filterOrgIds = array_filter($filterOrgIds);
-        // $filterOrgIds = array_filter($filterOrgIds, fn($id) => $id !== 'all');
 
         //Files received by user's organisation
         $query->whereHas('file.recipientMinistries', function ($q) use ($userOrgId) {

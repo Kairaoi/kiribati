@@ -12,7 +12,7 @@
 
     <div class="bg-white rounded-lg shadow-lg overflow-hidden">
         <table id="divisionsTable" class="table w-full">
-            <thead class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
+            <thead class="bg-gradient-to-r from-cyan-500 to-indigo-500 text-white">
                 <tr>
                     <th class="w-16">ID</th>
                     {{-- <th class="w-32">Organisation</th> --}}
@@ -31,10 +31,10 @@
 <div id="actionDropdownTemplate" class="hidden">
     <div class="dropdown-menu">
         <a class="dropdown-item view-btn" href="#">
-            <i class="fas fa-eye text-blue-500 mr-2"></i> View
+            <i class="fas fa-eye text-cyan-500 mr-2"></i> View
         </a>
         <a class="dropdown-item edit-btn" href="#">
-            <i class="fas fa-edit text-green-500 mr-2"></i> Edit
+            <i class="fas fa-edit text-cyan-500 mr-2"></i> Edit
         </a>
         <a class="dropdown-item delete-btn" href="#">
             <i class="fas fa-trash text-red-500 mr-2"></i> Delete
@@ -220,10 +220,10 @@ $(document).ready(function() {
        const dropdown = $(` 
            <div class="dropdown-menu" style="display:none;">
                <a class="dropdown-item" href="${route('registry.divisions.show', rowId)}">
-                   <i class="fas fa-eye text-blue-500 mr-2"></i> View
+                   <i class="fas fa-eye text-cyan-500 mr-2"></i> View
                </a>
                <a class="dropdown-item" href="${route('registry.divisions.edit', rowId)}">
-                   <i class="fas fa-edit text-green-500 mr-2"></i> Edit
+                   <i class="fas fa-edit text-cyan-500 mr-2"></i> Edit
                </a>
                <a class="dropdown-item delete-action" href="#" data-id="${rowId}">
                    <i class="fas fa-trash text-red-500 mr-2"></i> Delete

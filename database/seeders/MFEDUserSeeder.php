@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\National\Eregistry\Division;
-use App\Models\National\Eregistry\Organisation;
+use App\Models\National\Eregistry\Ministry;
 use App\Models\Role;
 use App\Models\User;
 use Carbon\Carbon;
@@ -25,25 +25,25 @@ class MFEDUserSeeder extends Seeder
         }
 
         //GET THE MFED MINISTRY
-        $organisation = Organisation::where('code', 'MFED')->first();
+        $ministry = Ministry::where('code', 'MFED')->first();
         $headquartersDivision = Division::where('name', 'Headquarters')
-            ->where('organisation_id', $organisation->id)->first();
+            ->where('ministry_id', $ministry->id)->first();
         $accountDivision = Division::where('name', 'Accounts Section')
-            ->where('organisation_id', $organisation->id)->first();
+            ->where('ministry_id', $ministry->id)->first();
         $customsDivision = Division::where('name', 'Customs Division')
-            ->where('organisation_id', $organisation->id)->first();
+            ->where('ministry_id', $ministry->id)->first();
 
 
-        if (!$organisation) {
-            $this->command->error('MFED organisation not found. Please run Organisation Seeder first.');
+        if (!$ministry) {
+            $this->command->error('MFED ministry not found. Please run Ministry Seeder first.');
             return;
         }
 
-        // Now update the admin user with the organisation_id
-        // $adminUser->organisation_id = $organisation->id;
+        // Now update the admin user with the ministry_id
+        // $adminUser->ministry_id = $ministry->id;
         // $adminUser->save();
 
-        // // Assign admin role to the Organisation of Finance admin
+        // // Assign admin role to the Ministry of Finance admin
         // $adminUser->assignRole('admin');
 
         // Users data (roles now are admin, registry, or user)
@@ -55,14 +55,14 @@ class MFEDUserSeeder extends Seeder
                 'first_name' => 'Domingo',
                 'last_name' => 'Kabunare',
                 'password' => Hash::make('sec'),
-                'organisation_id' => $organisation->id,
+                'ministry_id' => $ministry->id,
                 'division_id' => $headquartersDivision->id,
                 'deleted_at' => null
             ]
         );
         $user1->assignRole('admin');
-        $organisation->review_officer_id = $user1->id;
-        $organisation->save();
+        // $ministry->review_officer_id = $user1->id;
+        // $ministry->save();
 
         $user2 = User::withTrashed()->updateOrCreate(
             ['email' => 'ds@mfed.gov.ki'],
@@ -70,7 +70,7 @@ class MFEDUserSeeder extends Seeder
                 'first_name' => 'Jane',
                 'last_name' => 'Austen',
                 'password' => Hash::make('ds'),
-                'organisation_id' => $organisation->id,
+                'ministry_id' => $ministry->id,
                 'division_id' => $headquartersDivision->id,
                 'deleted_at' => null
             ]
@@ -83,7 +83,7 @@ class MFEDUserSeeder extends Seeder
                 'first_name' => 'Samuel',
                 'last_name' => 'Adams',
                 'password' => Hash::make('sas'),
-                'organisation_id' => $organisation->id,
+                'ministry_id' => $ministry->id,
                 'division_id' => $headquartersDivision->id,
                 'deleted_at' => null
             ]
@@ -96,7 +96,7 @@ class MFEDUserSeeder extends Seeder
                 'first_name' => 'Teringa',
                 'last_name' => 'Toabwa',
                 'password' => Hash::make('custom'),
-                'organisation_id' => $organisation->id,
+                'ministry_id' => $ministry->id,
                 'division_id' => $customsDivision->id,
                 'deleted_at' => null
             ]
@@ -109,7 +109,7 @@ class MFEDUserSeeder extends Seeder
                 'first_name' => 'Tetobi',
                 'last_name' => 'Mariko',
                 'password' => Hash::make('om'),
-                'organisation_id' => $organisation->id,
+                'ministry_id' => $ministry->id,
                 'division_id' => $headquartersDivision->id,
                 'deleted_at' => null
             ]

@@ -8,7 +8,7 @@
         x-show="show"
         x-transition.opacity.scale.80
         x-init="setTimeout(() => show = false, 4000)" 
-        class="fixed right-0 bg-green-400 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 z-50">
+        class="fixed right-0 bg-cyan-400 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 z-50">
         <!-- Icon -->
         <svg xmlns="http://www.w3.org/2000/svg" 
              fill="none" 
@@ -39,7 +39,7 @@
         </div>
 
         <a href="{{ route('registry.users.create') }}"
-            class="inline-flex items-center mt-5 gap-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition">
+            class="inline-flex items-center mt-5 gap-2 px-4 py-2 bg-cyan-600 text-white text-sm rounded-md hover:bg-cyan-700 transition">
             <i class="fas fa-plus"></i>
             Create New User
         </a>

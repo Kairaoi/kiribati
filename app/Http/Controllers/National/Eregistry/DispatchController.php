@@ -4,12 +4,14 @@ namespace App\Http\Controllers\National\Eregistry;
 
 use App\Http\Controllers\Controller;
 use App\Models\National\Eregistry\Dispatch;
+use App\Models\National\Eregistry\File;
 use App\Models\National\Eregistry\FileCirculation;
 use App\Models\National\Eregistry\Organisation;
+use App\Models\User;
 use App\Repositories\National\Eregistry\DispatchRepository;
 use App\Repositories\National\Eregistry\DivisionRepository;
 use App\Repositories\National\Eregistry\FileRepository;
-use App\Repositories\National\Eregistry\OrganisationRepository;
+use App\Repositories\National\Eregistry\MinistryRepository;
 use App\Repositories\National\Eregistry\UserRepository;
 use Illuminate\Container\Attributes\Storage;
 use Illuminate\Http\Request;
@@ -19,26 +21,27 @@ use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 use Spatie\Activitylog\Models\Activity;
 
+use function Symfony\Component\Clock\now;
 
 class DispatchController extends Controller
 {
     private $dispatches;
     private $files;
-    private $organisations;
+    private $ministries;
     private $divisions;
     private $users;
 
     public function __construct(
         DispatchRepository $dispatches,
         FileRepository $files,
-        OrganisationRepository $organisations,
+        MinistryRepository $ministries,
         DivisionRepository $divisions,
         UserRepository $users
     )
     {
         $this->dispatches = $dispatches;
         $this->files = $files;
-        $this->organisations = $organisations;
+        $this->ministries = $ministries;
         $this->divisions = $divisions;
         $this->users = $users;
     }
@@ -118,79 +121,63 @@ class DispatchController extends Controller
     public function store(Request $request)
     {
         // $organisationId = $user->organisation_id; // Get the organisation ID of the authenticated user
-
+        // dd($request->all());
         $validated = $request->validate([
             'file_id' => 'required|exists:files,id',
-            'from_organisation_id' => 'required|exists:organisations,id',
-            'from_division_id' => 'required|exists:divisions,id',
-            'dispatch_date' => 'required|date',
-            ]);
+            'recipient_ministries' => 'required|array',
+            'recipient_ministries.*' => 'exists:ministries,id',
+        ]);    
+
+        // dd($validated);
+        //create dispatch record and circulation record for each recipient ministry
 
         try {
-            Log::info('Attempting to update file dispatch', ['data' => $validated]);
+            
+            $dispatch = Dispatch::create([
+                'file_id' => $validated['file_id'],
+                'dispatched_by' => auth()->user()->id,
+                'dispatch_date' => now(),
+                'updated_by' => auth()->user()->id,
+            ]);
 
-            $dispatch = Dispatch::where('file_id', $validated['file_id'])->first();
-
-            if ($dispatch) {
-                $dispatch->update([
-                    'from_organisation_id' => $validated['from_organisation_id'],
-                    'from_division_id' => $validated['from_division_id'],
-                    'dispatched_by' => auth()->user()->id,
-                    'dispatch_date' => now(),
-                    'updated_by' => auth()->user()->id,
-                ]);
-            } else {
-                Log::warning('No existing File Dispatch found for update', $validated);
-                return back()->withErrors(['error' => 'No existing file dispatch found to update'])->withInput();
-            }
-
-            $file = $this->files->getById($validated['file_id']);
-
+            $file = File::findOrFail($validated['file_id']);
             $file->status = 'Dispatched';
-            $file->updated_by = auth()->user()->id;
             $file->save();
 
-            // Get the recipient organisation IDs from the file
-            $recipientOrganisationIds = $file->recipientMinistries()->pluck('organisations.id')->toArray();
-            // dd($recipientOrganisationIds);
-            // dd($file);
-            foreach ($recipientOrganisationIds as $organisationId) {
-
-                $organisation = Organisation::with('reviewOfficer')->find($organisationId); //get the organisation along with its review officer
-
-                //Once a file is dispatched, the status of the recipient organisations is updated to 'Pending Circulation'
-                $file->recipientMinistries()->updateExistingPivot($organisationId, ['status' => 'Pending Review']);  
-                // Check pivot table row
-            
-                //and a new FileCirculation record is created for each recipient organisation
+            foreach ($validated['recipient_ministries'] as $ministryId) {
+                // dd($ministryId);
                 FileCirculation::create([                                                       
                     'file_id' => $validated['file_id'],
-                    'from_organisation_id' => $validated['from_organisation_id'], 
-                    'to_organisation_id' => $organisationId,
-                    'to_review_file' => $organisation->reviewOfficer ? $organisation->reviewOfficer->id : null,         
+                    'dispatch_id' => $dispatch->id,
+                    'to_ministry_id' => $ministryId,
+                    'circulated_by' => auth()->user()->id,
+                    'circulated_at' => now(),
+                    'status' => 'Pending Review',
+                    'updated_by' => auth()->user()->id,
+                    'to_review_file' => User::where('ministry_id', $ministryId)->whereHas('roles', function ($q) {
+                        $q->where('name', 'review-officer');
+                    })->first()->id ?? null,            
                 ]);
             }
 
-            activity()
-                ->causedBy(auth()->user())
-                ->performedOn($file)
-                ->log('File dispatched');
 
-            if(auth()->user()->hasRole('user') || (auth()->user()->hasRole('admin')) ){
-                return redirect()->route('registry.dispatches.user.index')->with('success', 'File dispatched successfully!');
-            }
+            //for activity log
+            // activity()
+            //     ->causedBy(auth()->user())
+            //     ->performedOn($dispatch)
+            //     ->log('File is dispatched');
 
             if(auth()->user()->hasRole('registry')) {
-                return redirect()->route('registry.dispatches.index')->with('success', 'File dispatched successfully!');
+                return redirect()->route('registry.files.index')->with('success', 'File dispatched successfully!');
             }
 
         } catch (\Exception $e) {
-            Log::error('Exception while updating file circulation', [
+            Log::error('Exception while creating file circulation', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'data' => $validated
             ]);
-            return back()->withErrors(['error' => 'Error updating file: ' . $e->getMessage()])->withInput();
+            return back()->withErrors(['error' => 'Error creating file circulation: ' . $e->getMessage()])->withInput();
         }
     }
 
@@ -216,9 +203,8 @@ class DispatchController extends Controller
         }
 
         $organisations = $this->organisations->pluck(); 
-        $fileCirculations = $file->circulations()->with('fromOrganisation', 'assignedOfficers')->get();
+        $fileCirculations = $file->circulations()->with('fromOrganisation', 'activeAssignments.officer')->get();
 
-        
         return view('national.eregistry.dispatches.show', compact('file', 'organisations', 'dispatch', 'fileCirculations'));
     }
 
@@ -291,7 +277,5 @@ class DispatchController extends Controller
         return response()->json(['message' => 'Dispatch and file deleted successfully.']);
     
     }
-
-
 
 }

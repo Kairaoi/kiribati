@@ -11,10 +11,16 @@ class CreateEregistryFilingSystemTables extends Migration
         // Create file_types table
         Schema::create('file_types', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique(); // e.g., Letter, General, MoU
-            $table->text('description')->nullable();
-            $table->string('code')->unique(); // Unique code for each file type
+            $table->string('name');
+            $table->boolean('is_global')->default(false);
+            $table->foreignId('ministry_id')->nullable(); // NULL = global type, NOT NULL = ministry-specific
+            $table->text('description')->nullable(); 
+            $table->string('code');
             $table->timestamps();
+
+            // Prevent duplicates within same ministry
+            $table->unique(['ministry_id', 'name']);
+            $table->unique(['ministry_id', 'code']);
         });
 
         //  Create categories table
@@ -35,17 +41,48 @@ class CreateEregistryFilingSystemTables extends Migration
         });
 
 
-        // Create SOE table
-        Schema::create('organisations', function (Blueprint $table) {
+        //Global Identity Registry
+        Schema::create('identity_organisations', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('code')->unique()->nullable();
+            $table->string('code');
             $table->text('location')->nullable();
-            $table->foreignId('review_officer_id')->nullable()->constrained('users');
+            $table->text('description')->nullable();
             $table->boolean('is_active')->default(true);
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('updated_by')->constrained('users');
             $table->foreignId('organisation_type_id')->constrained('organisation_types');
+            $table->timestamps();
+
+            $table->unique(['name', 'organisation_type_id']);
+        });
+
+
+        //Users of the system.
+        Schema::create('ministries', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('code');
+            $table->boolean('is_active')->default(true);
+            $table->foreignId('organisation_type_id')->constrained('organisation_types');
+            $table->foreignId('identity_organisation_id')->constrained('identity_organisations');
+            $table->text('location')->nullable();
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by')->constrained('users');
+        });
+
+    
+        Schema::create('external_partners', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->text('location')->nullable();
+            $table->foreignId('ministry_id')->constrained('ministries'); 
+            $table->foreignId('organisation_type_id')->nullable()->constrained('organisation_types');
+            $table->foreignId('identity_organisation_id')->nullable()->constrained('identity_organisations');
+            $table->boolean('is_active')->default(true);
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by')->constrained('users');
+            $table->enum('status', ['active', 'pending'])->default('pending');
             $table->timestamps();
 
             $table->unique(['name', 'organisation_type_id']);
@@ -57,7 +94,7 @@ class CreateEregistryFilingSystemTables extends Migration
             $table->string('name');
             $table->string('location');
             $table->boolean('is_active')->default(true);
-            $table->foreignId('organisation_id')->constrained('organisations');
+            $table->foreignId('ministry_id')->constrained('ministries');
             $table->timestamps();
         });
 
@@ -65,18 +102,19 @@ class CreateEregistryFilingSystemTables extends Migration
         // Create files table
         Schema::create('files', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('organisation_id')->nullable()->constrained();
-            $table->foreignId('division_id')->nullable()->constrained('divisions');
-            $table->string('file_reference')->unique()->nullable();
+            $table->string('reference_no')->unique();
+            $table->foreignId('ministry_id')->nullable()->constrained('ministries'); //who logs the file in the system
+            $table->foreignId('from_division_id')->nullable()->constrained('divisions');
+            $table->morphs('source');
+            // $table->enum('source_channel', ['system', 'manual', 'external']);
             $table->foreignId('file_type_id')->constrained('file_types');
-            $table->foreignId('category_id')->constrained('categories');
+            $table->foreignId('category_id')->nullable()->constrained('categories');
             $table->string('subject');
-            $table->string('main_file_path'); //File path
-            $table->json('additional_file_paths')->nullable(); // JSON column to store paths of additional files
-            $table->string('main_file_name')->nullable(); // Original file name for download purposes
-            $table->enum('initial_type', ['dispatch','internal']);
+            $table->string('main_file_path');
+            $table->json('additional_file_paths')->nullable(); 
+            $table->string('main_file_name')->nullable(); 
             $table->date('letter_date'); 
-            $table->string('letter_ref_no')->nullable()->unique();
+            $table->date('due_date')->nullable();
             $table->string('status')->nullable();
             $table->dateTime('response_deadline')->nullable();
             $table->boolean('is_active')->default(true);
@@ -85,17 +123,7 @@ class CreateEregistryFilingSystemTables extends Migration
             $table->foreignId('updated_by')->constrained('users');
             $table->timestamps();
             $table->softDeletes();
-            $table->index(['organisation_id']);
-        });
-
-        
-        Schema::create('file_sequences', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-            $table->unsignedBigInteger('organisation_id');
-            $table->integer('year');
-            $table->integer('last_number')->default(0);
-            $table->unique(['organisation_id', 'year']);
+           
         });
 
 
@@ -103,15 +131,17 @@ class CreateEregistryFilingSystemTables extends Migration
         Schema::create('file_recipients', function (Blueprint $table) {
             $table->id();
             $table->foreignId('file_id')->constrained('files')->onDelete('cascade');
-            $table->foreignId('organisation_id')->constrained('organisations')->onDelete('cascade'); // But only minisries will be used here
+            $table->foreignId('ministry_id')->constrained('ministries')->onDelete('cascade'); 
             $table->enum('status', [
                 'Pending Review',
                 'Pending Dispatch',
-                'Pending Circulation', //for internal files
+                'Pending Circulation',
                 'Dispatched',
                 'Circulated',
-                'Assigned',
-                'Completed'
+                'Reviewed',
+                'Completed',
+                'Filed',
+                'Archive'
             ]);
             $table->timestamps();
         });
@@ -120,80 +150,83 @@ class CreateEregistryFilingSystemTables extends Migration
         Schema::create('dispatches', function (Blueprint $table) {
             $table->id();
             $table->foreignId('file_id')->constrained();
-            $table->foreignId('from_organisation_id')->constrained('organisations');
-            $table->foreignId('from_division_id')->constrained('divisions');
             $table->foreignId('dispatched_by')->nullable()->constrained('users');
             $table->datetime('dispatch_date')->nullable();
             $table->boolean('read_status')->default(false);
             $table->text('comments')->nullable();
             $table->string('required_action')->nullable();
             $table->string('action_taken')->nullable();
-            // $table->json('circular_recipients')->nullable();
             $table->foreignId('updated_by')->constrained('users');
             $table->timestamps();
             $table->softDeletes();
-
         });
 
-        // Updated file_circulations table for internal organisation circulation
+    
         Schema::create('file_circulations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('file_id')->constrained();
-            $table->foreignId('from_organisation_id')->constrained('organisations');  // Added organisation_id
-            $table->foreignId('to_organisation_id')->constrained('organisations');  // Added organisation_id
+            $table->foreignId('dispatch_id')->nullable()->constrained('dispatches')->nullOnDelete();
+            $table->foreignId('to_ministry_id')->constrained('ministries');
             $table->foreignId('circulated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->datetime('circulated_at')->default(now());
+            $table->enum('status', ['Pending Circulation', 
+                                    'Pending Review', 
+                                    'Reviewed', 
+                                    'Filed', 
+                                    'Archived']);
             $table->foreignId('updated_by')->nullable()->constrained('users');            
-            $table->foreignId('assigned_division_id')->nullable()->constrained('divisions');  // Added division_id
-            $table->foreignId('to_review_file')->nullable()->constrained('users');                      //Secretary or Officer in Charge
-            // $table->foreignId('assigned_officer')->nullable()->constrained('users'); 
-            $table->datetime('read_at')->nullable();                     // Changed to read_at timestamp
+            $table->datetime('read_at')->nullable();                     
             $table->boolean('read_status')->default(false);
-            $table->text('review_comment')->nullable();                        // Added comments field
-            $table->boolean('requires_action')->default(false);          // Added action required flag
-            $table->text('action_taken')->nullable();                    // Added action taken field
+            $table->text('review_comment')->nullable();
+            $table->foreignId('to_review_file')->nullable()->constrained('users'); 
+            $table->datetime('date_reviewed')->nullable();
+            $table->boolean('requires_action')->default(false);    
+            $table->text('action_taken')->nullable();                  
             $table->timestamps();
-            // Add index for better query performance
-            // $table->index(['organisation_id',  'user_id']);
+    
+            $table->unique(['file_id',  'to_ministry_id']); 
         });
 
 
-        // Create file_circulation_officer table for tracking officers assigned to file circulations
-        Schema::create('file_circulation_officer', function (Blueprint $table) {
+        Schema::create('file_assignments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('file_circulation_id')->constrained();
-            $table->foreignId('officer_id')->constrained('users');
-            $table->enum('status', ['pending', 'completed'])->default('pending');
-            $table->date('date_assigned')->default(now());
-            $table->date('date_completed')->nullable(); // Date when the officer completed their action or acknowledge receipt of file 
+            $table->foreignId('file_circulation_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('officer_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('assigned_by')->constrained('users')->cascadeOnDelete();
+            $table->timestamp('assigned_date')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->enum('status', ['pending', 'accepted', 'declined'])->default('pending'); // Added status field
+            // for reassignment tracking
+            $table->foreignId('reassigned_from')->nullable()->constrained('users')->nullOnDelete();
+            $table->datetime('accepted_at')->nullable();
             $table->timestamps();
         });
 
 
-        Schema::create('organisation_archived_files', function (Blueprint $table) {
+        Schema::create('ministry_archived_files', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('organisation_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('ministry_id')->constrained()->cascadeOnDelete();
             $table->foreignId('file_id')->constrained()->cascadeOnDelete();
             $table->foreignId('archived_by')->constrained('users');
             $table->datetime('archived_at')->default(now());
             $table->timestamps();
 
-            $table->unique(['organisation_id', 'file_id']); // prevent duplicate archive
+            $table->unique(['ministry_id', 'file_id']); 
 
         });
 
+        Schema::create('file_sequences', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('ministry_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('file_type_id')->constrained()->cascadeOnDelete();
 
-        // Schema::create('audit_logs', function (Blueprint $table) {
-        //     $table->id();
-        //     $table->foreignId('user_id')->constrained('users'); // User who performed the action
-        //     $table->string('action'); // e.g., 'create', 'update', 'delete'
-        //     $table->ipAddress('ip_address')->nullable(); // IP address of the user
-        //     $table->string('user_agent')->nullable(); // from what device/browser the action was performed
-        //     $table->morphs('auditable'); // Polymorphic relation to the model being audited
-        //     $table->json('old_values')->nullable(); // Old values before the action
-        //     $table->json('new_values')->nullable(); // New values after the action
-        //     $table->timestamps();
-        // });
+            $table->integer('year');
+            $table->integer('last_number')->default(0);
+            $table->timestamps();
+
+            $table->unique(['ministry_id', 'file_type_id', 'year']);
+        });
+
     }
 
 
@@ -211,5 +244,8 @@ class CreateEregistryFilingSystemTables extends Migration
         Schema::dropIfExists('audit_logs');
         Schema::dropIfExists('dispatches');
         Schema::dropIfExists('categories');
+        Schema::dropIfExists('organisation_archived_files');
+        Schema::dropIfExists('file_assignments ');
+
     }
 }

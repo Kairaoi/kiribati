@@ -5,7 +5,7 @@
 
                 @if ($breadcrumb->url && !$loop->last)
                     <li>
-                        <a href="{{ $breadcrumb->url }}" class="text-blue-600 hover:text-blue-900 hover:underline focus:text-blue-900 focus:underline">
+                        <a href="{{ $breadcrumb->url }}" class="text-cyan-600 hover:text-cyan-900 hover:underline focus:text-cyan-900 focus:underline">
                             {{ $breadcrumb->title }}
                         </a>
                     </li>

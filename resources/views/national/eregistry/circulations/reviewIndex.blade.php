@@ -8,7 +8,7 @@
         x-show="show"
         x-transition.opacity.scale.80
         x-init="setTimeout(() => show = false, 4000)" 
-        class="fixed right-0 bg-green-400 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 z-50">
+        class="fixed right-0 bg-cyan-400 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 z-50">
         <!-- Icon -->
         <svg xmlns="http://www.w3.org/2000/svg" 
              fill="none" 
@@ -47,6 +47,7 @@
                 <tr>
                     <th>ID</th>
                     <th>From</th>
+                    <th>Subject</th>
                     <th>Status</th>
                     <th>File Date</th>
                     <th class="w-28">Actions</th>
@@ -97,7 +98,7 @@
 
     .table.dataTable td {
         vertical-align: middle;
-        padding: 0.5rem;
+        padding: 1.5rem;
         color: #4c4c53;
         font-size: 0.9rem;
         
@@ -190,8 +191,9 @@ $(document).ready(function() {
             }
         },
         columns: [
-            { data:'id'},
+            { data:'id', visible:false},
             { data: 'organisation_code'},
+            { data: 'file_subject' },
             { 
                 data: 'file_recipient_status',
                 name: 'file_recipient_status',

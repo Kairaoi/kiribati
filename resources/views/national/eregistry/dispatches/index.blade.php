@@ -1,14 +1,13 @@
 @extends('layouts.app')
 
 @section('content')
-
     @if (session('success'))
         <div 
             x-data="{ show: true }"
             x-show="show"
             x-transition.opacity.scale.80
             x-init="setTimeout(() => show = false, 4000)" 
-            class="fixed right-0 bg-green-400 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 z-50">
+            class="fixed right-0 bg-cyan-400 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 z-50">
             <!-- Icon -->
             <svg xmlns="http://www.w3.org/2000/svg" 
                 fill="none" 
@@ -29,189 +28,212 @@
         </div>
     @endif
 
-    <div class="container mx-auto font-poppins px-4 py-8 max-w-6xl mt-3 rounded-md min-h-screen">
-
-        <div class="mt-4 mb-6 flex items-start justify-between">
+    <div class="container mx-auto px-4 py-8 max-w-7xl rounded-md min-h-screen">
+        <div class="mt-2 mb-6 flex items-start justify-between">
             <div>
-                <h1 class="text-3xl font-bold tracking-wide">Dispatches</h1>
+                <h1 class="text-3xl font-bold">Dispatches</h1>
                 <p class="text-base text-gray-500 mt-1">
-                    View and manage dispatched files from your organisation or division.
+                    View and manage all dispatched files from your organisation or division.
                 </p>
             </div>
 
             <a href="{{ route('registry.files.create.withType', ['createType' => 'dispatch']) }}"
-                class="inline-flex items-center mt-5 gap-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition">
+                class="inline-flex items-center mt-5 gap-2 px-4 py-2 bg-cyan-600 text-white text-sm rounded-md hover:bg-cyan-700 transition">
                 <i class="fas fa-plus"></i>
                 Create file dispatch
             </a>
         </div>
 
-        <div class="p-4 bg-white rounded-lg shadow-lg overflow-hidden">
-            <table id="dispatchesTable" class="table table-striped rounded-lg w-full mt-6">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">        
+            <table id="dispatchesTable" class="bg-gray-50 text-gray-600 text-sm tracking-wide">
                 <thead>
                     <tr>
+                        <th>REFERENCE NO</th>
+                        <th>SUBJECT</th>
                         <th>DIVISION</th>
-                        <th>FILE ID</th>
-                        <th>CREATED BY</th>
+                        <th>DUE DATE</th>
                         <th>STATUS</th>
                         <th>DISPATCH DATE</th>
                         <th>DISPATCHED BY</th> 
                         <th class="w-30">ACTIONS</th>
                     </tr>
                 </thead>
-                <tbody></tbody> <!-- DataTable will populate this -->
+                <tbody class="divide-y"></tbody> <!-- DataTable will populate this -->
             </table>
         </div>
     </div>
 
-    @push('styles')
-        <style>
+@push('styles')
+    <style>
+        /* Table Styles */
+    table.dataTable {
+            width: 100%;
+            border-collapse: collapse;
+            /* font-size: 0.85rem; */
+            border-left: 0.5px solid #d3d3d8;
+            border-right: 0.5px solid #d3d3d8;
+        }
 
-            h1 {
-                font-family: 'Poppins', sans-serif;
-                font-weight: 600;
-                color: #0a44e3; 
-            }
+        /* Header */
+        #dispatchesTable thead {
+            background-color: #f9fafb;
+            color: #6b7280;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
 
-            p {
-                font-family: 'Poppins', sans-serif;
-                /* color: #3175c2;  */
-            }
-            
-            /* Table Styles */
-            table.dataTable {
-                width: 100%;
-                border-collapse: collapse;
-                font-size: 0.85rem;
-                border-left: 0.5px solid #d3d3d8;
-                border-right: 0.5px solid #d3d3d8;
-            }
+        /* Cells */
+        #dispatchesTable th,
+        #dispatchesTable td {
+            padding: 14px 16px;
+        }
 
-            .table.dataTable thead th {
-                background-color: #ffffff; 
-                border-bottom: 3px solid #d3d3d8;
-                border-top: 0.5px solid #d3d3d8;
-                color: #000000;
-                font-family: 'Poppins', sans-serif;
-                padding: 0.5rem;
-                padding-top: 1rem; 
-                padding-bottom: 1rem; 
-                font-size: 0.9rem;
-                text-align: left;
-            }
+        /* Row divider */
+        #dispatchesTable tbody tr {
+            border-bottom: 1px solid #e5e7eb;
+        }
 
-            .table.dataTable td {
-                vertical-align: middle;
-                padding: 1.5rem;
-                color: #4c4c53;
-                font-size: 0.9rem;
-            }
+        /* Hover effect */
+        #dispatchesTable tbody tr:hover {
+            background-color: #f9fafb;
+        }
 
-            /* Action Button Styles */ 
-            /* .action-btn {
-                cursor: pointer;
-                padding: 0.5rem 1rem;
-                border-radius: 9999px;
-                font-size: 0.875rem;
-                transition: background-color 0.3s, transform 0.2s;
-            }
+        /* Fix long text */
+        #dispatchesTable td {
+            white-space: normal !important;
+            /* word-break: break-word; */
+        }
+        .dataTables_filter input {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 6px 10px;
+            outline: none;
+        }
 
-            .action-btn:hover {
-                background-color: #e5e7eb;
-            } */
+        .dataTables_filter input:focus {
+            ring: 2px solid #93c5fd;
+        }
 
-            /* Dropdown Menu Styles */
-            .dropdown-menu {
-                position: absolute;
-                background-color: white;
-                /* border-radius: 9999px; */
-                box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-                min-width: 160px;
-                z-index: 1000;
-            }
+        .dataTables_length select {
+            border-radius: 8px;
+            padding: 4px 8px;
+            padding-right: 30px; /* space for arrow */
+            border: 1px solid #d1d5db;
+        }
 
-            .dropdown-item {
-                display: block;
-                padding: 0.5rem 1rem;
-                color: #212529;
-            }
+        /* Action Button Styles */ 
+        /* .action-btn {
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            transition: background-color 0.3s, transform 0.2s;
+        }
 
-            .dropdown-item:hover {
-                background-color: #f3f4f6; 
-            }
+        .action-btn:hover {
+            background-color: #e5e7eb;
+        } */
 
-            /* Force green Excel button */
-            .excel-export-btn {
-                border: none !important;       /* Ensures no border, overrides any border below */
-                border-radius: 6px !important;
-                background-color: rgb(32, 180, 39) !important;
-                color: #ffffff;
-                padding: 0.25rem 0.75rem !important;   /* smaller padding */
-                box-shadow: none !important;          /* removes inner or outer shadow */
-                background-image: none !important;    /* removes gradient */
-                /* padding: 0.5rem 2rem; */
-                font-size: 0.7rem !important;
-                display: inline-flex;
-                align-items: center;
-            }
+        /* Dropdown Menu Styles */
+        .dropdown-menu {
+            position: absolute;
+            background-color: white;
+            /* border-radius: 9999px; */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+            min-width: 160px;
+            z-index: 1000;
+        }
 
-            .excel-export-btn:hover {
-                background-color: #f3f4f6;  
-                transform: translateY(-1px);
-                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-            }
+        .dropdown-item {
+            display: block;
+            padding: 0.5rem 1rem;
+            color: #212529;
+        }
 
-            .pdf-export-btn {
-                border: none !important;       /* Ensures no border, overrides any border below */
-                border-radius: 6px !important;
-                background-color: rgb(238, 45, 45) !important;
-                color: #ffffff;
-                padding: 0.25rem 0.75rem !important;   /* smaller padding */
-                box-shadow: none !important;          /* removes inner or outer shadow */
-                background-image: none !important;    /* removes gradient */
-                /* padding: 0.5rem 2rem; */
-                font-size: 0.7rem !important;
-                display: inline-flex !important;
-                align-items: center;
-            }
-
-            .pdf-export-btn:hover {
-                background-color: #f3f4f6;  
-                transform: translateY(-1px);
-                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-            }
-
-        
-            .dataTables_filter input {
-                padding: 0.375rem 0.75rem !important;
-                border-radius: 0.375rem !important;
-                border: 1px solid #ced4da !important;
-                font-size: 0.8rem !important;
-                margin-top: 1rem !important; 
-                font-family: 'Poppins', sans-serif !important;
-            }
-
-            .dataTables_info {
-                font-size: 0.85rem !important;
-                font-family: 'Poppins', sans-serif !important;
-                color: #4b5563 !important; /* Tailwind gray-700 */
-            }
-
-            .dataTables_paginate {
-                font-size: 0.9rem !important;
-                font-family: 'Poppins', sans-serif !important;
-                color: #4b5563 !important;
-            }
-
-            .dataTables_paginate.paginate_button {
-                padding: 0.25rem 0.5rem;
-                margin: 0 2px;
-                border-radius: 4px;
-            }
+        .dropdown-item:hover {
+            background-color: #f3f4f6; 
+        }
 
 
-        </style>
-    @endpush
+    
+        .dataTables_filter input {
+            padding: 0.375rem 0.75rem !important;
+            border-radius: 0.375rem !important;
+            border: 1px solid #ced4da !important;
+            font-size: 0.8rem !important;
+            margin-top: 1rem !important; 
+            font-family: 'Poppins', sans-serif !important;
+        }
+
+        .dataTables_info {
+            font-size: 0.85rem !important;
+            font-family: 'Poppins', sans-serif !important;
+            color: #4b5563 !important; /* Tailwind gray-700 */
+        }
+
+        .dataTables_paginate {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .dataTables_paginate .paginate_button {
+            padding: 6px 10px;
+            border-radius: 6px;
+            background: #f3f4f6;
+            cursor: pointer;
+        }
+
+        .dataTables_paginate .current {
+            background: #4f46e5 !important;
+            color: white !important;
+        }
+
+
+                /* Force green Excel button */
+                .excel-export-btn {
+                    border: none !important;       /* Ensures no border, overrides any border below */
+                    border-radius: 6px !important;
+                    background-color: rgb(32, 180, 39) !important;
+                    color: #ffffff;
+                    padding: 0.25rem 0.75rem !important;   /* smaller padding */
+                    box-shadow: none !important;          /* removes inner or outer shadow */
+                    background-image: none !important;    /* removes gradient */
+                    /* padding: 0.5rem 2rem; */
+                    font-size: 0.7rem !important;
+                    display: inline-flex;
+                    align-items: center;
+                }
+
+                .excel-export-btn:hover {
+                    background-color: #f3f4f6;  
+                    transform: translateY(-1px);
+                    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+                }
+
+                .pdf-export-btn {
+                    border: none !important;       /* Ensures no border, overrides any border below */
+                    border-radius: 6px !important;
+                    background-color: rgb(238, 45, 45) !important;
+                    color: #ffffff;
+                    padding: 0.25rem 0.75rem !important;   /* smaller padding */
+                    box-shadow: none !important;          /* removes inner or outer shadow */
+                    background-image: none !important;    /* removes gradient */
+                    /* padding: 0.5rem 2rem; */
+                    font-size: 0.7rem !important;
+                    display: inline-flex !important;
+                    align-items: center;
+                }
+
+                .pdf-export-btn:hover {
+                    background-color: #f3f4f6;  
+                    transform: translateY(-1px);
+                    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+                }
+
+
+    </style>
+@endpush
 
     @push('scripts')
         <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
@@ -251,9 +273,19 @@
                         }
                     },
                     columns: [
+                        { data: 'reference_no', name: 'files.reference_no' },
+                        { data: 'file_subject', name: 'files.subject' },
                         { data: 'owning_division_name', name: 'divisions.name' },
-                        { data: 'file_id', name: 'files.id', visible: false }, // Hidden file ID column
-                        { data: 'file_created_by', name: 'creators.first_name' },
+                        {  data: 'due_date',
+                            render: function (data) {
+                                if (!data) return '';
+                                const date = new Date(data);
+                                return date.toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric'
+                                });
+                            }},
                         { 
                             data: 'status', name: 'files.status',
                             render: function(data, type, row) {
@@ -262,7 +294,7 @@
                                 if (data === 'Pending Dispatch') {
                                     badgeClass = 'bg-gray-300 text-xs px-2 py-1 rounded-full font-medium';
                                 } else if (data === 'Dispatched') {
-                                    badgeClass = 'bg-green-300 text-xs px-2 py-1 rounded-full font-medium';
+                                    badgeClass = 'bg-cyan-300 text-xs px-2 py-1 rounded-full font-medium';
                                 } else {
                                     badgeClass = 'bg-gray-300 text-xs px-2 py-1 rounded-full font-medium';
                                 }
@@ -276,7 +308,7 @@
                                 const date = new Date(data);
                                 return date.toLocaleDateString('en-US', {
                                     year: 'numeric',
-                                    month: 'long',
+                                    month: 'short',
                                     day: 'numeric'
                                 });
                             }  
@@ -295,12 +327,6 @@
                                     title="View">
                                         <i class="fas fa-eye"></i>
                                     </a>
-
-                                    <button class="btn btn-sm btn-outline-danger delete-action" 
-                                            data-id="${row.id}" 
-                                            title="Delete">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
                                 `;
 
                                 if (row.status === 'Pending Dispatch') {
@@ -310,6 +336,12 @@
                                         title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </a>
+                                        <button
+                                            class="btn btn-sm btn-outline-danger delete-action" 
+                                            data-id="${row.id}" 
+                                            title="Delete">
+                                                <i class="fas fa-trash-alt"></i>
+                                        </button>
                                     `;
                                 }
 
@@ -323,7 +355,9 @@
                                     `;
                                 }
 
-                                return buttons;
+                                return buttons += `
+                                       
+                                    `;;
 
                             }
                         }
@@ -335,6 +369,12 @@
                     dom:   "<'row mb-3'<'col-md-6 d-flex align-items-center'B><'col-12 col-md-6 text-md-end text-start'f>>" +
                         "<'row'<'col-sm-12'tr>>" +
                         "<'row mt-3'<'col-sm-5'i><'col-sm-7'p>>",
+                    language: {
+                        paginate: {
+                            previous: "←",
+                            next: "→"
+                        }
+                    },
                     buttons: [
                         {
                             extend: 'excelHtml5',

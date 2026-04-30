@@ -8,7 +8,7 @@
             x-init="setTimeout(() => show = false, 5000)"
             x-show="show"
             x-transition
-            class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-green-400 text-green-900 px-6 py-3 rounded shadow-lg max-w-md w-full text-center z-50">
+            class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-cyan-400 text-cyan-900 px-6 py-3 rounded shadow-lg max-w-md w-full text-center z-50">
             {{ session('success') }}
         </div>
 @endif
@@ -55,10 +55,10 @@
 <div id="actionDropdownTemplate" class="hidden">
     <div class="dropdown-menu">
         <a class="dropdown-item view-btn" href="#">
-            <i class="fas fa-eye text-blue-500 mr-2"></i> View
+            <i class="fas fa-eye text-cyan-500 mr-2"></i> View
         </a>
         <a class="dropdown-item edit-btn" href="#">
-            <i class="fas fa-edit text-green-500 mr-2"></i> Edit
+            <i class="fas fa-edit text-cyan-500 mr-2"></i> Edit
         </a>
         <a class="dropdown-item delete-btn" href="#">
             <i class="fas fa-trash text-red-500 mr-2"></i> Delete
@@ -264,7 +264,7 @@ $(document).ready(function() {
                     if (data === 'Pending Dispatched') {
                         badgeClass = 'bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium';
                     } else if (data === 'Dispatched') {
-                        badgeClass = 'bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium';
+                        badgeClass = 'bg-cyan-500 text-white text-xs px-2 py-1 rounded-full font-medium';
                     } else {
                         badgeClass = 'bg-gray-300 text-white text-xs px-2 py-1 rounded-full font-medium';
                     }
@@ -325,10 +325,10 @@ $(document).ready(function() {
         const dropdown = $(` 
             <div class="dropdown-menu" style="display:none;">
                 <a class="dropdown-item" href="${route('registry.dispatches.show', rowId)}">
-                    <i class="fas fa-eye text-blue-500 mr-2"></i> View
+                    <i class="fas fa-eye text-cyan-500 mr-2"></i> View
                 </a>
                 <a class="dropdown-item" href="${route('registry.files.edit', rowId)}">
-                    <i class="fas fa-edit text-green-500 mr-2"></i> Edit
+                    <i class="fas fa-edit text-cyan-500 mr-2"></i> Edit
                 </a>
                 <a class="dropdown-item delete-action" href="#" data-id="${rowId}">
                     <i class="fas fa-trash text-red-500 mr-2"></i> Delete

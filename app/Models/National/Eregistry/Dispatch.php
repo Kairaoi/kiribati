@@ -15,9 +15,6 @@ class Dispatch extends Model
         'file_id',
         'from_organisation_id',
         'from_division_id',
-        // 'to_organisation_id',
-        // 'from_user_id',
-        // 'to_user_id',
         'dispatch_date',
         'dispatched_by',
         'read_status',
@@ -25,7 +22,6 @@ class Dispatch extends Model
         'required_action',
         'action_taken',
         'status',
-        // 'created_by',
         'updated_by',
     ];
 
@@ -45,10 +41,10 @@ class Dispatch extends Model
         return $this->file->recipientMinistries();
     }   
 
-    public function fromOrganisation()
-    {
-        return $this->belongsTo(Organisation::class, 'from_organisation_id');
-    }
+    // public function fromOrganisation()
+    // {
+    //     return $this->belongsTo(Organisation::class, 'from_organisation_id');
+    // }
 
     public function division()
     {

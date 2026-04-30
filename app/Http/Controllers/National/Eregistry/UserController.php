@@ -12,6 +12,7 @@ use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Yajra\DataTables\Facades\DataTables;
 
 
@@ -187,6 +188,60 @@ class UserController extends Controller
 
         return redirect()->route('user.index')->with('message', 'User updated successfully.');
     }
+
+
+     /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function editReviewOfficer()
+    {
+        $ministryId = auth()->user()->ministry_id;
+        $usersWithDivision = $this->users->getUsersDivision();
+        $reviewOfficer = User::role('review-officer')
+                                ->where('ministry_id', $ministryId)
+                                ->first();
+
+        return view('national.eregistry.users.editReviewOfficer', compact('usersWithDivision', 'reviewOfficer'));
+    }
+
+
+         /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function updateReviewOfficer(Request $request)
+    {
+        $ministryId = auth()->user()->ministry_id;
+        $request->validate([
+            'review_officer_id' => [
+                'required',
+                Rule::exists('users', 'id')->where(function ($query) use ($ministryId) {
+                    $query->where('ministry_id', $ministryId);
+                }),
+            ],
+        ]);
+        $currentReviewOfficer = User::role('review-officer')
+            ->where('ministry_id', $ministryId)
+            ->first();
+
+        if ($currentReviewOfficer) {
+            $currentReviewOfficer->removeRole('review-officer');
+        }
+
+        $newReviewOfficer = User::find($request->review_officer_id);
+        $newReviewOfficer->assignRole('review-officer');
+        return back()->with('success', 'Review officer updated successfully.');
+
+    }
+
+
 
     /**
      * Remove the specified resource from storage.

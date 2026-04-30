@@ -61,7 +61,7 @@ class FileRepository extends BaseRepository
     {
         $data = array_merge($model->toArray(), [
             'organisation_id' => $input['organisation_id'] ?? $model->organisation_id,
-            'name' => $input['name'] ?? $model->name,
+            'subject' => $input['subject'] ?? $model->subject,
             'path' => $input['path'] ?? $model->path,
             'letter_date' => $input['letter_date'] ?? $model->letter_date,
             'status' => $input['status'] ?? $model->status,
@@ -78,13 +78,37 @@ class FileRepository extends BaseRepository
     }
 
 
-    public function getForDataTable(string $search = '')
+    public function getForDataTable( ?int $ministryId = null)
     {
+
         return $this->model->query()
-            ->select('files.id', 'files.subject')
-            ->when($search, function ($q) use ($search) {
-                $q->where('files.name', 'like', "%{$search}%");
-            });
+                            ->select([
+                                'files.id as id',
+                                'files.subject as file_subject',
+                                'files.status as file_status',
+                                'fc.status as circulation_status',
+                                'files.reference_no as reference_no',
+                                'files.letter_date as letter_date',
+                                'files.ministry_id',
+                                'files.due_date as due_date',
+                                'dispatches.dispatch_date as dispatch_date',
+                            ])
+                            ->join('ministries', 'files.ministry_id', '=', 'ministries.id')
+
+                            ->leftJoin('file_circulations as fc', function ($join) use ($ministryId) {
+                                $join->on('files.id', '=', 'fc.file_id')
+                                    ->where('fc.to_ministry_id', $ministryId);
+                            })
+
+                            ->leftJoin('dispatches', function ($join) {
+                                $join->on('dispatches.file_id', '=', 'files.id')
+                                    ->on('dispatches.id', '=', 'fc.dispatch_id');
+                            })
+
+                            ->where(function ($query) use ($ministryId) {
+                                $query->where('files.ministry_id', $ministryId)
+                                    ->orWhere('fc.to_ministry_id', $ministryId);
+                            });
     }
 
     
@@ -99,7 +123,7 @@ class FileRepository extends BaseRepository
             // ->join('organisations as to_org', 'file_recipients.organisation_id', '=', 'to_org.id')
             ->select([
                 'files.id',
-                'files.name as file_name',
+                'files.subject as file_subject',
                 'files.letter_date as letter_date',
                 'from_org.code as organisation_code',
             //     'to_org.name as to_organisation_name'

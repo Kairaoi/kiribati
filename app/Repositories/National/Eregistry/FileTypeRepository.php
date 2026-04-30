@@ -33,8 +33,6 @@ class FileTypeRepository extends BaseRepository
             'code' => $input['code'],
             'created_at' => now(),
             'updated_at' => now(),
-
-
         ];
 
         $fileType = $this->model();
@@ -53,6 +51,7 @@ class FileTypeRepository extends BaseRepository
      */
     public function update(FileType $model, array $input)
     {
+
         $data = [
             'name' => $input['name'],
             'description' => $input['description'] ?? $model->description,
@@ -73,22 +72,26 @@ class FileTypeRepository extends BaseRepository
      * @param string $sort
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function getForDataTable($search = '', $order_by = 'id', $sort = 'asc')
+    public function getForDataTable($selectedType, int $ministryId, $search = '', $order_by = 'id', $sort = 'desc')
     {
-        $query = $this->model->query()->select(['id', 'name', 'description', 'code', 'created_at', 'updated_at']);
+        
+        $query = $this->model->query()
+            ->select(['id', 'name', 'is_global', 'code', 'created_at', 'updated_at'])
+            ->forType($selectedType, $ministryId); //scope in Model
 
         if (!empty($search)) {
             $search = '%' . strtolower($search) . '%';
+
             $query->where(function ($q) use ($search) {
                 $q->whereRaw('LOWER(name) LIKE ?', [$search])
-                  ->orWhereRaw('LOWER(description) LIKE ?', [$search])
-                  ->orWhereRaw('LOWER(code) LIKE ?', [$search])
-                  ->orWhereRaw('DATE_FORMAT(created_at, "%Y-%m-%d") LIKE ?', [str_replace('%', '', $search)]) // Date must match format
-                  ->orWhereRaw('CAST(created_by AS CHAR) LIKE ?', [$search]);
+                ->orWhereRaw('LOWER(description) LIKE ?', [$search])
+                ->orWhereRaw('LOWER(code) LIKE ?', [$search])
+                ->orWhereRaw('DATE_FORMAT(created_at, "%Y-%m-%d") LIKE ?', [str_replace('%', '', $search)])
+                ->orWhereRaw('CAST(created_by AS CHAR) LIKE ?', [$search]);
             });
         }
 
-        return $query->orderBy($order_by, $sort);
+        return $query->orderBy($order_by, $sort)->get();
     }
 
     /**
@@ -111,6 +114,13 @@ class FileTypeRepository extends BaseRepository
         return $this->model->query()
             ->orderBy('name')
             ->get(['id', 'name', 'description']);
+    }
+
+    public function getFileTypes()
+    {
+        return $this->model->query()
+            ->orderBy('name')
+            ->get(['id', 'name', 'is_global']);
     }
 
 }

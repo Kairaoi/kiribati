@@ -28,7 +28,7 @@
                             <x-nav-link href="{{ route('registry.boards.index') }}"
                                 :active="request()->routeIs('registry.boards.index')"
                                 class="flex items-center h-full">
-                                <svg class="w-5 h-5 inline-block mr-1 text-blue-900" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                <svg class="w-5 h-5 inline-block mr-1 text-cyan-900" xmlns="http://www.w3.org/2000/svg" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M3 9l9-7 9 7v11a2 2 0 01-2 2h-4a2 2 0 01-2-2V13H9v7a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
@@ -43,15 +43,15 @@
                                 class="absolute left-0 top-full mt-5 w-56 bg-white shadow-lg rounded-md py-2 z-50"
                                 @click.outside="open = false">
                                 <a href="{{ route('registry.boards.index') }}"
-                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-900">
+                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-cyan-50 hover:text-cyan-900">
                                     Boards
                                 </a>
                                 <a href="{{ route('registry.files.index') }}"
-                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-900">
+                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-cyan-50 hover:text-cyan-900">
                                     Files
                                 </a>
                                 <a href="{{ route('registry.file-circulations.index') }}"
-                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-900">
+                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-cyan-50 hover:text-cyan-900">
                                     Circulation
                                 </a>
                             </div> --}}
@@ -62,7 +62,7 @@
                     {{-- Management --}}
                     <div class="hidden space-x-8 sm:-my-px sm:ms-10 font-montserrat sm:flex">
                         <x-nav-link href="{{ route('registry.boards.management') }}" :active="request()->routeIs('registry.boards.management')">
-                            <svg class="w-5 h-5 inline-block mr-1 text-blue-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg class="w-5 h-5 inline-block mr-1 text-cyan-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a2 2 0 012-2h2a2 2 0 012 2v2m-6 0h6M4 6h16M4 10h16M4 14h16" />
                             </svg>
                             {{ __('MANAGEMENT') }}
@@ -73,7 +73,7 @@
                 {{-- My Files --}}
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 font-montserrat sm:flex">
                     <x-nav-link href="{{ route('registry.boards.myFiles') }}" :active="request()->routeIs('registry.boards.myFiles')">
-                        <svg class="w-5 h-5 inline-block mr-1 text-blue-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg class="w-5 h-5 inline-block mr-1 text-cyan-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M5 6h14M5 6v12a2 2 0 002 2h10a2 2 0 002-2V6H5z" />
                         </svg>
                         {{ __('MY FILES') }}
@@ -83,7 +83,7 @@
                 {{-- Profile --}}
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 font-montserrat sm:flex">
                     <x-nav-link href="{{ route('registry.boards.profile') }}" :active="request()->routeIs('registry.boards.profile')">
-                        <svg class="w-5 h-5 inline-block mr-1 text-blue-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg class="w-5 h-5 inline-block mr-1 text-cyan-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9.99 9.99 0 0112 15c2.28 0 4.374.755 6.001 2.026M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                         {{ __('PROFILE') }}

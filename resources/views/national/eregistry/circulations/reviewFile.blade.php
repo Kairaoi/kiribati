@@ -51,13 +51,13 @@
                             @php
                                 switch ($organisation->pivot->status) {
                                     case 'Dispatched':
-                                        $badgeClass = 'bg-green-500 text-white px-2 py-1 rounded';
+                                        $badgeClass = 'bg-cyan-500 text-white px-2 py-1 rounded';
                                         break;
                                     case 'Circulated':
                                         $badgeClass = 'bg-yellow-500 text-white px-2 py-1 rounded';
                                         break;
                                     case 'Assigned To Officer':
-                                        $badgeClass = 'bg-blue-300 text-gray-700 px-2 py-1 rounded';
+                                        $badgeClass = 'bg-cyan-300 text-gray-700 px-2 py-1 rounded';
                                         break;
                                     default:
                                         $badgeClass = 'bg-gray-400 text-white px-2 py-1 rounded';
@@ -98,7 +98,7 @@
                     @if (!empty($file->$field))
                         <li>
                             <a href="{{ route('registry.files.download.additional', ['id' => $file->id, 'number' => $i]) }}"
-                            class="text-blue-500 hover:underline">
+                            class="text-cyan-500 hover:underline">
                                 Download Additional File {{ $i }}
                             </a>
                         </li>
@@ -124,9 +124,9 @@
             @endphp
 
             
-            <label for="assignedOfficers" class="block text-xl font-medium text-blue-600 mb-2">Select Responsible Officers:</label>
+            <label for="assignedOfficers" class="block text-xl font-medium text-cyan-600 mb-2">Select Responsible Officers:</label>
             
-            <select name="assignedOfficers[]" id="assignedOfficers" multiple class="w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-200">
+            <select name="assignedOfficers[]" id="assignedOfficers" multiple class="w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-cyan-200">
                 @foreach ($users as $user)
                     <option value="{{ $user->id }}" data-name="{{ $user->first_name }} {{ $user->last_name }}">
                         {{ $user->division_name }} - {{ $user->first_name }} {{ $user->last_name }} </option>
@@ -139,7 +139,7 @@
             <br class="my-4 border-t border-gray-300">
             <button type="submit"
                 title="{{ $isCirculated ? '' : 'Forwarding is only allowed when status is Circulated' }}"
-                class="w-full {{ $isCirculated ? 'bg-blue-600 hover:bg-blue-900' : 'bg-gray-400 cursor-not-allowed' }} text-white font-semibold py-2 px-4 rounded-md shadow-sm transition duration-200"
+                class="w-full {{ $isCirculated ? 'bg-cyan-600 hover:bg-cyan-900' : 'bg-gray-400 cursor-not-allowed' }} text-white font-semibold py-2 px-4 rounded-md shadow-sm transition duration-200"
                 {{ $isCirculated ? '' : 'disabled' }}>
                 Forward
             </button>
