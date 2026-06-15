@@ -10,6 +10,8 @@ use App\Models\National\Eregistry\FileCirculation;
 use App\Models\National\Eregistry\Ministry;
 use App\Models\National\Eregistry\OrganisationType;
 use App\Models\National\Eregistry\IdentityOrganisation;
+use App\Models\National\Eregistry\MinistryArchivedFile;
+use App\Models\National\Eregistry\MinistryClosedFile;
 use App\Models\User;
 use App\Repositories\National\Eregistry\CategoryRepository;
 use App\Repositories\National\Eregistry\DispatchRepository;
@@ -23,6 +25,7 @@ use App\Repositories\National\Eregistry\IdentityOrganisationRepository;
 use App\Repositories\National\Eregistry\MinistryRepository;
 use App\Repositories\National\Eregistry\UserRepository;
 use App\Services\FileReferenceService;
+use App\Services\FileActionService;
 use Illuminate\Auth\Events\Validated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -31,6 +34,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class FileController extends Controller
 {
@@ -81,35 +85,67 @@ class FileController extends Controller
      */
     public function getDataTables(Request $request)
     {
-        $query = $this->files->getForDataTable(auth()->user()->ministry_id);
+        Log::info('DataTables request', $request->all());
+        $selectedType = $request->get('selected_type');
+        $type = empty($selectedType)
+                ? 'active'
+                : $request->get('type', 'active');
+
+         $fileType = $request->get('file_type');
+         $category = $request->get('category');
+        // $organisationId = $request->get('organisation_id'); // Get array of selected organisation IDs
+        // $fromDate = $request->get('date_from');
+        // $toDate = $request->get('date_to');
+
+        // $query = $this->files->getForDataTable(auth()->user()->ministry_id, $type, $selectedType, $organisationId, $fromDate, $toDate);
+
+        $query = $this->files->getForDataTable(auth()->user()->ministry_id, 
+                                                $type, 
+                                                $selectedType,
+                                                $fileType,
+                                                $category
+                                            );
 
         return DataTables::of($query)
-            ->editColumn('file_status', function ($file) {
-                return $file->ministry_id == auth()->user()->ministry_id
-                    ? $file->file_status
-                    : ($file->circulation_status ?? 'Pending');
-            })
-            ->make(true);
+            ->editColumn('file_status', function ($row) {
+                $userMinistryId = auth()->user()->ministry_id;
+
+                if ($row->ministry_id == $userMinistryId && $row->circulation_ministry_id && $row->circulation_ministry_id == $userMinistryId) {
+                    return $row->circulation_status;
+                }
+
+                if ($row->ministry_id == $userMinistryId) {
+                    return $row->file_status;
+                }
+
+                return $row->circulation_status ?? 'Pending';
+            })->make(true);
     }
 
 
-    // public function getFiles(Request $request)
-    // {
+    public function index($type = 'active')
+    {
+        // if (!auth()->user()->hasRole(['registry','admin'])) {
+        //     abort(403, 'Unauthorized access');
+        // }
+        $ministryId = auth()->user()->ministry_id;
+        $organisations = $this->identityOrganisations->listAll();
+        $categories = $this->categories->listWithDescriptions();
+        $file_types = $this->file_types->listWithMinistryTypes($ministryId);
+        return view('national.eregistry.files.index', compact('type', 'organisations', 'categories', 'file_types'));
+    }
 
-    //     $organisationId = Auth::user()->organisation_id;
 
-    //     $query = $this->files->getForDataTable($request->search['value'] ?? '');
+    public function assignedIndex()
+    {
+        // if (!auth()->user()->hasRole(['registry','admin'])) {
+        //     abort(403, 'Unauthorized access');
+        // }
 
-    //     $query = $query->visibleToOrganisation($organisationId);
+        return view('national.eregistry.files.assignedIndex');
+    }
 
-    //     $files = $query
-    //         ->with('recipientMinistries')
-    //         ->get();
 
-    //     return response()->json([
-    //         'data' => $files
-    //     ]);
-    // }
 
     public function getArchiveFiles(Request $request)
     {
@@ -132,91 +168,6 @@ class FileController extends Controller
     }
        
 
-
-    /**
-     * Display a listing of the files.
-     *
-     * @return \Illuminate\View\View
-     */
-    // public function index()
-    // {
-    //     $divisions = $this->divisions->list();
-    //     $officers = $this->fileCirculations->listOfficers();
-    //     $organisations = $this->organisations->list();
-
-    //     // $archives = DB::table('organisation_archived_files')
-    //     //     ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, COUNT(*) as total')
-    //     //     ->where('organisation_id', auth()->user()->organisation_id)
-    //     //     ->groupBy('year', 'month')
-    //     //     ->orderBy('year', 'desc')
-    //     //     ->orderBy('month', 'desc')
-    //     //     ->get()
-    //     //     ->groupBy('year');
-
-    //     $orgFilters = DB::table('organisation_archived_files as oaf')
-    //         ->join('organisations as o', 'o.id', '=', 'oaf.organisation_id')
-    //         ->select('o.id', 'o.code', DB::raw('COUNT(*) as total'))
-    //         ->groupBy('o.id', 'o.code')
-    //         ->orderBy('o.code')
-    //         ->get();
-
-    //     $files= DB::table('organisation_archived_files as oaf')
-    //         ->join('files as f', 'f.id', '=', 'oaf.file_id')
-    //         ->join('organisations as o', 'o.id', '=', 'f.organisation_id') // sender ministry
-    //         ->where('oaf.organisation_id', auth()->user()->organisation_id)
-    //         ->select(
-    //             'f.id as file_id',
-    //             'f.subject as file_subject', 
-    //             'o.name as organisation_name',
-    //             'o.id as organisation_id',
-    //             'o.code as organisation_code',
-    //             'oaf.created_at as archived_date'
-    //         )
-    //         ->orderBy('oaf.created_at', 'desc')
-    //         ->get();
-
-    //     $organisations = DB::table('organisation_archived_files as oaf')
-    //         ->join('files as f', 'f.id', '=', 'oaf.file_id')
-    //         ->join('organisations as o', 'o.id', '=', 'f.organisation_id') // sender ministry
-    //         ->where('oaf.organisation_id', auth()->user()->organisation_id)
-    //         ->select('o.id', 'o.name', DB::raw('COUNT(*) as total'))
-    //         ->groupBy('o.id', 'o.name')
-    //         ->orderBy('o.name')
-    //         ->get();
-
-    //     $monthlyArchives = DB::table('organisation_archived_files as oaf')
-    //         ->join('files as f', 'f.id', '=', 'oaf.file_id')
-    //         ->join('organisations as o', 'o.id', '=', 'f.organisation_id') // sender ministry
-    //         ->where('oaf.organisation_id', auth()->user()->organisation_id)
-    //         ->select(
-    //             DB::raw('YEAR(oaf.created_at) as year'),
-    //             DB::raw('MONTH(oaf.created_at) as month'),
-    //             DB::raw('COUNT(*) as total')
-    //         )
-    //         ->groupBy('year', 'month')
-    //         ->orderBy('year', 'desc')
-    //         ->orderBy('month', 'desc')
-    //         ->get()
-    //         ->groupBy('year', 'month');
-
-
-    //     return view('national.eregistry.files.index', compact('divisions', 
-    //     'officers', 'organisations', 'orgFilters', 'files', 'monthlyArchives'));
-    // }
-
-    public function index()
-    {
-        // if (!auth()->user()->hasRole(['registry','admin'])) {
-        //     abort(403, 'Unauthorized access');
-        // }
-        return view('national.eregistry.files.index');
-
-        
-    }
-
-    //     return view('national.eregistry.files.index', compact('identityOrganisations'));
-    // }
-
     /**
      * Show the form for creating a new file (for dispatch & circulation).
      *
@@ -224,28 +175,29 @@ class FileController extends Controller
      */
     public function create()
     {
+        $ministryId = auth()->user()->ministry_id;
 
-        $identityOrganisations = IdentityOrganisation::select(
-                'id',
-                'name',
-                'code',
-                'organisation_type_id'
-            )
-            ->get();        
-        $externalPartners = $this->externalPartners->list(); // Fetch external partners for the dropdown in the file creation form
+        $identityOrganisations = IdentityOrganisation::with('type')->orderBy('name')->get(); 
+        $externalPartners = $this->externalPartners->list($ministryId);
         $ministryId = Auth::user()->ministry_id;
-        $file_types = $this->file_types->getFileTypes(); 
+        $file_types = $this->file_types->listWithMinistryTypes($ministryId); 
         $categories = $this->categories->listWithDescriptions();
-        $divisions = $this->divisions->listWithOrganisation($ministryId); // Fetch divisions for the logged-in organisation
+        $divisions = $this->divisions->listWithOrganisation($ministryId);
+        $ministries = $this->ministries->list();
+        $usersWithDivision = $this->users->getUsersDivision();
+
+        $notMinistriesOrgs = $identityOrganisations->filter(function($org) {
+            return $org->type->name !== 'Ministry';
+        });
         
-        // Return the view and pass the data
         return view('national.eregistry.files.create', compact('identityOrganisations',
-                                                                'externalPartners',    
+                                                                'externalPartners',  
+                                                                'ministries',  
                                                                 'divisions',
                                                                 'categories',
                                                                 'file_types',
-                                                        
-            
+                                                                'notMinistriesOrgs',
+                                                                'usersWithDivision'
         ));
     }
 
@@ -262,15 +214,45 @@ class FileController extends Controller
         $validated = $request->validate([
             'source_type' => 'required|in:identity_organisation,external_partner',
             'source_id' => 'required|integer',
+            'document_source' => 'required|in:upload,online',
             'from_division_id' => 'nullable|exists:divisions,id',
             'subject' => 'required|string|max:255',
-            'main_file' => 'required|file|mimes:pdf|max:10240',
+            'main_file' => 'required_if:document_source,upload|file|mimes:pdf|max:10240',
+            'content' => [
+                    'exclude_unless:document_source,online',
+                    'required',
+                    'string',
+            ],
+            'correspondence_type' => 'required_if:document_source,online|in:letter,internal,memo',
             'additional_files' => 'nullable|array|max:3',
             'additional_files.*' => 'file|mimes:pdf,xls,xlsx,png,jpg,jpeg,doc,docx,ppt,pptx|max:10240',
             'file_type_id' => 'required|exists:file_types,id',
             'category_id' => 'nullable|exists:categories,id',
             'due_date' => 'nullable|date',
+            'memo_from_field' => 'nullable|string|max:255',
+            'memo_cc_field' =>'nullable|string|max:255',
+            'memo_attention_to' => 'nullable|string|max:255',
+            'internal_from_field' => 'nullable|string|max:255',
+            'internal_to_field' => 'nullable|string|max:255',
+            'internal_cc_field' => 'nullable|string|max:255',
+            'internal_ufs_id' => 'nullable|exists:users,id',
         ]);
+
+        if (!$request->filled('content') && !$request->hasFile('main_file')) {
+            return back()
+                ->withErrors([
+                    'content' => 'Please upload a file or write content online.',
+                ])
+                ->withInput();
+        }
+
+        if ($validated['document_source'] === 'online' && !$request->filled('content')) {
+            return back()
+                ->withErrors([
+                    'content' => 'Content is required when document source is online.',
+                ])
+                ->withInput();
+        }
 
         $map = [
             'identity_organisation' => IdentityOrganisation::class,
@@ -285,11 +267,37 @@ class FileController extends Controller
             $request->file_type_id
         );
 
-        try {
+        $letterRecipients = [];
+        $memoRecipients = [];
+        $correspondenceType = $validated['correspondence_type'] ?? null;
+        if ($correspondenceType !== null && $validated['correspondence_type'] === 'letter') {
+                $request->validate([
+                    'registered_organisations'   => ['nullable', 'array'],
+                    'registered_organisations.*' => ['integer', 'exists:identity_organisations,id'],
+
+                    'external_partners'   => ['nullable', 'array'],
+                    'external_partners.*' => ['integer', 'exists:external_partners,id'],
+                ]);
+
+                $letterRecipients = [
+                    'registered_organisations' => $request->registered_organisations ?? [],
+                    'external_partners'        => $request->external_partners ?? [],
+                ];
+
+        } else if ($correspondenceType !== null && $validated['correspondence_type']=== 'memo') {
+                $request->validate([
+                    'memo_recipients'   => ['nullable', 'array'],
+                    'memo_recipients.*' => ['integer', 'exists:ministries,id'],
+                ]);
+        }
+        
+        $memoRecipients = $request->memo_recipients ?? [];
+        $mainFilePath = null;
+        if ($request->hasFile('main_file')) {
             $mainFile = $request->file('main_file');
             $mainFilePath = $mainFile->store('uploads/main_files', 'public');
-            $mainFileName = $mainFile->getClientOriginalName(); // save original name
-
+        }
+       
             // Store up to 3 additional files
             $additionalFilePaths = [];
 
@@ -299,23 +307,34 @@ class FileController extends Controller
                     $additionalFilePaths[] = $path;
                 }
             }
+            // $status = $validated['document_source'] === 'online'
+            //     ? 'Draft'
+            //     : 'Pending Action';
 
-            $fileData = array_merge($validated,
-                [
-                    'main_file_path' => $mainFilePath,
-                    'additional_file_paths' => $additionalFilePaths, 
-                    'reference_no' => $referenceNo,
-                    'is_active' => true,
-                    'created_by' => auth()->id(),
-                    'updated_by' => auth()->id(),
-                    'letter_date' => now()->toDateString(),
-                    'ministry_id' => auth()->user()->ministry_id,
-                    'status' => 'Pending Action'
-                ]
-            );
+            $correspondenceType = $validated['correspondence_type'] ?? null;
+           
+            $fileData = array_merge($validated, [
+                'main_file_path' => $mainFilePath,
+                'additional_file_paths' => $additionalFilePaths,
+                'reference_no' => $referenceNo,
+                'is_active' => true,
+                'created_by' => auth()->id(),
+                'updated_by' => auth()->id(),
+                'letter_date' => now()->toDateString(),
+                'ministry_id' => auth()->user()->ministry_id,
+                'status' => 'Pending Action',
+
+                'letter_recipients' => $correspondenceType === 'letter'
+                    ? $letterRecipients
+                    : [],
+
+                'memo_recipients' => $correspondenceType === 'memo'
+                    ? $memoRecipients
+                    : [],
+            ]);
 
             $file = File::create($fileData);
-
+            
             activity('file')
                 ->causedBy(auth()->user())
                 ->performedOn($file)
@@ -325,15 +344,7 @@ class FileController extends Controller
                 ->log('File created');
 
             Log::info('File successfully stored in database', ['file_id' => $file->id]);
-
-            return view('national.eregistry.files.index')  
-                ->with('success', 'File created successfully. Reference No: ' . $file->reference_no);
-
-
-        } catch (\Exception $e) {
-            Log::error('Error storing file', ['message' => $e->getMessage(), 'file_data' => $validated]);
-            return back()->withErrors(['error' => 'Error storing file: ' . $e->getMessage()])->withInput();
-        }
+            return redirect()->route('registry.files.index')->with('success', 'File created successfully!');
     }
 
     
@@ -347,92 +358,72 @@ class FileController extends Controller
     {
         $ministryId = auth()->user()->ministry_id;
         $fileId = $file->id;
-        $fileCirculations = $this->fileCirculations->ministryCirculations($fileId, $ministryId)->latest()->get();
+        $closedRecord = DB::table('ministry_closed_files')
+                ->join('users', 'ministry_closed_files.closed_by', '=', 'users.id')
+                ->where('ministry_closed_files.file_id', $fileId)
+                ->where('ministry_closed_files.ministry_id', $ministryId)
+                ->select(
+                    'ministry_closed_files.created_at',
+                    'users.first_name as closed_by_name',
+                    'users.last_name as closed_by_lastName',
+                )
+                ->first();
+
+        $isClosed = !is_null($closedRecord);
+        $closedBy = $closedRecord?->closed_by_name ?? 'Unknown';
+        $closedDate = $closedRecord?->closed_at ?? null;
+
+        $ministrySource = $file->isOwnedByMinistry(auth()->user()->ministry_id);
+        // dd($ministrySource);
+        // $fileCirculations = $this->fileCirculations->ministryCirculations($fileId, $ministryId)->latest()->get();
+        $fileCirculations = $this->fileCirculations
+                                ->ministryCirculations($fileId, $ministryId)
+                                ->with('activeAssignments')
+                                ->latest()
+                                ->get();
         $circulation = $this->fileCirculations->thisCirculation($fileId, $ministryId);
+    
         $fileAssignment = $circulation?->activeAssignments()->where('officer_id', Auth::id())->first(); // Get the file assignment for the logged-in user, if it exists
-        // dd($fileAssignment);
+        
         $dispatchedMinistries = $fileCirculations->pluck('to_ministry_id')->unique()->toArray();
         $ministries = $this->ministries->list()
-                                        ->where('id', '!=', $file->ministry_id)
-                                        ->whereNotIn(
-                                            'id',
-                                            $fileCirculations->pluck('to_ministry_id')->unique()
-                                        )
-                                        ->values();
-        // dd($dispatchedMinistriesId);
-        // dd($dispatchedMinistries);
+                                       ->where('id', '!=', $file->ministry_id)
+                                       ->whereNotIn('id', $fileCirculations->pluck('to_ministry_id')->unique())
+                                       ->values();
         $officers = $this->users->pluck();
         $reviewOfficer = User::role('review-officer')
                                 ->where('ministry_id', $ministryId)
                                 ->first();
-        $usersWithDivision = $this->users->getUsersDivision(); // Fetch all admin users using the listAdmins method from UserRepository  
-
-        // dd($fileId);
+        $usersWithDivision = $this->users->getUsersDivision();
         
-        return view('national.eregistry.files.show', compact('file', 'fileId', 'ministries', 'officers', 'dispatchedMinistries', 'reviewOfficer', 'usersWithDivision', 'fileCirculations', 'circulation', 'fileAssignment'));
+        return view('national.eregistry.files.show', compact('file', 
+                                                             'ministrySource', 
+                                                             'fileId', 
+                                                             'isClosed', 
+                                                             'closedBy',
+                                                             'closedDate', 
+                                                             'ministryId', 
+                                                             'ministries', 
+                                                             'officers', 
+                                                             'dispatchedMinistries', 
+                                                             'reviewOfficer', 
+                                                             'usersWithDivision', 
+                                                             'fileCirculations',
+                                                             'circulation', 
+                                                             'fileAssignment'));
     }
 
 
-    //display file dispatch or file circulation from e-filing or archive 
-    // public function show($id)
+    // public function show(File $file, FileActionService $fileActionService)
     // {
-    //     $file = File::findOrFail($id);
+    //     $actions = $fileActionService->getActions($file, auth()->user());
 
-    //     //if the file is a dispatch file and the logged in user belongs to the sender ministry, show the dispatch details and circulation history for the file
-    //     if ($file->initial_type === 'dispatch' && $file->organisation_id == auth()->user()->organisation_id) {
-    //         $dispatch = $this->dispatches->where('file_id', $id)->first();        
-    //         $fileCirculations = $file->circulations()->with('fromOrganisation', 'assignedOfficers')->get();
-
-    //         return view('national.eregistry.dispatches.show', compact('file', 'dispatch', 'fileCirculations'));
-        
-    //     //if the file is also a dispatch file and the logged in user belongs to the recipient ministry, show the circulation details for the file
-    //     //also if the file is an internal circulation file and the logged in user belongs to the recipient ministry, show the circulation details for the file
-    //     } else if ( ($file->initial_type === 'dispatch' &&  $file->recipientMinistries->pluck('id')->contains(auth()->user()->organisation_id))  || 
-    //                ($file->initial_type === 'internal' && $file->recipientMinistries->pluck('id')->contains(auth()->user()->organisation_id)) ) {
-                    
-    //                 $fileCirculation = $this->fileCirculations->where('file_id', $id)
-    //                                                         ->where('to_organisation_id', auth()->user()->organisation_id)->first(); // Ensure the circulation record is for the logged-in user's organisation
-                    
-    //                 $fileCirculation->load('assignedOfficers'); // Load assigned officers for the circulation record
-    //                 $usersWithDivision = $this->users->getUsersDivision(); // Fetch all admin users using the listAdmins method from UserRepository  
-    //                 $loggedInOrganisation = $this->organisations->getById(Auth()->user()->organisation_id); // Get the logged-in user's organisation
-    //                 $fileRecipientOrganisations = $file->recipientMinistries()->pluck('organisations.id')->toArray();
-
-    //                 return view('national.eregistry.circulations.show', compact('file', 'usersWithDivision', 'loggedInOrganisation', 'fileCirculation'));       
-                
-    //         } 
-
-    //     // fallback (optional)
-    //     abort(403, 'Unauthorized access to this file');
+    //     return view('files.show', compact(
+    //         'file',
+    //         'actions'
+    //     ));
     // }
 
-
-    /**
-     * View the file content directly in the browser.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-    // public function viewFile($id)
-    // {
-    //     $file = $this->files->getById($id);
-
-    //     // Optional: Check permissions
-    //     // if (!auth()->user()->can('view', $file)) {
-    //     //     abort(403, 'Unauthorized');
-    //     // }
-
-    //     $filePath = storage_path('app/private/' . $file->main_file_path);
-
-    //     if (!file_exists($filePath)) {
-    //         abort(404, 'File not found');
-    //     }
-
-    //     return response()->file($filePath, [
-    //         'Content-Type' => 'application/pdf',
-    //         'Content-Disposition' => 'inline; filename="' . basename($filePath) . '"'
-    //     ]);
-    // }
 
      /**
      * View the specified file.
@@ -446,78 +437,124 @@ class FileController extends Controller
 
         $file = $this->files->getById($id);
 
-        $recipientOrgIds = $file->recipientMinistries->pluck('id')->toArray();
+        $circulation = $this->fileCirculations->thisCirculation($file->id, $file->ministry_id);
 
-        Log::info('Attempting to view file', [
-            'file_id' => $id,
-            'user_org_id' => $userOrgId,
-            'recipient_org_ids' => $recipientOrgIds
-        ]);
+        if ($file->document_source === 'online') {
+            /*
+            |--------------------------------------------------------------------------
+            | RETURN FINAL RENDERED PDF IF EXISTS
+            |--------------------------------------------------------------------------
+            */
 
-        if ($file->ministry_id != $userOrgId && !in_array($userOrgId, $recipientOrgIds)) {
-            abort(403, 'Unauthorized action.');
+            if ($circulation && $circulation->rendered_pdf_path && Storage::disk('public')->exists($circulation->rendered_pdf_path))
+            {
+                return Storage::disk('public')->response(
+                    $circulation->rendered_pdf_path,
+                    null,
+                    [
+                        'Content-Type' => 'application/pdf',
+                        'Content-Disposition' => 'inline; filename="' .
+                            basename($circulation->rendered_pdf_path) . '"'
+                    ]
+                );
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | GENERATE LIVE TEMPLATE PREVIEW
+            |--------------------------------------------------------------------------
+            */
+
+            $file->load('ministry');
+
+            $templateView = match ($file->correspondence_type) {
+                'memo'    => 'national.eregistry.files.pdf.templates.memo',
+                'letter'  => 'national.eregistry.files.pdf.templates.letter',
+                'internal'=> 'national.eregistry.files.pdf.templates.internal',
+                default   => 'national.eregistry.files.pdf.templates.memo',
+            };
+
+            if ($file->correspondence_type === 'letter' && !empty($file->letter_recipients)) {
+                 $recipientCopies = $file->correspondence_type === 'letter'
+                    ? ($file->letter_recipient_copies ?? collect())
+                    : collect();
+                            
+
+                $pdf = Pdf::loadView($templateView, [
+                    'file' => $file,
+                    'fileCirculation' => $circulation,
+                    'recipientCopies' => $recipientCopies,
+                ])->setPaper('a4', 'portrait');
+
+                return $pdf->stream($file->reference_no . '.pdf');
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | DEFAULT SINGLE PDF
+            |--------------------------------------------------------------------------
+            */
+
+            $pdf = Pdf::loadView($templateView, [
+                'file' => $file,
+                'fileCirculation' => $circulation,
+            ])->setPaper('a4', 'portrait');
+
+            return $pdf->stream($file->reference_no . '.pdf');
         }
 
-        // use Storage (BEST PRACTICE)
+        /*
+        |--------------------------------------------------------------------------
+        | UPLOADED FILE
+        |--------------------------------------------------------------------------
+        */
+
         if (!Storage::disk('public')->exists($file->main_file_path)) {
             abort(404, 'File not found');
         }
 
         return Storage::disk('public')->response($file->main_file_path, null, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="'.basename($file->main_file_path).'"'
+            'Content-Disposition' => 'inline; filename="' .
+                basename($file->main_file_path) . '"'
         ]);
     }
 
-
-    /**
-     * Show the form for editing the specified file.
-     *
-     * @param int $id
-     * @return \Illuminate\View\View
-     */
-    public function editType($id, $editType)
+    
+    public function edit(File $file)
     {
+        $this->authorize('update', $file);
 
-        if ($editType === 'dispatch') {
-            $dispatch = $this->dispatches->getById($id);
-            $file = $this->files->getById($dispatch->file_id);
-        } elseif ($editType === 'internal') {
-            $circulation = $this->fileCirculations->getById($id);
-            $file = $this->files->getById($circulation->file_id);
-        }
+        $ministryId = auth()->user()->ministry_id;
 
-        $allowedTypes = ['dispatch', 'internal'];
-        if (!in_array($editType, $allowedTypes)) {
-            abort(404, 'Invalid file type specified.');
-        }
-        
-        $organisationTypes = $this->organisation_types->list(); // Fetch all organisation types using the list method from OrganisationRepository
-
-        $organisations = $this->organisations->list(); // Fetch all organisations using the list method from OrganisationRepository
-        $ministries = $this->organisations->listMinistries(); // Fetch all ministries using the list method from OrganisationRepository
-        
-
-        $organisationId = Auth::user()->organisation_id;
-        $file_types = $this->file_types->listWithDescriptions(); 
+        $identityOrganisations = IdentityOrganisation::with('type')->orderBy('name')->get();        
+        $externalPartners = $this->externalPartners->list($ministryId);
+        $ministryId = Auth::user()->ministry_id;
+        $file_types = $this->file_types->listWithMinistryTypes($ministryId); 
         $categories = $this->categories->listWithDescriptions();
-        $divisions = $this->divisions->listWithOrganisation($organisationId); // Fetch divisions for the logged-in organisation
-        $allDivisions = $this->divisions->list(); // Fetch all divisions
+        $divisions = $this->divisions->listWithOrganisation($ministryId);
+        $ministries = $this->ministries->list();
+        $usersWithDivision = $this->users->getUsersDivision();
+
+        $notMinistriesOrgs = $identityOrganisations->filter(function($org) {
+            return $org->type->name !== 'Ministry';
+        });
         
-        // Return the view and pass the data
-        return view('national.eregistry.files.edit', compact('organisations',
-                                                                'organisationTypes',
-                                                                'ministries',       
-                                                                'divisions',
-                                                                'allDivisions',
-                                                                'categories',
-                                                                'file_types',
-                                                                'editType',
-                                                                'file'
+        return view('national.eregistry.files.edit', compact('file',
+                                                             'identityOrganisations',
+                                                             'externalPartners',    
+                                                             'divisions',
+                                                             'categories',
+                                                             'file_types',
+                                                             'ministries',
+                                                             'notMinistriesOrgs',
+                                                             'usersWithDivision'
         ));
+
     }
 
-    
+
+
     /**
      * Update the specified file in storage.
      *
@@ -527,6 +564,7 @@ class FileController extends Controller
      */
     public function update(Request $request, File $file)
     {
+        $this->authorize('update', $file);
         $validated = $request->validate([
             'organisation_id' => 'required|exists:organisations,id',
             'organisation_name' => 'required_if:organisation_id,null|string|max:255',
@@ -556,7 +594,7 @@ class FileController extends Controller
             // Handle additional files (keep existing, add new)
             $existingFiles = $file->additional_file_paths ?? [];
 
-            // Remove selected files
+            // Remove selected filesclear
             if ($request->filled('delete_additional_files')) {
                 foreach ($request->delete_additional_files as $fileToDelete) {
 
@@ -641,18 +679,14 @@ class FileController extends Controller
         if (!auth()->check()) {
             abort(403, 'Unauthorized access.');
         }
-
         $file = $this->files->getById($id);
         // dd($file->main_file_path);
-
         if (!$file->main_file_path) {
             abort(404, 'File path not set.');
         }
-
         if (!Storage::disk('local')->exists($file->main_file_path)) {
             abort(404, 'File not found.');
         }
-
         return Storage::disk('local')->download($file->main_file_path, basename($file->main_file_path));
     }
 
@@ -670,13 +704,11 @@ class FileController extends Controller
             if (!isset($file->$additionalField)) {
                 abort(404, 'Invalid additional file number');
             }
-
             $filePath = storage_path('app/private/' . $file->$additionalField);
 
             if (!file_exists($filePath)) {
                 abort(404, 'Additional file not found');
             }
-
             return response()->download($filePath);
         }
 
@@ -692,18 +724,69 @@ class FileController extends Controller
         ]);
 
         $file = File::findOrFail($request->file_id);
-    
-        $org = auth()->user()->organisation;
-    
-        // Fill extra pivot columns
-        $org->archivedFiles()->syncWithoutDetaching([
-            $file->id => [
+
+        MinistryArchivedFile::firstOrCreate(
+            [
+                'file_id' => $file->id,
+                'ministry_id' => auth()->user()->ministry_id,
+            ],
+            [
                 'archived_by' => auth()->id(),
-                'archived_at' => now()
+                'archived_at' => now(),
             ]
+        );
+    }
+
+
+    public function close(File $file)
+    {
+
+        MinistryClosedFile::firstOrCreate(
+            [
+                'file_id' => $file->id,
+                'ministry_id' => auth()->user()->ministry_id,
+            ],
+            [
+                'closed_by' => auth()->id(),
+                'closed_at' => now(),
+            ]
+        );
+
+         return redirect()->route('registry.files.index')->with('success', 'File closed successfully!');
+
+    }
+
+
+    public function viewAudit(File $file)
+    {
+        $file->load(['audits.user']);
+
+        $dispatch = $this->dispatches->getById($file->id);
+        $fileCirculations = $this->fileCirculations->ministryCirculations($file->id, auth()->user()->id)->latest()->get();
+        // dd($fileCirculations);
+        $dispatch->load(['audits.user']);
+
+        return view('national.eregistry.files.audit', compact('file', 'dispatch', 'fileCirculations'));
+    }
+
+
+
+    public function sign(File $file)
+    {
+        $file->signature()->create([
+            'signed_by'       => auth()->id(),
+            'signed_name'     => auth()->user()->full_name,
+            'signed_title'    => auth()->user()->ministry?->reviewer_title,
+            'signed_ministry' => auth()->user()->ministry?->name,
+            'signature_image' => auth()->user()->signature_path,
+            'signed_at'       => now(),
         ]);
 
-        return response()->json(['success' => true]);
+        $file->update([
+            'status' => 'Signed',
+        ]);
+
+        return back()->with('success', 'File signed successfully.');
     }
 
 }

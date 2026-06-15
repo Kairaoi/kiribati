@@ -4,7 +4,7 @@ namespace App\Http\Controllers\National\Eregistry;
 
 use App\Http\Controllers\Controller;
 use App\Repositories\National\Eregistry\DivisionRepository;
-use App\Repositories\National\Eregistry\OrganisationRepository;
+use App\Repositories\National\Eregistry\MinistryRepository;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,12 +14,12 @@ use Yajra\DataTables\Facades\DataTables;
 class DivisionController extends Controller
 {
     private $divisions;
-    private $organisations;
+    private $ministries;
 
-    public function __construct(DivisionRepository $divisions, OrganisationRepository $organisations)
+    public function __construct(DivisionRepository $divisions, MinistryRepository $ministries)
     {
         $this->divisions = $divisions;
-        $this->organisations = $organisations;
+        $this->ministries = $ministries;
     }
 
     /**
@@ -35,10 +35,18 @@ class DivisionController extends Controller
             $search = $search['value'];
         }
     
-        $organisationId = Auth::user()->organisation_id; // Add this line
-        $query = $this->divisions->getForDataTable($search, 'id', 'asc', $organisationId); // Pass it
+        $user = Auth::user();
+        $ministryId = Auth::user()->ministry_id;
+        $query = $this->divisions->getForDataTable($search, 'id', 'asc', $ministryId, $user);
     
-        return DataTables::of($query)->make(true);
+        return DataTables::of($query)
+                    ->addColumn('can_delete', function ($row) {
+                        return auth()->user()->hasRole('system-admin');
+                    })
+                    ->addColumn('can_edit', function ($row) {
+                        return auth()->user()->hasRole('system-admin');
+                    })
+                    ->make(true);
     }
     
     /**
@@ -62,9 +70,9 @@ class DivisionController extends Controller
         //     abort(403, 'Unauthorized action.');
         // }
 
-        $organisations = $this->organisations->pluck();
+        $ministries = $this->ministries->pluck();
 
-        return view('national.eregistry.divisions.create')->with('organisations', $organisations);
+        return view('national.eregistry.divisions.create')->with('ministries', $ministries);
     }
 
     /**
@@ -83,7 +91,7 @@ class DivisionController extends Controller
 
         // Validation
         $request->validate([
-            'organisation_id' => 'required|exists:organisations,id',
+            'ministry_id' => 'required|exists:ministries,id',
             'name' => 'required|string',
             'code' => 'required|string|unique:divisions',
             'description' => 'nullable|string',
@@ -126,11 +134,11 @@ class DivisionController extends Controller
         // }
 
         $division = $this->divisions->getById($id);
-        $organisations = $this->organisations->pluck();
+        $ministries = $this->ministries->pluck();
 
         return view('national.eregistry.divisions.edit', [
             'division' => $division,
-            'organisations' => $organisations,
+            'ministries' => $ministries,
         ]);
     }
 

@@ -58,7 +58,6 @@ class FileTypeRepository extends BaseRepository
             'code' => $input['code'],
             'created_at' => now(),
             'updated_at' => now(),
-
         ];
 
         return $model->update($data);
@@ -72,12 +71,26 @@ class FileTypeRepository extends BaseRepository
      * @param string $sort
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function getForDataTable($selectedType, int $ministryId, $search = '', $order_by = 'id', $sort = 'desc')
+    public function getForDataTable($selectedType, int $ministryId, $user, $search = '', $order_by = 'id', $sort = 'desc')
     {
         
         $query = $this->model->query()
-            ->select(['id', 'name', 'is_global', 'code', 'created_at', 'updated_at'])
-            ->forType($selectedType, $ministryId); //scope in Model
+            ->select(['file_types.id as id', 
+                      'file_types.name as file_type_name', 
+                      'file_types.is_global as is_global', 
+                      'file_types.code as code', 
+                      'file_types.created_at as created_at', 
+                      'file_types.updated_at as updated_at'])
+            ->leftJoin('ministries', 'file_types.ministry_id', '=', 'ministries.id')
+            ->groupBy('file_types.id');
+
+            //scope in Model
+
+            if ($user->hasRole('system-admin')) {
+
+            } else {
+                $query->forType($selectedType, $ministryId);
+            }
 
         if (!empty($search)) {
             $search = '%' . strtolower($search) . '%';
@@ -114,6 +127,18 @@ class FileTypeRepository extends BaseRepository
         return $this->model->query()
             ->orderBy('name')
             ->get(['id', 'name', 'description']);
+    }
+
+
+    public function listWithMinistryTypes($ministryId)
+    {
+        return $this->model->query()
+            ->where(function ($query) use ($ministryId) {
+                $query->where('is_global', 1)
+                    ->orWhere('ministry_id', $ministryId);
+            })
+            ->orderBy('name')
+            ->get(['id', 'name', 'is_global']);
     }
 
     public function getFileTypes()

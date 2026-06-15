@@ -13,6 +13,7 @@ use App\Repositories\National\Eregistry\DivisionRepository;
 use App\Repositories\National\Eregistry\FileRepository;
 use App\Repositories\National\Eregistry\MinistryRepository;
 use App\Repositories\National\Eregistry\UserRepository;
+use App\Repositories\National\Eregistry\FileCirculationRepository;
 use Illuminate\Container\Attributes\Storage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -30,13 +31,15 @@ class DispatchController extends Controller
     private $ministries;
     private $divisions;
     private $users;
+    private $fileCirculations;
 
     public function __construct(
         DispatchRepository $dispatches,
         FileRepository $files,
         MinistryRepository $ministries,
         DivisionRepository $divisions,
-        UserRepository $users
+        UserRepository $users,
+        FileCirculationRepository $fileCirculations
     )
     {
         $this->dispatches = $dispatches;
@@ -44,6 +47,7 @@ class DispatchController extends Controller
         $this->ministries = $ministries;
         $this->divisions = $divisions;
         $this->users = $users;
+        $this->fileCirculations = $fileCirculations;
     }
 
     /**
@@ -144,22 +148,26 @@ class DispatchController extends Controller
             $file->status = 'Dispatched';
             $file->save();
 
+            $fileOwnerCirculation = $this->fileCirculations->thisCirculation($validated['file_id'], auth()->user()->ministry_id);
+
+            if ($fileOwnerCirculation) {
+                $fileOwnerCirculation->update([
+                    'status' => 'Dispatched',
+                    'updated_by' => auth()->id(),
+                ]);
+            }
+
             foreach ($validated['recipient_ministries'] as $ministryId) {
-                // dd($ministryId);
                 FileCirculation::create([                                                       
                     'file_id' => $validated['file_id'],
                     'dispatch_id' => $dispatch->id,
                     'to_ministry_id' => $ministryId,
                     'circulated_by' => auth()->user()->id,
                     'circulated_at' => now(),
-                    'status' => 'Pending Review',
-                    'updated_by' => auth()->user()->id,
-                    'to_review_file' => User::where('ministry_id', $ministryId)->whereHas('roles', function ($q) {
-                        $q->where('name', 'review-officer');
-                    })->first()->id ?? null,            
+                    'status' => 'Pending',
+                    'updated_by' => auth()->user()->id          
                 ]);
             }
-
 
             //for activity log
             // activity()

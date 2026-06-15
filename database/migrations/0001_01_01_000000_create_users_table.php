@@ -13,16 +13,19 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('ministry_id')->nullable(); // Make ministry_id nullable
-            $table->unsignedBigInteger('division_id')->nullable(); // Make division_id nullable
+            $table->unsignedBigInteger('ministry_id')->nullable();
+            $table->unsignedBigInteger('division_id')->nullable(); 
+            $table->string('designation')->nullable(); 
             $table->string('first_name');
             $table->string('last_name');
             $table->string('email')->unique();
+            $table->string('signature_path')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
             $table->foreignId('current_team_id')->nullable();
             $table->string('profile_photo_path', 2048)->nullable();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
             $table->softDeletes();
         });
@@ -33,6 +36,7 @@ return new class extends Migration
             $table->string('token');
             $table->timestamp('created_at')->nullable();
         });
+        
 
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();

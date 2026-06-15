@@ -4,10 +4,12 @@ namespace App\Models\National\Eregistry;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class FileType extends Model
+class FileType extends Model implements Auditable
 {
     use HasFactory;
+    use \OwenIt\Auditing\Auditable;
 
     protected $table = 'file_types';
 
@@ -41,6 +43,7 @@ class FileType extends Model
     }
 
 
+    //filetypes index 
     public function scopeForType($query,  $selectedType, int $ministryId)
     {
             //if dispatched is selected, then show files archived by the organisation
@@ -61,4 +64,9 @@ class FileType extends Model
             }
             return $query;
     }
+
+
+   
+
+
 }

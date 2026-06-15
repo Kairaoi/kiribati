@@ -26,7 +26,7 @@ class DivisionRepository extends BaseRepository
     public function create(array $input)
     {
         $data = [
-            'organisation_id' => $input['organisation_id'],
+            'ministry_id' => $input['ministry_id'],
             'name' => $input['name'],
             'is_active' => $input['is_active'] ?? true,
             'created_at' => Auth::id(),
@@ -50,7 +50,7 @@ class DivisionRepository extends BaseRepository
     public function update(Division $model, array $input)
     {
         $data = [
-            'organisation_id' => $input['organisation_id'],
+            'ministry_id' => $input['ministry_id'],
             'name' => $input['name'],
             'code' => $input['code'],
             'description' => $input['description'] ?? $model->description,
@@ -69,23 +69,32 @@ class DivisionRepository extends BaseRepository
      * @param string $sort
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function getForDataTable($search = '', $order_by = 'id', $sort = 'asc', $ministryId = null)
+    public function getForDataTable($search = '', $order_by = 'id', $sort = 'asc', $ministryId = null, $user = null)
     {
-        $query = $this->model->query()
-            ->select(['id', 'ministry_id', 'name', 'location', 'is_active']);
 
-        // Apply ministry filter if provided
-        if (!is_null($ministryId)) {
-            $query->where('ministry_id', $ministryId);
-        }
+        $query = $this->model->query()
+            ->select(['divisions.id as id', 
+                      'ministries.name as ministry_name', 
+                      'divisions.name as division_name', 
+                      'divisions.location as location', 
+                      'divisions.is_active as is_active',
+                      'divisions.created_at as created_at',
+                      'divisions.updated_at as updated_at'])
+            ->join('ministries', 'divisions.ministry_id', '=', 'ministries.id');
+
+            if($user && $user->hasRole('system-admin')) {
+                // System Admin can see all divisions, no additional filtering needed
+            } else {
+                $query->where('divisions.ministry_id', $ministryId); // Filter by ministry
+            }   
 
         // Apply search filter if provided
         if (!empty($search)) {
             $search = '%' . strtolower($search) . '%';
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'ILIKE', $search)
-                ->orWhere('code', 'ILIKE', $search)
-                ->orWhere('description', 'ILIKE', $search);
+                $q->where('divisions.name', 'ILIKE', $search)
+                ->orWhere('divisions.code', 'ILIKE', $search)
+                ->orWhere('divisions.description', 'ILIKE', $search);
             });
         }
 
@@ -123,12 +132,12 @@ class DivisionRepository extends BaseRepository
     }
 
 
-    //Get the list of divisions for a specific organisation
+    //Get the list of divisions for a specific ministry
     //used in create function in file controller
     public function listWithMinistry($ministryId)
     {
         return $this->model->query()
-            ->with('ministry') // Eager load the organisation relationship
+            ->with('ministry') // Eager load the ministry relationship
             ->where('ministry_id', $ministryId)
             ->orderBy('name')
             ->get();

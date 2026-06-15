@@ -6,10 +6,12 @@ use App\Models\National\Eregistry\Division;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class Ministry extends Model
+class Ministry extends Model implements Auditable
 {
     use HasFactory;
+    use \OwenIt\Auditing\Auditable;
 
     protected $table = 'ministries';
 
@@ -19,10 +21,16 @@ class Ministry extends Model
         'is_active',
         'created_by',
         'updated_by',
+        'updated_at',
         'organisation_type_id',
         'identity_organisation_id',
-        'location',
-        'status'
+        'address',
+        'status',
+        'phone',
+        'email',
+        'logo_path',
+        'website',
+        'po_box',
     ];
 
     public function organisationType()

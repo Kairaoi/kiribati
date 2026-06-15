@@ -14,13 +14,12 @@ class RolesAndPermissionsSeeder extends Seeder
      */
     public function run(): void
     {
-        $systemAdmin = Role::create(['name' => 'system-admin']);
-        $admin = Role::create(['name' => 'admin']);
+        $systemadmin = Role::create(['name' => 'system-admin']);
+        $ministryadmin = Role::create(['name' => 'ministry-admin']);
         $registry = Role::create(['name' => 'registry']);
         $sro = Role::create(['name' => 'sro']);
         $user = Role::create(['name' => 'user']);
         $review_officer = Role::create(['name' => 'review-officer']);
-
 
         Permission::create(['name' => 'view-admin-dashboard']);
         Permission::create(['name' => 'view-registry-dashboard']);
@@ -33,7 +32,7 @@ class RolesAndPermissionsSeeder extends Seeder
         Permission::create(['name' => 'view-assigned-files']);
         Permission::create(['name' => 'review-file']);
 
-        $admin->givePermissionTo(['view-admin-dashboard', 
+        $ministryadmin->givePermissionTo(['view-admin-dashboard', 
                                   'view-registry-dashboard', 
                                   'view-user-dashboard', 
                                   'approve-dispatch',

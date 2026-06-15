@@ -54,26 +54,24 @@
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 </head>
 
-<body class="min-h-screen flex flex-col font-sans antialiased">
+<body class="min-h-screen flex flex-col font-sans antialiased bg-white">
     <x-banner />
 
-    <div class="bg-gray-100 flex-grow">
-        @livewire('navigation-menu')
+    @livewire('navigation-menu')
 
-        @if (isset($header))
-            {{ $header }}
-        @elseif (View::hasSection('header'))
-            @yield('header')
+    @if (isset($header))
+        {{ $header }}
+    @elseif (View::hasSection('header'))
+        @yield('header')
+    @endif
+
+    <main class="flex-grow bg-gray-50">
+        @if (isset($slot))
+            {{ $slot }}
+        @else
+            @yield('content')
         @endif
-
-        <main>
-            @if (isset($slot))
-                {{ $slot }}
-            @else
-                @yield('content')
-            @endif
-        </main>
-    </div>
+    </main>
 
     @stack('modals')
     @livewireScripts

@@ -78,10 +78,14 @@ class IdentityOrganisationRepository extends BaseRepository
      * @param bool $trashed
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function getForDataTable($search = '', $order_by = 'id', $sort = 'asc', $trashed = false)
+    public function getForDataTable($selectedType, $search = '', $order_by = 'id', $sort = 'asc', $trashed = false)
     {
-        $query = $this->model()::query()->select(['id', 'name', 'code', 'description', 'is_active']);
-
+        $query = $this->model()::query()->select(['identity_organisations.id as id', 
+                                                  'identity_organisations.name as name', 
+                                                  'identity_organisations.code as code', 
+                                                  'organisation_types.name as type_name'])
+                                        ->join('organisation_types', 'identity_organisations.organisation_type_id', '=', 'organisation_types.id')
+                                        ->forSelectedType($selectedType);
         if (!empty($search)) {
             $search = '%' . strtolower($search) . '%';
             $query->where(function ($q) use ($search) {

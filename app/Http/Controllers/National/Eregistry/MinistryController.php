@@ -3,17 +3,19 @@
 namespace App\Http\Controllers\National\Eregistry;
 
 use App\Http\Controllers\Controller;
-use App\Models\National\Eregistry\Organisation;
+use App\Models\National\Eregistry\Ministry;
 use App\Repositories\National\Eregistry\MinistryRepository;
 use App\Repositories\National\Eregistry\UserRepository;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
 
 
 class MinistryController extends Controller
 {
+    
     private $ministries;
     private $users;
 
@@ -38,7 +40,7 @@ class MinistryController extends Controller
         if (is_array($search)) {
             $search = $search['value'];
         }
-        $query = $this->organisations->getForDataTable($search);
+        $query = $this->ministries->getForDataTable($search);
         $datatables = DataTables::make($query)->make(true);
         return $datatables;
     }
@@ -50,8 +52,9 @@ class MinistryController extends Controller
      */
     public function index()
     {
-        return view('national.eregistry.organisations.index');
+        return view('national.eregistry.ministries.index');
     }
+
 
     /**
      * Show the form for creating a new resource.
@@ -60,12 +63,14 @@ class MinistryController extends Controller
      */
     public function create()
     {
-        if (!Auth::user()->can('organisation.create')) {
-            abort(403, 'Unauthorized action.');
-        }
+        // if (!Auth::user()->can('organisation.create')) {
+        //     abort(403, 'Unauthorized action.');
+        // }
 
-        return view('national.eregistry.organisations.create');
+
+        return view('national.eregistry.ministries.create');
     }
+
 
     /**
      * Store a newly created resource in storage.
@@ -73,26 +78,44 @@ class MinistryController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function update(Request $request, Ministry $ministry)
     {
-        if (!Auth::user()->can('organisation.store')) {
-            abort(403, 'Unauthorized action.');
-        }
-
-        $input = $request->all();
-
-        // Validation
-        $request->validate([
-            'name' => 'required|string|unique:organisations',
-            'code' => 'required|string|unique:organisations',
-            'description' => 'nullable|string',
-            'is_active' => 'boolean',
+        $validated = $request->validate([
+            'address'     => ['required', 'string', 'max:255'],
+            'po_box'      => ['nullable', 'string', 'max:100'],
+            'phone'       => ['required', 'string', 'max:50'],
+            'email'       => ['required', 'email', 'max:255'],
+            'website'     => ['nullable', 'string', 'max:255'],
+            'logo'        => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
-        // Create the organisation
-        $this->organisations->create($input);
+        if ($request->hasFile('logo')) {
+            if ($ministry->logo && Storage::disk('public')->exists($ministry->logo)) {
+                Storage::disk('public')->delete($ministry->logo);
+            }
+            $validated['logo'] = $request->file('logo')
+                ->store('ministries/logos', 'public');
 
-        return redirect()->route('organisation.index')->with('message', 'Organisation created successfully.');
+        } else {
+            // keep old logo
+            $validated['logo'] = $ministry->logo_path;
+        }
+
+        $ministry->update([
+            'description' => $validated['description'] ?? null,
+            'address'     => $validated['address'],
+            'po_box'      => $validated['po_box'],
+            'phone'       => $validated['phone'],
+            'email'       => $validated['email'],
+            'website'     => $validated['website'],
+            'logo_path'   => $validated['logo'],
+            'updated_at'  => now(),
+            'updated_by'  => auth()->user()->id
+        ]);
+
+        return redirect()
+            ->route('registry.ministries.edit', $ministry)
+            ->with('success', 'Ministry details updated');
     }
 
     /**
@@ -101,15 +124,15 @@ class MinistryController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Ministry $ministry)
     {
-        if (!Auth::user()->can('organisation.show')) {
-            abort(403, 'Unauthorized action.');
-        }
+        // if (!Auth::user()->can('organisation.show')) {
+        //     abort(403, 'Unauthorized action.');
+        // }
 
-        $organisation = $this->organisations->getById($id);
+        // $ministry = $this->ministries->getById($id);
 
-        return view('national.eregistry.organisations.show')->with('organisation', $organisation);
+        return view('national.eregistry.ministries.show', compact('ministry'));
     }
 
     /**
@@ -118,76 +141,19 @@ class MinistryController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
-    {
-        if (!Auth::user()->can('organisation.edit')) {
-            abort(403, 'Unauthorized action.');
-        }
-
-        $organisation = $this->organisations->getById($id);
-
-        return view('national.eregistry.organisations.edit')->with('organisation', $organisation);
-    }
-
-
-    public function showReviewOfficer($id)
+    public function edit(Ministry $ministry)
     {
         // if (!Auth::user()->can('organisation.edit')) {
         //     abort(403, 'Unauthorized action.');
         // }
 
-        $organisation = $this->organisations->getById($id); //logged in organisation
-        $usersWithDivision = $this->users->getUsersDivision(); //users with division name
-        // dd($usersWithDivision);
+        abort_if($ministry->id !== auth()->user()->ministry_id, 403);
 
-        return view('national.eregistry.organisations.show-review-officer', compact('organisation', 
-                                                                                    'usersWithDivision'));
+        return view('national.eregistry.ministries.edit', compact('ministry'));
     }
 
 
-    public function updateReviewOfficer(Request $request, $organisationId)
-    {
-        // if (!Auth::user()->can('organisation.edit')) {
-        //     abort(403, 'Unauthorized action.');
-        // }
-        $validated = $request->validate([
-            'review_officer_id' => 'required|exists:users,id',
-        ]);
 
-        $organisation = Ministry::find($organisationId);
-        $organisation->review_officer_id = $validated['review_officer_id'];
-        $organisation->save();
-
-        //Update file circulations assigned to this organisation to the new review officer
-        DB::table('file_circulations')
-            ->join('file_recipients', 'file_circulations.to_organisation_id', '=', 'file_recipients.organisation_id')
-            ->where('file_circulations.to_organisation_id', $organisationId)
-            ->whereColumn('file_circulations.file_id', '=', 'file_recipients.file_id') //compare these two columns
-            ->whereIn('file_recipients.status', ['Pending Review', 'Pending Circulation'])
-            ->update(['to_review_file' => $validated['review_officer_id']]);
-
-        return back()->with('success', 'Review officer updated successfully.');
-    }
-
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        if (!Auth::user()->can('organisation.update')) {
-            abort(403, 'Unauthorized action.');
-        }
-
-        $organisation = $this->organisations->getById($id);
-        $this->organisations->update($organisation, $request->all());
-
-        return redirect()->route('organisation.index')->with('message', 'Organisation updated successfully.');
-    }
 
     /**
      * Remove the specified resource from storage.

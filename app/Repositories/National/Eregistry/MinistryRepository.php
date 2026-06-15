@@ -124,7 +124,7 @@ class MinistryRepository extends BaseRepository
         return $this->model()::query()
             ->orderBy('id')
             ->orderBy($column)
-            ->get(['id', 'name', 'code']);
+            ->get(['id', 'name', 'code', 'reviewer_title']);
     }
 
     

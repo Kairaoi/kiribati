@@ -44,7 +44,7 @@
             </a>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">        
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 stripe">        
             <table id="dispatchesTable" class="bg-gray-50 text-gray-600 text-sm tracking-wide">
                 <thead>
                     <tr>
@@ -66,7 +66,7 @@
 @push('styles')
     <style>
         /* Table Styles */
-    table.dataTable {
+        table.dataTable {
             width: 100%;
             border-collapse: collapse;
             /* font-size: 0.85rem; */

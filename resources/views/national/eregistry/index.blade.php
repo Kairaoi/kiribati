@@ -16,7 +16,7 @@
         <div class="bg-white p-4 rounded-2xl shadow border-l-4 border-cyan-500">
             <p class="text-gray-500 text-sm">Current Review Officer</p>
             <h2 class="text-lg font-semibold text-gray-700">
-                {{ optional($reviewOfficer)->name() ?? 'N/A' }}
+                {{ optional($reviewOfficer)->name ?? 'N/A' }}
             </h2>
             {{-- <a href="{{ route('registry.users.edit-review-officer' }}" --}}
             <a href="{{ route('registry.users.edit-review-officer') }}"

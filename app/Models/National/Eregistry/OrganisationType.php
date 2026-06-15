@@ -3,12 +3,14 @@
 namespace App\Models\National\Eregistry;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\National\Eregistry\Organisation;
+use App\Models\National\Eregistry\IdentityOrganisation;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class OrganisationType extends Model
+class OrganisationType extends Model implements Auditable
 {
     use HasFactory;
+    use \OwenIt\Auditing\Auditable;
 
     protected $table = 'organisation_types';
 
@@ -19,6 +21,6 @@ class OrganisationType extends Model
 
     public function organisations()
     {
-        return $this->hasMany(Organisation::class, 'organisation_type_id');
+        return $this->hasMany(IdentityOrganisation::class, 'organisation_type_id');
     }
 }

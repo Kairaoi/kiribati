@@ -1,15 +1,17 @@
 <?php
 
 namespace App\Models\National\Eregistry;
+use OwenIt\Auditing\Contracts\Auditable;
+
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Dispatch extends Model
+class Dispatch extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
         'file_id',
@@ -25,12 +27,14 @@ class Dispatch extends Model
         'updated_by',
     ];
 
-    // protected $casts = [
-    //     'movement_start_date' => 'datetime',
-    //     'movement_end_date' => 'datetime',
-    //     'read_status' => 'boolean',
-    // ];
-
+    protected $auditInclude = [
+        'file_id',
+        'dispatch_date',
+        'status',
+        'dispatched_by',
+        'status',
+    ];
+  
     public function file()
     {
         return $this->belongsTo(File::class);

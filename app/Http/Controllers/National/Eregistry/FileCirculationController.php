@@ -4,6 +4,7 @@ namespace App\Http\Controllers\National\Eregistry;
 
 use App\Http\Controllers\Controller;
 use App\Models\National\Eregistry\FileCirculation;
+use App\Models\National\Eregistry\File;
 use App\Models\User;
 use App\Repositories\National\Eregistry\DivisionRepository;
 use App\Repositories\National\Eregistry\FileCirculationRepository;
@@ -264,30 +265,42 @@ class FileCirculationController extends Controller
 
         $validated = $request->validate([
             'file_id' => 'required|exists:files,id',
+            'internal_ufs_id' => [
+                'nullable',
+                Rule::exists('users', 'id')->where(fn ($q) =>
+                    $q->where('division_id', auth()->user()->division_id)
+                ),
+            ],
         ]);
-        
-        $ministryId = Auth::user()->ministry_id;    
-        $reviewOfficerId = User::where('ministry_id', $ministryId)
-                                    ->whereHas('roles', function ($q) {
-                                        $q->where('name', 'review-officer');
-                                    })
-                                    ->first()
-                                    ->id ?? null;
-        // dd($reviewOfficerId);
-        FileCirculation::create([                                                       
-            'file_id' => $validated['file_id'],
-            'to_ministry_id' => $ministryId,
-            'circulated_by' => auth()->user()->id,
-            'circulated_at' => now(),
-            'status' => 'Pending Review',
-            'updated_by' => auth()->user()->id,
-            'to_review_file' => $reviewOfficerId,            
-        ]);
-      
 
-        return redirect()->route('registry.files.index');  
-            
+        $ministryId = Auth::user()->ministry_id;
+
+        $status = !empty($validated['internal_ufs_id'])
+            ? 'Pending UFS'
+            : 'Pending Review';
+
+        FileCirculation::updateOrCreate(
+            [
+                'file_id'        => $validated['file_id'],
+                'to_ministry_id' => $ministryId,
+            ],
+            [
+                'circulated_by'  => auth()->id(),
+                'circulated_at'  => now(),
+                'updated_by'     => auth()->id(),
+                'ufs_id'         => $validated['ufs_id'] ?? null,
+                'status'         => $status,
+            ]
+        );
+
+        File::where('id', $validated['file_id'])
+            ->update([
+                'status' => $status,
+            ]);
+        
+        return redirect()->route('registry.files.index')->with('success', 'File circulated to review officer');
     }
+
 
 
     /**
@@ -298,17 +311,7 @@ class FileCirculationController extends Controller
      */
     public function edit($id)
     {
-        // if (!Auth::user()->can('division.edit')) {
-        //     abort(403, 'Unauthorized action.');
-        // }
-
-        $division = $this->divisions->getById($id);
-        $organisations = $this->organisations->pluck();
-
-        return view('national.eregistry.divisions.edit', [
-            'division' => $division,
-            'organisations' => $organisations,
-        ]);
+        
     }
 
 
@@ -321,15 +324,26 @@ class FileCirculationController extends Controller
      */
     public function update(Request $request, $id)
     {
-        // if (!Auth::user()->can('division.update')) {
-        //     abort(403, 'Unauthorized action.');
-        // }
-
-        $division = $this->divisions->getById($id);
-        $this->divisions->update($division, $request->all());
-
-        return redirect()->route('division.index')->with('message', 'Division updated successfully.');
+       
     }
+
+
+    public function receive(FileCirculation $fileCirculation)
+    {  
+
+        if ($fileCirculation->status === 'Pending') {
+            $fileCirculation->update([
+                'status' => 'Received',
+                'received_at' => now(),
+                'received_by' => auth()->id(),
+                'updated_by' => auth()->id(),
+            ]);
+        }
+
+        return redirect()->route('registry.files.index')->with('message', 'File marked as Received successfully.');
+    }
+
+
 
 
     /**

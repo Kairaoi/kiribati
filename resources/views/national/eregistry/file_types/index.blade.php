@@ -74,6 +74,7 @@
     /* Hover effect */
     #fileTypesTable tbody tr:hover {
         background-color: #f9fafb;
+        bg-cyan-50/40 transition;
     }
 
     /* Fix long text */
@@ -172,8 +173,8 @@
             .excel-export-btn {
                 border: none !important;       /* Ensures no border, overrides any border below */
                 border-radius: 6px !important;
-                background-color: rgb(32, 180, 39) !important;
-                color: #ffffff;
+                background-color:  #f9fafb; !important;
+                color: #322f2f;
                 padding: 0.25rem 0.75rem !important;   /* smaller padding */
                 box-shadow: none !important;          /* removes inner or outer shadow */
                 background-image: none !important;    /* removes gradient */
@@ -192,8 +193,8 @@
             .pdf-export-btn {
                 border: none !important;       /* Ensures no border, overrides any border below */
                 border-radius: 6px !important;
-                background-color: rgb(238, 45, 45) !important;
-                color: #ffffff;
+                background-color:  #f9fafb; !important;
+                color: #322f2f;
                 padding: 0.25rem 0.75rem !important;   /* smaller padding */
                 box-shadow: none !important;          /* removes inner or outer shadow */
                 background-image: none !important;    /* removes gradient */
@@ -262,14 +263,25 @@ $(document).ready(function() {
        },
        columns: [
            { data: 'id', visible: false },
-           { data: 'name' },
+           { data: 'file_type_name' },
            { data: 'code'},
            {
                 data: 'is_global',
                 render: function (data, type, row) {
+
                     return data
-                        ? '<span class="px-2 py-1 text-xs bg-cyan-100 text-cyan-700 rounded">Global</span>'
-                        : '<span class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded">Ministry</span>';
+                        ? `
+                            <span class="inline-flex items-center rounded-full bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-700 ring-1 ring-cyan-100">
+                                <span class="mr-1.5 h-1.5 w-1.5 rounded-full bg-cyan-500"></span>
+                                Global
+                            </span>
+                        `
+                        : `
+                            <span class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-100">
+                                <span class="mr-1.5 h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+                                Ministry
+                            </span>
+                        `;
                 }
             },
            {
@@ -279,22 +291,22 @@ $(document).ready(function() {
                 searchable: false,
                 render: function (data, type, row) {
                     let buttons = `
-                        <a href="/registry/file-types/${row.id}/edit" 
-                        class="btn btn-sm btn-outline-info" 
-                        title="View">
+                        <a href="/registry/file-types/${row.id}/show" 
+                        class="btn btn-sm" 
+                        title="Show">
                             <i class="fas fa-eye"></i>
                         </a>
 
                     `;
-                    if (!row.is_global) {
+                    if (!row.is_global || row.can_edit) {
                         buttons += `
                             <a href="/registry/file-types/${row.id}/edit" 
-                            class="btn btn-sm btn-outline-success" 
+                            class="btn btn-sm" 
                             title="Edit">
                                 <i class="fas fa-edit"></i>
                             </a>
                             <button data-id="${row.id}" 
-                                class="btn btn-sm btn-outline-danger delete-btn" 
+                                class="btn btn-sm delete-btn" 
                                 title="Delete">
                                 <i class="fas fa-trash"></i>
                             </button>
@@ -304,9 +316,9 @@ $(document).ready(function() {
                 }
             },
        ],
-        dom: "<'row mb-3'<'col-md-6 d-flex align-items-center'B><'col-12 col-md-6 text-md-end text-start'f>>" +
-             "<'row'<'col-sm-12'tr>>" +
-             "<'row mt-3'<'col-sm-5'i><'col-sm-7'p>>",
+        dom: "<'flex flex-col md:flex-row md:items-center md:justify-between mb-4'Bf>" +
+        "rt" +
+        "<'flex flex-col md:flex-row md:items-center md:justify-between mt-4'lip>",
         language: {
                         paginate: {
                             previous: "←",
@@ -316,7 +328,7 @@ $(document).ready(function() {
        buttons: [
                         {
                             extend: 'excelHtml5',
-                            text: '<i class="fas fa-download"></i>EXCEL',
+                            text: '<i class="fas fa-download"></i> Download Excel',
                             className: 'excel-export-btn',
                             title: 'File types',
                             exportOptions: {
@@ -325,7 +337,7 @@ $(document).ready(function() {
                         },
                         {
                             extend: 'pdfHtml5',
-                            text: '<i class="fas fa-download"></i>PDF',
+                            text: '<i class="fas fa-download"></i> Download PDF',
                             className: 'pdf-export-btn',
                             title: 'File types',
                             exportOptions: {

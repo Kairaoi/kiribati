@@ -5,9 +5,13 @@ namespace App\Models\National\Eregistry;
 use App\Models\National\Eregistry\FileCirculation;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class FileAssignment extends Model
+class FileAssignment extends Model implements Auditable
 {
+
+    use \OwenIt\Auditing\Auditable;
+
     protected $fillable = [
         'file_circulation_id',
         'officer_id',
@@ -30,6 +34,11 @@ class FileAssignment extends Model
         return $this->belongsTo(FileCirculation::class);
     }
 
+    public function overlays()
+    {
+        return $this->hasMany(DocumentOverlay::class);
+    }
+    
     public function officer()
     {
         return $this->belongsTo(User::class, 'officer_id');

@@ -2,8 +2,7 @@
 
 @section('content')
 
-{{-- <div class="container mx-auto font-roboto px-8 max-w-5xl mt-1"> {{ Breadcrumbs::render('dispatches.show', $file) }} </div> --}}
-    <div class="max-w-3xl mx-auto bg-white shadow-sm border border-gray-200 rounded-lg p-6 mt-4">
+    {{-- <div class="max-w-3xl mx-auto bg-white shadow-sm border border-gray-200 rounded-lg p-6 mt-4">
         <h2 class="text-sm font-semibold text-gray-500 tracking-wide uppercase mb-4">
             Review Officer Details
         </h2>
@@ -23,7 +22,7 @@
                 </p>
             </div>
         </div>
-    </div>
+    </div> --}}
     <div class="max-w-3xl mx-auto mt-6 space-y-4">
         <form method="POST" action="{{ route('registry.organisations.reviewOfficer.update', $organisation->id) }}">
             @csrf
@@ -47,5 +46,6 @@
             </button>
         </form>
     </div>
+</div>
 
 @endsection

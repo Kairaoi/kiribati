@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class UserRepository extends BaseRepository
 {
@@ -77,7 +78,7 @@ class UserRepository extends BaseRepository
      * @param string $sort
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function getForDataTable($search = '')
+    public function getForDataTable($search = '', $user = null)
     {
         $query = $this->model->query()
         ->select([
@@ -85,20 +86,38 @@ class UserRepository extends BaseRepository
             'users.first_name',
             'users.last_name',
             'users.email',
-            // 'users.created_at as user_created_at',
+            'users.designation',
+            'users.created_at',
+            'users.updated_at',
             'users.profile_photo_path',
             'divisions.name as division_name',
-            'roles.name as role_name'
+            'ministries.name as ministry_name',
+            DB::raw('GROUP_CONCAT(roles.name SEPARATOR ", ") as role_names')
         ])
-        // ->leftJoin('organisations', 'users.organisation_id', '=', 'organisations.id')
         ->leftJoin('divisions', 'users.division_id', '=', 'divisions.id')
+        ->join('ministries', 'users.ministry_id', '=', 'ministries.id')
         ->leftJoin('model_has_roles', function ($join) {
             $join->on('users.id', '=', 'model_has_roles.model_id')
                  ->where('model_has_roles.model_type', '=', User::class);
         })
         ->leftJoin('roles', 'model_has_roles.role_id', '=', 'roles.id')
-        ->where('users.organisation_id', auth()->user()->organisation_id);  // Filter by logged-in user's organisation
+        ->groupBy(
+            'users.id',
+        
+        );
 
+
+        if ($user->hasRole('system-admin')) {
+             // System admin sees all users
+        } else if ($user->hasRole('ministry-admin') || $user->hasRole('registry')) {
+            // Ministry admin only sees users from their ministry
+            $query->where('users.ministry_id', $user->ministry_id)
+                ->whereDoesntHave('roles', function ($q) {
+                    $q->where('name', 'system-admin');
+                });
+        }
+
+        
         return $query->orderBy('users.created_at', 'desc');
     }
 
@@ -128,7 +147,7 @@ class UserRepository extends BaseRepository
      * @param string $key
      * @return \Illuminate\Support\Collection
      */
-    public function list($column = 'name', $key = 'id') //return all organisations with only their id, name, code, location and organisation_type_id
+    public function list($column = 'name', $key = 'id')
     {
         return $this->model()::query()
             ->orderBy('id')
@@ -148,7 +167,7 @@ class UserRepository extends BaseRepository
         return $this->model->query()
             ->select('users.id', 'users.division_id', 'users.first_name', 'users.last_name', 'divisions.name as division_name')
             ->join('divisions', 'users.division_id', '=', 'divisions.id')
-            ->where('users.ministry_id', Auth::user()->ministry_id)
+            ->where('users.ministry_id', Auth::user()->ministry_id)->where('users.email', '!=', 'admin@system.gov.ki')
             ->orderBy('divisions.name')
             ->orderBy('users.first_name')
             ->orderBy('users.last_name')

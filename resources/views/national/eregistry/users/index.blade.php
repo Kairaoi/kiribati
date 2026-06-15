@@ -29,10 +29,10 @@
     </div>
 @endif
 
-<div class="container mx-auto font-poppins px-4 py-8 max-w-7xl mt-3 rounded-md min-h-screen ">
+<div class="container mx-auto px-4 py-8 max-w-full mt-3 rounded-md min-h-screen ">
     <div class="mb-4 flex items-start justify-between">
         <div>
-            <h1 class="text-3xl font-bold tracking-wide">{{ Auth::user()->organisation->code }} Users</h1>
+            <h1 class="text-3xl font-bold tracking-wide">Users</h1>
             <p class="text-base text-gray-500 mt-1">
                 View and manage all users from your organisation.
             </p>
@@ -45,15 +45,19 @@
         </a>
     </div>
 
-    <div class="p-4 bg-white rounded-lg shadow-lg overflow-hidden">
-        <table id="usersTable" class="table table-striped w-full mt-6">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-2">
+        <table id="usersTable" class="bg-gray-50 text-gray-800 text-sm divide-y divide-gray-200 stripe">
             <thead>
                 <tr>
+                    <th>Ministry</th>
                     <th>First Name</th>
                     <th>Last Name</th>
-                    <th>Email</th>
                     <th>Division</th>
-                    <th class="w-30">Actions</th>
+                    <th>Designation</th>
+                    <th>Role</th>
+                    <th>Created At</th>
+                    <th>Updated At</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody></tbody> <!-- DataTable will populate this -->
@@ -64,152 +68,179 @@
 @endsection
 
 @push('styles')
-<style>
+  <style>
+        /* Table Styles */
+        table.dataTable {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border: 0.5px solid #d3d3d8;
+            border-radius: 8px;
+            overflow: hidden;
+        }
 
-    h1 {
-        font-family: 'Poppins', sans-serif;
-        font-weight: 600;
-        color: #0a44e3; 
-    }
+        /* Header */
+        #filesTable thead {
+            background-color: #e9edee;
+            color: #5c5d5f;
+            font-size: 12px;
+        }
 
-    p {
-        font-family: 'Poppins', sans-serif;
-        color: #3175c2; 
-    }
-    /* Table Styles */
-   table.dataTable {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.85rem;
-        border-left: 0.5px solid #d3d3d8;
-        border-right: 0.5px solid #d3d3d8;
-    }
+        #usersTable thead th {
+            padding: 8px 10px;
+            font-weight: 600;
+            
+        }
 
-    .table.dataTable thead th {
-        background-color: #ffffff; 
-        border-bottom: 3px solid #d3d3d8;
-        border-top: 0.5px solid #d3d3d8;
-        color: #000000;
-        font-family: 'Poppins', sans-serif;
-        padding: 0.5rem;
-        padding-top: 1rem; 
-        padding-bottom: 1rem; 
-        font-size: 0.9rem;
-        text-align: left;
-    }
+        /* Cells */
+        #usersTable td {
+            padding: 12px 14px;
+            white-space: normal !important;
+            border-bottom: 1px solid #cfd4d7;
+        }
 
-    .table.dataTable td {
-        vertical-align: middle;
-        padding: 1.5rem;
-        color: #4c4c53;
-        font-size: 0.9rem;
-        
-    }
+        /* Row divider */
+        #usersTable tbody tr {
+            border-bottom: 1.5px solid #6b6969;
+            border-top: 1.5px solid #6b6969;
+            background-color: #ffffff;
+        }
 
-    /* Action Button Styles */ 
-     /* .action-btn {
-        cursor: pointer;
-        padding: 0.5rem 1rem;
-        border-radius: 9999px;
-        font-size: 0.875rem;
-        transition: background-color 0.3s, transform 0.2s;
-    }
+        /* Hover effect */
+        #usersTable tbody tr:hover {
+            background-color: #f9fafb;
+        }
 
-    .action-btn:hover {
-        background-color: #e5e7eb;
-    } */
+        .dataTables_filter input {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 6px 10px;
+            outline: none;
+        }
 
-    /* Dropdown Menu Styles */
-    .dropdown-menu {
-        position: absolute;
-        background-color: white;
-        /* border-radius: 9999px; */
-        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-        min-width: 160px;
-        z-index: 1000;
-    }
+        .dataTables_filter input:focus {
+            ring: 2px solid #93c5fd;
+        }
 
-    .dropdown-item {
-        display: block;
-        padding: 0.5rem 1rem;
-        color: #212529;
-    }
+        .dataTables_length select {
+            border-radius: 8px;
+            padding: 4px 8px;
+            padding-right: 30px; /* space for arrow */
+            border: 1px solid #d1d5db;
+        }
 
-    .dropdown-item:hover {
-        background-color: #f3f4f6; 
-    }
+        /* Action Button Styles */ 
+        /* .action-btn {
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            transition: background-color 0.3s, transform 0.2s;
+        }
 
-    /* Force green Excel button */
-    .excel-export-btn {
-        border: none !important;       /* Ensures no border, overrides any border below */
-        border-radius: 6px !important;
-        background-color: rgb(32, 180, 39) !important;
-        color: #ffffff;
-        padding: 0.25rem 0.75rem !important;   /* smaller padding */
-        box-shadow: none !important;          /* removes inner or outer shadow */
-        background-image: none !important;    /* removes gradient */
-        /* padding: 0.5rem 2rem; */
-        font-size: 0.7rem !important;
-        display: inline-flex;
-        align-items: center;
-    }
+        .action-btn:hover {
+            background-color: #e5e7eb;
+        } */
 
-    .excel-export-btn:hover {
-        background-color: #f3f4f6;  
-        transform: translateY(-1px);
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-    }
+        /* Dropdown Menu Styles */
+        .dropdown-menu {
+            position: absolute;
+            background-color: white;
+            /* border-radius: 9999px; */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+            min-width: 160px;
+            z-index: 1000;
+        }
 
-    .pdf-export-btn {
-        border: none !important;       /* Ensures no border, overrides any border below */
-        border-radius: 6px !important;
-        background-color: rgb(238, 45, 45) !important;
-        color: #ffffff;
-        padding: 0.25rem 0.75rem !important;   /* smaller padding */
-        box-shadow: none !important;          /* removes inner or outer shadow */
-        background-image: none !important;    /* removes gradient */
-        /* padding: 0.5rem 2rem; */
-        font-size: 0.7rem !important;
-        display: inline-flex !important;
-        align-items: center;
-    }
+        .dropdown-item {
+            display: block;
+            padding: 0.5rem 1rem;
+            color: #212529;
+        }
 
-    .pdf-export-btn:hover {
-        background-color: #f3f4f6;  
-        transform: translateY(-1px);
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-    }
-
-  
-    .dataTables_filter input {
-        padding: 0.375rem 0.75rem !important;
-        border-radius: 0.375rem !important;
-        border: 1px solid #ced4da !important;
-        font-size: 0.8rem !important;
-        margin-top: 1rem !important; 
-        font-family: 'Poppins', sans-serif !important;
-    }
-
-    .dataTables_info {
-        font-size: 0.85rem !important;
-        font-family: 'Poppins', sans-serif !important;
-        color: #4b5563 !important; /* Tailwind gray-700 */
-    }
-
-    .dataTables_paginate {
-        font-size: 0.9rem !important;
-        font-family: 'Poppins', sans-serif !important;
-        color: #4b5563 !important;
-    }
-
-    .dataTables_paginate.paginate_button {
-        padding: 0.25rem 0.5rem;
-        margin: 0 2px;
-        border-radius: 4px;
-    }
+        .dropdown-item:hover {
+            background-color: #f3f4f6; 
+        }
 
 
-</style>
+    
+        .dataTables_filter input {
+            padding: 0.375rem 0.75rem !important;
+            border-radius: 0.375rem !important;
+            border: 1px solid #ced4da !important;
+            font-size: 0.8rem !important;
+            margin-top: 1rem !important; 
+            font-family: 'Poppins', sans-serif !important;
+        }
+
+        .dataTables_info {
+            font-size: 0.85rem !important;
+            font-family: 'Poppins', sans-serif !important;
+            color: #4b5563 !important; /* Tailwind gray-700 */
+        }
+
+        .dataTables_paginate {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .dataTables_paginate .paginate_button {
+            padding: 6px 10px;
+            border-radius: 6px;
+            background: #f3f4f6;
+            cursor: pointer;
+        }
+
+        .dataTables_paginate .current {
+            background: #4f46e5 !important;
+            color: white !important;
+        }
+
+
+                /* Force green Excel button */
+                .excel-export-btn {
+                    border: none !important;       /* Ensures no border, overrides any border below */
+                    border-radius: 6px !important;
+                    background-color: rgba(234, 236, 241, 0.76) !important;
+                    color: #000000;
+                    padding: 0.25rem 0.75rem !important;   /* smaller padding */
+                    box-shadow: none !important;          /* removes inner or outer shadow */
+                    background-image: none !important;    /* removes gradient */
+                    /* padding: 0.5rem 2rem; */
+                    font-size: 0.7rem !important;
+                    display: inline-flex;
+                    align-items: center;
+                }
+
+                .excel-export-btn:hover {
+                    background-color: #f3f4f6;  
+                    transform: translateY(-1px);
+                    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+                }
+
+                .pdf-export-btn {
+                    border: none !important;       /* Ensures no border, overrides any border below */
+                    border-radius: 6px !important;
+                    background-color:  rgba(234, 236, 241, 0.76) !important;
+                    color: #000000;
+                    padding: 0.25rem 0.75rem !important;   /* smaller padding */
+                    box-shadow: none !important;          /* removes inner or outer shadow */
+                    background-image: none !important;    /* removes gradient */
+                    /* padding: 0.5rem 2rem; */
+                    font-size: 0.7rem !important;
+                    display: inline-flex !important;
+                    align-items: center;
+                }
+
+                .pdf-export-btn:hover {
+                    background-color: #f3f4f6;  
+                    transform: translateY(-1px);
+                    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+                }
+
+
+    </style>
 @endpush
 
 @push('scripts')
@@ -252,10 +283,31 @@ $(document).ready(function() {
             }
         },
         columns: [
+            { data: 'ministry_name' },
             { data: 'first_name' },
             { data: 'last_name' },
-            { data: 'email' },
-            { data: 'division_name' },  
+            { data: 'division_name' }, 
+            { data: 'designation' },
+            { data: 'role_names' },  
+            { data: 'created_at', 
+                render(data) {
+                    return new Date(data).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                }
+            },
+            { data: 'updated_at', 
+                render(data) {
+                    return new Date(data).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                }
+            },
+
             { 
                 data: null,
                 name: 'actions',
@@ -263,19 +315,41 @@ $(document).ready(function() {
                 searchable: false,
                 render(data, type, row) {
                     return `
-                        <a href"/registry/users/${row.id}" class="btn btn-sm btn-info text-white">View</a>
-                        <a href="/registry/users/${row.id}/edit-type/internal" class="btn btn-sm btn-primary">Edit</a>
-                        <button class="btn btn-sm btn-danger delete-action" data-id="${row.id}">Delete</button>
-                    `;
+                                        <a href="/registry/files/${row.id}" 
+                                            class="inline-flex items-center justify-center hover:text-gray-600 transition"
+                                            title="View">
+                                            <i class="fa fa-eye text-sm"></i>
+                                        </a>
+
+                                        <a href="/registry/files/${row.id}/edit" 
+                                            class="inline-flex items-center justify-center hover:text-gray-600 transition ms-3"
+                                            title="Edit">
+                                            <i class="fa fa-pen text-sm"></i>
+                                        </a>
+
+                                        <button class="inline-flex items-center justify-center hover:text-red-600 transition ms-3 delete-action" 
+                                                data-id="${row.id}" 
+                                                title="Delete">
+                                            <i class="fa fa-trash text-sm"></i>
+                                        </button>
+                                    `;
                 }
             }
         ],
         pageLength: 10,
         responsive: true,
+        pageLength: 10,
+        pagingType: "simple_numbers",
         order: [[0, 'desc']],
         dom: "<'row mb-3'<'col-md-6 d-flex align-items-center'B><'col-12 col-md-6 text-md-end text-start'f>>" +
-               "<'row'<'col-sm-12'tr>>" +
-               "<'row mt-3'<'col-sm-5'i><'col-sm-7'p>>",
+             "<'row'<'col-sm-12'tr>>" +
+            "<'row mt-3'<'col-sm-5'i><'col-sm-7'p>>",
+        language: {
+            paginate: {
+                previous: "←",
+                next: "→"
+            }
+        },
         buttons: [
             {
                 extend: 'excelHtml5',

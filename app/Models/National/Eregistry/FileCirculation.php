@@ -7,11 +7,14 @@ use App\Models\National\Eregistry\Organisation;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use OwenIt\Auditing\Contracts\Auditable;
 
 
-class FileCirculation extends Model
+class FileCirculation extends Model implements Auditable
 {
+    
     use HasFactory;
+    use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
         'file_id',
@@ -19,7 +22,7 @@ class FileCirculation extends Model
         'to_ministry_id',
         'circulated_by',
         'circulated_at',
-        'to_review_file',
+        'review_officer',
         'read_at',
         'read_status',
         'requires_action',
@@ -28,7 +31,19 @@ class FileCirculation extends Model
         'review_comment',
         'date_reviewed',
         'status',
-        ];
+        'ufs_id',
+        'ufs_approved_at',
+        'ufs_rejected_at',
+        'ufs_comment',
+        'signed_by',
+        'signature_path',
+        'signed_at',
+        'received_at',
+        'received_by',
+        'rendered_pdf_path',
+        'rendered_pdf_hash',
+        'rendered_pdf_at',
+    ];
 
 
     public function file()
@@ -36,9 +51,20 @@ class FileCirculation extends Model
         return $this->belongsTo(File::class);
     }
 
+    public function overlays()
+    {
+        return $this->hasMany(DocumentOverlay::class);
+    }
+    
     public function dispatch()
     {
         return $this->belongsTo(Dispatch::class);
+    }
+
+
+    public function signedBy()
+    {
+        return $this->belongsTo(User::class, 'signed_by');
     }
 
     public function recipientMinistries()
@@ -61,9 +87,9 @@ class FileCirculation extends Model
         return $this->belongsTo(User::class, 'circulated_by');
     }
 
-    public function toReviewFile()
+    public function reviewOfficer()
     {
-        return $this->belongsTo(User::class, 'to_review_file');
+        return $this->belongsTo(User::class, 'review_officer');
     }
 
     public function assignments()
@@ -75,8 +101,6 @@ class FileCirculation extends Model
     {
         return $this->hasMany(FileAssignment::class, 'file_circulation_id')->where('is_active', true);
     }
-
-   
 
     public function createdBy()
     {

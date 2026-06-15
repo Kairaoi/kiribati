@@ -17,6 +17,9 @@
         "vite": "^6.0"
     },
     "dependencies": {
-        "alpinejs": "^3.14.8"
+        "alpinejs": "^3.14.8",
+        "konva": "^10.3.0",
+        "pdfjs-dist": "^6.0.227",
+        "tinymce": "^8.5.1"
     }
 }

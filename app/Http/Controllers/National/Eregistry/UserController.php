@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\User;
 use App\Repositories\National\Eregistry\DivisionRepository;
-
+use App\Repositories\National\Eregistry\MinistryRepository;
 use App\Repositories\National\Eregistry\UserRepository;
 use DB;
 use Illuminate\Http\Request;
@@ -20,14 +20,16 @@ class UserController extends Controller
 {
     private $users;
     private $divisions;
-    private $organisations;
+    private $ministries;
 
 
     public function __construct(UserRepository $users,
-                                DivisionRepository $divisions)
+                                DivisionRepository $divisions,
+                                MinistryRepository $ministries)
     {
         $this->users = $users;
         $this->divisions = $divisions;
+        $this->ministries = $ministries;
     }
 
     /**
@@ -42,7 +44,7 @@ class UserController extends Controller
         if (is_array($search)) {
             $search = $search['value'];
         }
-        $query = $this->users->getForDataTable($search);
+        $query = $this->users->getForDataTable($search, auth()->user());
         $datatables = DataTables::make($query)
                                 ->addColumn('role_name', function ($user) {
                                     return $user->role_name ?? '';
@@ -76,10 +78,11 @@ class UserController extends Controller
         //     abort(403, 'Unauthorized action.');
         // }
 
-        $organisationId = Auth::user()->organisation_id;
-        $divisions = $this->divisions->listWithOrganisation($organisationId); // Fetch divisions for the logged-in organisation
+        $ministryId = Auth::user()->ministry_id;
+        $divisions = $this->divisions->listWithMinistry($ministryId); // Fetch divisions for the logged-in ministry
+        $ministries = $this->ministries->listAll();
         $roles = Role::all();
-        return view('national.eregistry.users.create', compact('divisions', 'roles'));
+        return view('national.eregistry.users.create', compact('divisions', 'roles', 'ministries'));
     }
 
     /**
@@ -95,7 +98,7 @@ class UserController extends Controller
         //     abort(403, 'Unauthorized action.');
         // }
     
-        // Validate and extract only the allowed fields
+        // dd($request->all());
         $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -103,28 +106,24 @@ class UserController extends Controller
             'password' => 'required|min:8',
             'role' => 'required|string|exists:roles,name',
             'division_id' => 'required|integer|exists:divisions,id',
-            'organisation_id' => 'required|integer|exists:organisations,id',
+            'designation' => 'required|string|max:255',
             'is_active' => 'sometimes|boolean',
         ]);
-    
-        // Remove 'role' from input so it doesn't go into the model (if present)
-        // $role = $input['role'];
-        // unset($input['role']);
 
     
         // Create the user
-        $user = $this->users->create([
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'email' => $request->email,
-            'password' => $request->password, // Hashing is handled in the repository
+       $user = User::create([
+            'first_name'  => $request->first_name,
+            'last_name'   => $request->last_name,
+            'email'       => $request->email,
+            'password'    => Hash::make($request->password),
             'division_id' => $request->division_id,
-            'organisation_id' => $request->organisation_id,
-            'is_active' => $request->is_active ?? true, // Default to true if not provided
-            'created_by' => auth()->id(),
-            'updated_by' => auth()->id(),
+            'ministry_id' => auth()->user()->ministry_id,
+            'designation' => $request->designation,
+            'is_active'   => $request->is_active ?? true,
+            'created_by'  => auth()->id(),
+            'updated_by'  => auth()->id(),
         ]);
-
     
         // Assign role via Spatie
         $user->assignRole($request->role);
@@ -170,6 +169,38 @@ class UserController extends Controller
         return view('national.eregistry.users.edit', compact('user', 'divisions', 'roles'));
     }
 
+    public function editSignature()
+    {
+        $user = Auth::user();
+        return view('national.eregistry.users.edit_signature', compact('user'));
+    }
+
+
+    public function updateSignature(Request $request)
+    {
+        // dd($request->all());
+        $request->validate([
+            'signature' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
+
+        $user = auth()->user();
+        // dd($user);
+        if ($request->hasFile('signature')) {
+            $file = $request->file('signature');
+            $filename = 'signature_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs(
+                'signatures',
+                $filename,
+                'public'
+            );
+            $user->signature_path = $path;
+            $user->save();
+        }
+        return redirect()->route('registry.users.signature.edit')->with('success', 'Signature updated successfully!');
+    }
+
+
+
     /**
      * Update the specified resource in storage.
      *
@@ -209,7 +240,7 @@ class UserController extends Controller
     }
 
 
-         /**
+    /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request

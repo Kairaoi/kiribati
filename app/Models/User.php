@@ -14,8 +14,10 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class User extends Authenticatable
+
+class User extends Authenticatable implements Auditable
 {
     use HasRoles, HasApiTokens, SoftDeletes;
 
@@ -24,6 +26,7 @@ class User extends Authenticatable
     use HasProfilePhoto;
     use Notifiable;
     use TwoFactorAuthenticatable;
+    use \OwenIt\Auditing\Auditable;
 
     /**
      * The attributes that are mass assignable.
@@ -32,11 +35,13 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'ministry_id',
+        'division_id',
+        'designation',
         'first_name',
         'last_name',
-        'division_id',
         'email',
         'password',
+        'signature_path'
     ];
 
     /**
@@ -78,11 +83,10 @@ class User extends Authenticatable
         return $this->belongsTo(Ministry::class);
     }
 
-    public function name()
-    {
-        return $this->first_name . ' ' . $this->last_name;
-    }
-
+   public function getNameAttribute()
+{
+    return trim($this->first_name . ' ' . $this->last_name);
+}
 
     public function division()
     {

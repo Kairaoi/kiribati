@@ -1,21 +1,15 @@
 @extends('layouts.app')
 
 @section('content')
-{{-- <div class="container  mx-auto font-montserrat px-4 py-8 max-w-7xl mt-3 rounded-md min-h-screen"> --}}
+{{-- <div class="container mx-auto font-montserrat px-4 py-8 max-w-6xl mt-3 rounded-md min-h-screen"> --}}
 
 {{-- <div class="container mx-auto font-poppins px-8 max-w-5xl mt-1"> {{ Breadcrumbs::render('files.create.withType', $createType) }} </div> --}}
+<div class="container bg-white mx-auto px-6 py-10 max-w-4xl mt-4 mb-4 text-gray-700 font-medium rounded-md min-h-screen border border-gray-600">
 
-<div class="container bg-white mx-auto font-poppins px-6 py-10 max-w-5xl mt-4 rounded-md min-h-screen border border-gray-600">
-    @if($editType === 'dispatch')
-        <h1 class="flex items-center justify-center text-m font-semibold text-gray-800 tracking-wide mb-4">
-            Edit Dispatch
-        </h1>
-    @elseif($editType === 'internal')
-        <h1 class="flex items-center justify-center text-m font-semibold text-gray-800 tracking-wide mb-4">
-            Edit Internal File
-        </h1>
-    @endif
-    
+     <h2 class="text-lg font-semibold text-gray-800 mb-6">
+       Edit File
+     </h2>
+
     @if ($errors->any())
         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             <ul class="list-disc pl-5">
@@ -26,258 +20,500 @@
         </div>
     @endif
 
-    <form action="{{ route('registry.files.update', $file->id) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+    <form action="{{ route('registry.files.update', $file->id) }}" method="POST" enctype="multipart/form-data">
         @csrf
-        @method('PUT')
- 
-        <!-- <label for="name" class="block text-sm font-medium text-gray-700">Division</label> -->
+            <div class="text-gray-700 text-sm grid grid-cols-1">
+                <label for="subject" class="block">Name / Subject <span class="text-red-600">*</span></label>
+                <input type="text" name="subject" id="subject" value="{{ old('subject', $file->subject) }}" class="mt-1 mb-2 text-sm block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500" required>
+                    
+                    
+                <label for="source_type">Source Type <span class="text-red-600">*</span></label>
+                <select name="source_type" id="source_type" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm">
+                    <option value="">Select Source Type</option>
+                    <option value="identity_organisation">Registered Organisation</option>
+                    <option value="external_partner">External Partner</option>
+                </select>
 
-         <div class="text-gray-700 text-sm grid grid-cols-1">
-            <label for="subject" class="block">Document Subject: <span class="text-red-600">*</span></label>
-            <input type="text" name="subject" id="subject" value="{{ old('subject', $file->subject) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
-         </div>
-    
-        <div class="text-gray-700 text-sm grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                <!-- Division -->
-
-                @if($editType === 'dispatch')
-                    <input type="hidden" name="organisation_id" id="organisation_id" value="{{ Auth::user()->organisation_id}}">
-                    <div>
-                        @if(Auth::user()->hasRole('user'))
-                            <label for="division" class="block">From Division: </label>
-                            <input type="text" name="division" id="division" value="{{ Auth::user()->division ? Auth::user()->division->name : '' }}" class="mt-1 block w-full border-gray-300 bg-gray-100 text-gray-700 rounded-md shadow-sm focus:ring-0 focus:border-gray-300 sm:text-sm cursor-not-allowed" required readonly>
-                            <input type="hidden" name="division_id" id="division_id" value="{{ Auth::user()->division_id }}">
-                        
-                        @elseif(Auth::user()->hasRole('admin') || Auth::user()->hasRole('registry'))
-                            <label for="division" class="block"> From Division: <span class="text-red-600">*</span></label>
-                            <select name="division_id" id="division_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
-                                <option class="text-gray-500" value="">Select a division </option>
-                                @foreach($divisions as $division)
-                                    @if($division->organisation_id == Auth::user()->organisation_id)
-                                        <option value="{{ $division->id }}" 
-                                            {{ $division->id == $file->division_id ? 'selected' : '' }}>
-                                            {{ $division->name }}
-                                        </option>
-                                    @endif
-                                @endforeach
-                            </select>
-                        @endif
+                <div id="org-select-container">
+                    <div class="mt-2 flex items-center justify-between mb-1">
+                        <label for="organisation" class="mt-1 block text-sm text-gray-700">
+                            Organisation Name <span class="text-red-600">*</span>
+                        </label>
                     </div>
-                @else
-                    {{--edit internal file--}}
-                    <div>
-                        <label for="organisation_type">From Organisation Type</label>
-                        <select id="organisation_type" 
-                                name="organisation_type" 
-                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" 
-                                data-selected="{{ old('organisation_type') }}">
-                            <option value="">Select Type</option>
-                            @foreach($organisationTypes as $type)
-                                <option value="{{ $type->id }}"
-                                    {{ old('organisation_type', $file->organisation_type_id) == $type->id ? 'selected' : '' }}>
-                                    {{ $type->name }}
-                                </option>
+
+                    <div class="relative">
+                        <select 
+                            id="organisation" 
+                            name="source_id" 
+                            class="mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-700 shadow-sm transition duration-200 hover:border-cyan-400 focus:border-cyan-500 focus:outline-none focus:ring-4 focus:ring-cyan-100"
+                        >
+                        <option value="">Select Organisation</option>
+                            @foreach($identityOrganisations->groupBy(fn($org) => optional($org->type)->name ?? 'Other') as $type => $organisations)
+                                <optgroup label="{{ $type }}">
+                                    @foreach($organisations as $organisation)
+                                        <option value="{{ $organisation->id }}">
+                                            {{ $organisation->name }} {{ $organisation->code ?? '' }}
+                                        </option>
+                                    @endforeach
+                                </optgroup>
                             @endforeach
                         </select>
+                        <a href="{{ route('registry.external-partners.create') }}"
+                            target="_blank"
+                            class="text-sm mt-3 text-cyan-600 hover:text-cyan-800 hover:text-cyan-800 hover:underline">
+                                Organisation not listed? Add as External Partner
+                        </a>
                     </div>
+                </div>
 
-                    {{-- 2) Organisation (select) --}}
-                    <div id="org-select-container" style="margin-top: .75rem;">
-                        <label for="organisation">Organisation Name</label>
-                        <select id="organisation" 
-                                name="organisation_id" 
-                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" 
-                                data-selected="{{ old('organisation_id') }}"
+                    <div id="partner-select-container" class="mt-4" style="display:none;">
+                        <label for="partner">External Partner <span class="text-red-600">*</span></label>
+                        <select id="partner" 
+                                name="source_id" 
+                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm" 
+                                data-selected="{{ old('partner_id') }}"
                         >
-                            <option value="">Select Organisation</option>
+                            <option value="">Select External Partner</option>
                         </select>
-                    </div>
-
-                    {{-- 2b) Organisation (text input when no orgs available) --}}
-                    <div id="org-input-container" style="display:none; margin-top: .75rem;">
-                        <label for="organisation_name">Organisation Name</label>
-                        <input type="text" 
-                               id="organisation_name" 
-                               name="organisation_name" 
-                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" 
-                               placeholder="Enter organisation name" 
-                               value="{{ old('organisation_name') }}">
                     </div>
 
                     {{-- 3) Division (depends on organisation) --}}
-                    <div id="division-container" style="display:none; margin-top: .75rem;">
-                        <label for="division_id">From Division</label>
+                    <div id="division-container" style="display:none;">
+                        <label for="division_id">From Division
+                            <span class="text-gray-400">(Optional)</span></label>
                         <select id="division_id" 
                                 name="division_id" 
-                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" 
+                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm" 
                                 data-selected="{{ old('division_id') }}">
                             <option value="">-- Select Division --</option>
                         </select>
                     </div>
-                @endif
+            </div>
+            <div class="mt-4 text-gray-700 text-sm grid grid-cols-1 md:grid-cols-2 gap-6">
 
                 <!-- File Type -->
                 <div>
-                    <label for="file_type_id" class="block">Document Type: <span class="text-red-600">*</span></label>
+                    <label for="file_type_id" class="block">File Type <span class="text-red-500">*</span></label>
                     <select name="file_type_id"
                             id="file_type_id" 
-                            class="select2 mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            class="select2 mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
                             required>
-                        <option class="" disabled selected>Select Document Type</option>
+                        <option class="" disabled selected>Select File Type</option>
                         @foreach ($file_types as $type)
                             <option value="{{ $type->id }}" 
-                                {{ $type->id == $file->file_type_id ? 'selected' : '' }}>
-                                {{ $type->name }}
+                             {{ old('type_id', $file->file_type_id) == $type->id ? 'selected' : '' }}>
+                            {{ $type->is_global ? '🌐' : '🏛' }} {{ $type->name }}                           
                             </option>
                         @endforeach
                     </select>
+                    <div class="mt-2">
+                        <div class="flex items-center justify-between text-sm text-cyan-600">
+                            <span>No suitable file type?</span>
+                            <a href="{{ route('registry.file-types.create') }}" 
+                                class="inline-flex items-center gap-1 font-medium text-cyan-600 hover:text-cyan-800 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" 
+                                    class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                        d="M12 4v16m8-8H4" />
+                                </svg>
+                                Add file type
+                            </a>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- File Category -->
                 <div>
                     <label for="category_id" class="block">
-                        Document Category:
+                        Category
+                        <span class="text-gray-400">(Optional)</span>
                     </label>
                     <select name="category_id" 
                             id="category_id" 
-                            class="select2 mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" 
-                            required>
+                            class="select2 mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm" 
+                    >
                         <option value="" disabled selected>Select Document Category</option>
                         @foreach ($categories as $category)
-                            <option value="{{ $category->id }}" 
-                                {{ $category->id == $file->category_id ? 'selected' : '' }}>
+                            <option value="{{ $category->id }}"
+                                {{ old('category_id', $file->category_id) == $category->id ? 'selected' : '' }}>
                                 {{ $category->name }}
                             </option>
                         @endforeach
                     </select>
                 </div>
+
+                <!-- Due Date -->
+                <div>
+                    <label for="due_date" class="block">Due Date <span class="text-gray-400">(Optional)</span></label>
+                    <input type="date" 
+                           name="due_date" 
+                           min="{{ date('Y-m-d') }}" 
+                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" 
+                           value="{{ old('due_date', $file->due_date ? \Carbon\Carbon::parse($file->due_date)->format('Y-m-d') : '') }}">
+                </div>
             </div>
         
-        <div class="pt-6 border-t border-gray-300 mt-6 text-gray-700 space-y-4"></div>
-    
-            <!-- Main File Section -->
+       <div class="pt-6 border-t border-gray-300 mt-6 text-gray-700 space-y-6">
+
+   <div>
+    <label class="block text-sm font-medium text-gray-700 mb-3">
+        Document Type <span class="text-red-600">*</span>
+    </label>
+
+    @php
+        $documentSource = old(
+            'document_source',
+            $file->document_source ?? 'upload'
+        );
+    @endphp
+
+    <div class="flex flex-col md:flex-row gap-4">
+
+        <label class="flex items-center gap-3 border border-gray-300 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50">
+            <input
+                type="radio"
+                name="document_source"
+                value="upload"
+                class="text-cyan-600 focus:ring-cyan-500"
+                @checked($documentSource === 'upload')
+            >
+
             <div>
-                <label for="main_file" class="block mt-2 text-sm font-medium">
-                    Main Document: <span class="text-red-600">*</span>
+                <div class="text-sm font-medium text-gray-800">
+                    Upload Document
+                </div>
+                <div class="text-xs text-gray-500">
+                    Upload an existing PDF file
+                </div>
+            </div>
+        </label>
+
+        <label
+            id="online-option"
+            class="flex items-center gap-3 border border-gray-300 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition">
+
+            <input
+                type="radio"
+                name="document_source"
+                value="online"
+                class="text-cyan-600 focus:ring-cyan-500"
+                @checked($documentSource === 'online')
+            >
+
+            <div>
+                <div class="text-sm font-medium text-gray-800">
+                    Write Online
+                </div>
+                <div class="text-xs text-gray-500">
+                    Create memorandum using editor
+                </div>
+            </div>
+        </label>
+
+    </div>
+</div>
+
+{{-- Upload Section --}}
+<div id="upload-section">
+
+    <label for="main_file" class="block text-sm font-medium text-gray-700 mb-2">
+        Main Document (PDF)
+    </label>
+
+    <input type="file" name="main_file" id="main_file" accept="application/pdf"
+           class="block w-full text-sm
+           file:mr-4 file:py-2 file:px-4
+           file:border-0 file:text-sm file:font-semibold
+           file:bg-cyan-50 file:text-cyan-700
+           hover:file:bg-cyan-100">
+
+    @error('main_file')
+        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+    @enderror
+</div>
+
+{{-- Template Options --}}
+<div id="template-section" class="hidden">
+    <label class="block text-sm font-medium text-gray-700 mb-3">
+         Choose Template <span class="text-red-600">*</span>
+    </label>
+
+    @php
+        $correspondenceType = old('correspondence_type', $file->correspondence_type ?? null);
+    @endphp
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {{-- Memorandum --}}
+        <label class="template-option border border-gray-300 rounded-xl p-4 cursor-pointer hover:bg-gray-50 transition">
+            <input
+                type="radio"
+                name="correspondence_type"
+                value="memo"
+                class="template-radio hidden"
+                @checked($correspondenceType === 'memo')
+            >
+            <div class="text-sm font-semibold text-gray-800">
+                Memorandum
+            </div>
+            <div class="text-xs text-gray-500 mt-1">
+                To government ministries, agencies and organisations registered in the Government Establishment Register (ER)
+            </div>
+        </label>
+
+        {{-- Official Letter --}}
+        <label class="template-option border border-gray-300 rounded-xl p-4 cursor-pointer hover:bg-gray-50 transition">
+            <input
+                type="radio"
+                name="correspondence_type"
+                value="letter"
+                class="template-radio hidden"
+                @checked($correspondenceType === 'letter')
+            >
+
+            <div class="text-sm font-semibold text-gray-800">
+                Official Letter
+            </div>
+
+            <div class="text-xs text-gray-500 mt-1">
+                To external bodies (e.g diplomatic missions, development partners, private sector, communities, churches & SOEs)
+            </div>
+        </label>
+
+        {{-- Internal Memorandum --}}
+        <label class="template-option border border-gray-300 rounded-xl p-4 cursor-pointer hover:bg-gray-50 transition">
+            <input
+                type="radio"
+                name="correspondence_type"
+                value="internal"
+                class="template-radio hidden"
+                @checked($correspondenceType === 'internal')
+            >
+
+            <div class="text-sm font-semibold text-gray-800">
+                Internal Memorandum
+            </div>
+
+            <div class="text-xs text-gray-500 mt-1">
+                Only for official internal ministry communications.
+            </div>
+        </label>
+
+    </div>
+
+    {{-- Memorandum Recipients --}}
+    <div id="ministries-container" class="hidden mt-6">
+        <div class="bg-gray-50 border border-gray-200 rounded-2xl p-5 space-y-5">
+            <h3 class="text-sm font-semibold text-gray-800 uppercase tracking-wide">
+                Memorandum Details
+            </h3>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Select file recipients
+                </label>
+                <select name="memo_recipients[]"
+                        multiple
+                        class="select2 mt-1 block w-full border-gray-300 rounded-xl shadow-sm focus:border-cyan-500 focus:ring-cyan-500">
+                    @foreach($ministries as $ministry)
+                        @if($ministry->id != auth()->user()->ministry_id)
+                            <option value="{{ $ministry->id }}">
+                                {{ $ministry->reviewer_title }} - {{ $ministry->name }}
+                            </option>
+                        @endif
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label for="attention_to" class="block text-sm font-medium text-gray-700 mb-2">
+                    Attention To
+                </label>
+                <input type="text"
+                       name="attention_to"
+                       id="attention_to"
+                       placeholder="Name or Designation of officer to attention to"
+                       class="mt-1 block w-full border-gray-300 rounded-xl shadow-sm focus:border-cyan-500 focus:ring-cyan-500">
+            </div>
+            <div>
+                <label for="cc" class="block text-sm font-medium text-gray-700 mb-2">
+                    CC
+                </label>
+                <input name="cc"
+                          id="cc"
+                          placeholder="Name or Designation of CC'ed officer"
+                          class="mt-1 block w-full border-gray-300 rounded-xl shadow-sm focus:border-cyan-500 focus:ring-cyan-500">
+            </div>
+
+        </div>
+        
+    </div>
+
+    {{-- Official Letter Recipients --}}
+    <div id="recipient-container" class="hidden mt-6">
+        <div class="bg-gray-50 border border-gray-200 rounded-2xl p-5 space-y-5">
+            <h3 class="text-sm font-semibold text-gray-800 uppercase tracking-wide">
+                Official Letter Recipients
+            </h3>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Select from registered organisations
+                </label>
+                <select name="registered_organisations[]"
+                        multiple
+                        class="select2 mt-1 block w-full border-gray-300 rounded-xl">
+                    @foreach($notMinistriesOrgs as $org)
+                        <option value="{{ $org->id }}">{{ $org->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            @if(!empty($externalPartners))
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Select from ministry external partners
+                    </label>
+                    <select name="external_partners[]"
+                            multiple
+                            class="select2 mt-1 block w-full border-gray-300 rounded-xl">
+                        @foreach($externalPartners as $partner)
+                            <option value="{{ $partner->id }}">{{ $partner->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            @endif
+        </div>
+        {{-- <div id="editor-section" class="hidden">
+                <label class="block text-md font-medium text-gray-700 mb-2">
+                    Content
                 </label>
 
-                @if($file->main_file_path)
-                    <div class="mb-2">
-                        <a href="{{ asset('storage/' . $file->main_file_path) }}" 
-                        target="_blank"
-                        class="text-cyan-600 text-sm hover:text-cyan-800 underline">
-                            {{ basename($file->main_file_path) }}
-                        </a>
-                    </div>
-                @endif
+                <textarea name="content" id="editor">{!! old('content', $file->content ?? '') !!}</textarea>
 
-                <input type="file" 
-                    name="main_file" 
-                    id="main_file" 
-                    accept="application/pdf"
-                    class="block w-full text-sm
-                            file:mr-4 file:py-2 file:px-4
-                            file:border-0
-                            file:text-sm file:font-semibold
-                            file:bg-cyan-50 file:text-cyan-700
-                            hover:file:bg-cyan-100">
-            
-                <!-- Additional Files Section -->
-                <div id="file-upload-container" class="space-y-4">
+                @error('content')
+                    <p class="mt-1 text-md text-red-600">{{ $message }}</p>
+                @enderror
+        </div> --}}
+        
+    </div>
 
-                    <label class="block mt-4 text-sm font-medium">
-                       Existing Additional Documents:
+    {{-- Internal letter values --}}
+    <div id="internal-container" class="hidden mt-6">
+        <div class="bg-gray-50 border border-gray-200 rounded-2xl p-5 space-y-5">
+            <h3 class="text-sm font-semibold text-gray-800 uppercase tracking-wide">
+                Metatable details
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                    <label for="from" class="block text-sm font-medium text-gray-700 mb-2">
+                        From:
+                    </label>
+                    <input type="text"
+                        value="{{ auth()->user()->designation ?? '' }}"
+                        class="mt-1 block w-full text-sm border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                        readonly>
+                </div>
+                <div>
+                    <label for="to" class="block text-sm font-medium text-gray-700 mb-2">
+                        To:
+                    </label>
+                    <input type="text"
+                        {{-- name="ufs"
+                        id="ufs" --}}
+                        value={{ auth()->user()->ministry?->reviewer_title ?? '' }}
+                        class="mt-1 block w-full text-sm border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                        readonly>
+                </div>
+                <div>
+                    <label for="ufs" class="block text-sm font-medium text-gray-700 mb-1">
+                        UFS and Cc'ed Officer
                     </label>
 
-                    {{-- Show additional Files --}}
-                    @if(!empty($file->additional_file_paths))
-                        @foreach($file->additional_file_paths as $index => $path)
-                            <div class="flex items-center gap-3 text-sm mb-1">
-                                <!-- View File -->
-                                <a href="{{ asset('storage/' . $path) }}" target="_blank" class="text-cyan-600 hover:text-cyan-800 underline">
-                                    {{ basename($path) }}
-                                </a>
+                    <p class="text-xs text-gray-500 mb-2">
+                      - will be selected and assigned in the next step of the workflow.
+                    </p>
 
-                                <!-- Delete Option -->
-                                <label class="flex items-center gap-1 text-red-600 text-xs">
-                                    <input type="checkbox" 
-                                        name="delete_additional_files[]" 
-                                        value="{{ $path }}">
-                                    Remove
-                                </label>
-                            </div>
-                        @endforeach
-                    @endif
+                    
+                </div>
+                
+            </div>
+        </div>
+    </div>
+  
+   {{-- Online Editor Section --}}
+                <div id="editor-section" class="hidden mt-6">
+                    <label class="block text-md font-medium text-gray-700 mb-2">
+                        Content
+                    </label>
 
-                    {{-- Upload Inputs --}}
+                    <textarea name="content" id="editor">{!! old('content', $file->content ?? '') !!}</textarea>
+
+                    @error('content')
+                        <p class="mt-1 text-md text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+</div>
+
+
+
+</div>
+
+        <!-- Additional Files Section -->
+                <div id="file-upload-container" class="space-y-4">
                     <div class="file-upload-item text-sm relative">
-                        <input type="file" name="additional_files[]" accept="application/pdf"
+                        <label for="file_1" class="block mt-4">
+                            Supporting Documents (PDF):      
+                        </label>
+                        <input type="file" name="additional_files[]" id="file_1" accept="application/pdf"
                             class="block w-full text-sm text-gray-600
                                 file:mr-4 file:py-2 file:px-4
                                 file:border-0
                                 file:text-sm file:font-semibold
                                 file:bg-cyan-50 file:text-cyan-700
-                                hover:file:bg-cyan-100">
+                                hover:file:bg-cyan-100">                
                     </div>
-
+            
                     <button type="button" id="add-file-button"
-                        class="w-full inline-flex justify-start text-purple-700 underline text-sm">
-                        + Additional File
+                        class="w-full inline-flex justify-start text-cyan-700 underline text-sm">
+                        + Supporting Document
                     </button>
                 </div>
-            </div>
-        
-        <!-- Recipient Ministries Section -->
-        @if($editType === 'dispatch')
-            <input type="hidden" name="initial_type" value="dispatch">
-            <div class="pt-6 border-t border-gray-300 mt-6 text-gray-700 space-y-4">
-                <div>
-                    <h2 class="pb-2 font-medium text-indigo-700 text-m">Select Recipient Ministries:</h2>
-                </div>
-                <div>
-                    <!-- Ministries checkboxes in a responsive grid layout -->
-                    <div class="mt-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        @foreach($ministries as $id => $name)
-                            @if($id != auth()->user()->organisation_id)
-                                <div class="flex items-center">
-                                    <input 
-                                        type="checkbox" 
-                                        name="recipient_organisations[]" 
-                                        value="{{ $id }}" 
-                                        id="organisation_{{ $id }}" 
-                                        class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500 rounded"
-                                        @if(
-                                            (old('recipient_organisations') && in_array($id, old('recipient_organisations'))) 
-                                            || (isset($file) && $file->recipientMinistries->pluck('id')->contains($id))
-                                        )
-                                            checked 
-                                        @endif
-                                    >
-                                    <label for="organisation_{{ $id }}" class="ml-2 text-sm text-gray-700">{{ $name }}</label>
-                                </div>
-                            @endif
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-        @elseif ($editType === 'internal')
-            <input type="hidden" name="initial_type" value="internal">
-            <input type="hidden" name="recipient_organisations[]" value="{{ Auth::user()->organisation_id}}">
-        @endif 
-        
-        <!-- Hidden field to indicate initial_type -->
-        {{-- <input type="hidden" name="initial_type" value="{{ $createType === 'dispatch' ? 'dispatch' : 'internal' }}"> --}}
 
-        <div class="mt-6 border-t border-gray-300"></div>
 
         <div class="text-center">
-            <button type="submit" class="mt-10 mb-2 w-1/4 bg-cyan-700 text-white py-2 px-8 rounded-lg hover:bg-cyan-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                Save changes
+            <button type="submit" class="mt-10 mb-2 w-full bg-cyan-500 text-white py-2 px-8 rounded-lg hover:bg-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
+                Create File
             </button>
         </div>
-        
     </form>
+
+    <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+
+    <script>
+        ClassicEditor
+            .create(document.querySelector('#editor'), {
+                toolbar: [
+                    'heading',
+                    '|',
+                    'bold',
+                    'italic',
+                    'underline',
+                    '|',
+                    'bulletedList',
+                    'numberedList',
+                    '|',
+                    'outdent',
+                    'indent',
+                    '|',
+                    'link',
+                    'insertTable',
+                    '|',
+                    'undo',
+                    'redo'
+                ]
+            })
+           
+            .catch(error => {
+                console.error(error);
+            });
+    </script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -286,8 +522,8 @@
             const addButton = document.getElementById('add-file-button');
 
             addButton.addEventListener('click', function () {
-                if (fileCounter >= 3) {
-                    alert('You can only add up to 3 files.');
+                if (fileCounter >= 5) {
+                    alert('You can only add up to 5 files.');
                     return;
                 }
 
@@ -296,18 +532,16 @@
                 newFileInput.classList.add('file-upload-item', 'mt-4', 'border', 'p-4', 'rounded', 'relative');
 
                 newFileInput.innerHTML = `
-                    <label for="file_${fileCounter}" class="block text-sm font-medium text-gray-700">
-                        Additional File (PDF only)
-                    </label>
+                  
                     <input type="file" name="additional_files[]" id="file_${fileCounter}" accept="application/pdf"
-                        class="block w-full text-sm text-gray-600
+                        class="block w-full text-xs text-gray-600
                             file:mr-4 file:py-2 file:px-4
                             file:border-0
-                            file:text-sm file:font-semibold
+                            file:text-xs file:font-semibold
                             file:bg-cyan-50 file:text-cyan-700
                             hover:file:bg-cyan-100">                
                         </div>                    
-                        <button type="button" class="remove-file-button mt-2 inline-flex items-center px-3 py-1 bg-red-600 text-white text-sm rounded-md hover:bg-red-700">
+                        <button type="button" class="remove-file-button mt-2 inline-flex items-center px-3 py-1 bg-red-600 text-white text-xs rounded-md hover:bg-red-700">
                         Remove File
                     </button>
                 `;
@@ -350,155 +584,241 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            const ORGANISATIONS = @json($organisations); // [{id,name,code,organisation_type_id}, ...]
-            const DIVISIONS     = @json($allDivisions);     // [{id,name,organisation_id}, ...]
 
-            const typeSelect         = document.getElementById("organisation_type");
-            const orgSelect          = document.getElementById("organisation");
-            const orgSelectContainer = document.getElementById("org-select-container");
-            const orgInputContainer  = document.getElementById("org-input-container");
-            const divisionContainer  = document.getElementById("division-container");
-            const divisionSelect     = document.getElementById("division_id");
+            const sourceType = document.getElementById("source_type");
+            const orgSelect = document.getElementById("organisation");
+            const partnerSelect = document.getElementById("partner");
 
-            function resetOrgSelect() {
-                orgSelect.innerHTML = '<option value="">Select Organisation</option>';
+            const orgContainer = document.getElementById("org-select-container");
+            const partnerContainer = document.getElementById("partner-select-container");
+
+            const ORGANISATIONS = @json($identityOrganisations);
+            const PARTNERS = @json($externalPartners);
+
+            function reset(select, label) {
+                select.innerHTML = `<option value="">${label}</option>`;
             }
 
-            function resetDivisionSelect() {
-                divisionSelect.innerHTML = '<option value="">Select Division</option>';
+            function hideAll() {
+                orgContainer.style.display = "none";
+                partnerContainer.style.display = "none";
+                orgSelect.disabled = true;
+                partnerSelect.disabled = true;
             }
 
-            function populateOrganisationsByType(typeId) {
-                resetOrgSelect();
-                const filtered = ORGANISATIONS.filter(o => String(o.organisation_type_id) === String(typeId));
-                filtered.forEach(o => {
-                    const opt = document.createElement('option');
-                    opt.value = o.id;
-                    opt.textContent = o.name + (o.code ? ` (${o.code})` : '');
-                    orgSelect.appendChild(opt);
-                });
-                return filtered.length;
-            }
+            function loadOrganisations() {
+                orgContainer.style.display = "block";
+                orgSelect.disabled = false;
 
-            function populateDivisionsByOrganisation(orgId) {
-                resetDivisionSelect();
-                const filtered = DIVISIONS.filter(d => String(d.organisation_id) === String(orgId));
-                filtered.forEach(d => {
-                    const opt = document.createElement('option');
-                    opt.value = d.id;
-                    opt.textContent = d.name;
-                    divisionSelect.appendChild(opt);
-                });
-                return filtered.length;
-            }
+                reset(orgSelect, "Select Organisation");
 
-            // When Type changes → populate organisations OR switch to manual input
-            typeSelect.addEventListener("change", function () {
-                const typeId = this.value;
+                const grouped = {};
 
-                // Always reset division on type change
-                divisionContainer.style.display = "none";
-                resetDivisionSelect();
+                ORGANISATIONS.forEach(o => {
+                    const typeName = o.type?.name ?? "Other";
 
-                if (!typeId) {
-                    // No type selected → show org select (empty), hide input
-                    resetOrgSelect();
-                    orgSelectContainer.style.display = "block";
-                    orgInputContainer.style.display = "none";
-                    return;
-                }
-
-                const count = populateOrganisationsByType(typeId);
-
-                if (count > 0) {
-                    orgSelectContainer.style.display = "block";
-                    orgInputContainer.style.display = "none";
-                } else {
-                    // No orgs: allow manual typing; also hide divisions (no parent)
-                    orgSelectContainer.style.display = "none";
-                    orgInputContainer.style.display = "block";
-                    divisionContainer.style.display = "none";
-                }
-            });
-
-            // When Organisation changes → populate divisions
-            orgSelect.addEventListener("change", function () {
-                const orgId = this.value;
-                if (!orgId) {
-                    divisionContainer.style.display = "none";
-                    resetDivisionSelect();
-                    return;
-                }
-
-                const count = populateDivisionsByOrganisation(orgId);
-                divisionContainer.style.display = count > 0 ? "block" : "none";
-            });
-
-            // --- Optional: restore old() selections on validation error / edit screens ---
-            const preType = typeSelect.getAttribute('data-selected');
-            const preOrg  = orgSelect.getAttribute('data-selected');
-            const preDiv  = divisionSelect.getAttribute('data-selected');
-
-            if (preType) {
-                typeSelect.value = preType;
-                const orgCount = populateOrganisationsByType(preType);
-                if (orgCount > 0) {
-                    orgSelectContainer.style.display = "block";
-                    orgInputContainer.style.display = "none";
-                    if (preOrg) {
-                        orgSelect.value = preOrg;
-                        const divCount = populateDivisionsByOrganisation(preOrg);
-                        divisionContainer.style.display = divCount > 0 ? "block" : "none";
-                        if (preDiv) divisionSelect.value = preDiv;
+                    if (!grouped[typeName]) {
+                        grouped[typeName] = [];
                     }
-                } else {
-                    orgSelectContainer.style.display = "none";
-                    orgInputContainer.style.display = "block";
-                    divisionContainer.style.display = "none";
-                }
+
+                    grouped[typeName].push(o);
+                });
+
+                Object.keys(grouped).forEach(typeName => {
+                    const optgroup = document.createElement("optgroup");
+                    optgroup.label = typeName;
+
+                    grouped[typeName].forEach(o => {
+                        const opt = document.createElement("option");
+                        opt.value = o.id;
+                        opt.textContent = o.name;
+                        optgroup.appendChild(opt);
+                    });
+
+                    orgSelect.appendChild(optgroup);
+                });
             }
+
+            function loadPartners() {
+                partnerContainer.style.display = "block";
+                partnerSelect.disabled = false;
+
+                reset(partnerSelect, "Select Partner");
+
+                PARTNERS.forEach(p => {
+                    const opt = document.createElement("option");
+                    opt.value = p.id;
+                    opt.textContent = p.name;
+                    partnerSelect.appendChild(opt);
+                });
+            }
+
+            sourceType.addEventListener("change", function () {
+                hideAll();
+
+                if (this.value === "identity_organisation") {
+                    loadOrganisations();
+                } else if (this.value === "external_partner") {
+                    loadPartners();
+                }
+            });
+
+            // ✅ Initial state
+            hideAll();
+
+            // ✅ Auto-load based on default selected value
+            if (sourceType.value === "identity_organisation") {
+                loadOrganisations();
+            } else if (sourceType.value === "external_partner") {
+                loadPartners();
+            }
+
         });
     </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const sourceRadios = document.querySelectorAll('input[name="document_source"]');
+
+            const uploadSection = document.getElementById('upload-section');
+            const templateSection = document.getElementById('template-section');
+            const editorSection = document.getElementById('editor-section');
+            const mainFile = document.getElementById('main_file');
+
+            const templateOptions = document.querySelectorAll('.template-option');
+            const ministriesContainer = document.getElementById('ministries-container');
+            const recipientContainer = document.getElementById('recipient-container');
+            const internalContainer = document.getElementById('internal-container');
+
+            function toggleDocumentSource() {
+                const selectedSource = document.querySelector('input[name="document_source"]:checked').value;
+
+                if (selectedSource === 'online') {
+                    uploadSection.classList.add('hidden');
+                    templateSection.classList.remove('hidden');
+                  
+                    mainFile.disabled = true;
+                } else {
+                    uploadSection.classList.remove('hidden');
+                    templateSection.classList.add('hidden');
+                    editorSection.classList.add('hidden');
+                    ministriesContainer.classList.add('hidden');
+                    recipientContainer.classList.add('hidden');
+                    internalContainer.classList.add('hidden');
+                    mainFile.disabled = false;
+                }
+            }
+
+            sourceRadios.forEach(radio => {
+                radio.addEventListener('change', toggleDocumentSource);
+            });
+
+            templateOptions.forEach(option => {
+                option.addEventListener('click', function () {
+                    templateOptions.forEach(item => {
+                        item.classList.remove('border-cyan-500', 'bg-cyan-50');
+                    });
+
+                    this.classList.add('border-cyan-500', 'bg-cyan-50');
+
+                    const radio = this.querySelector('input[type="radio"]');
+                    radio.checked = true;
+
+                    if (radio.value === 'memo') {
+                        ministriesContainer.classList.remove('hidden');
+                        editorSection.classList.remove('hidden');
+                        internalContainer.classList.add('hidden');
+                        recipientContainer.classList.add('hidden');
+                    } else if (radio.value === 'letter') {
+                        ministriesContainer.classList.add('hidden');
+                        internalContainer.classList.add('hidden');
+                        recipientContainer.classList.remove('hidden');
+                        editorSection.classList.remove('hidden');
+                    } else if (radio.value === 'internal') {
+                        ministriesContainer.classList.add('hidden');
+                        recipientContainer.classList.add('hidden');
+                        internalContainer.classList.remove('hidden');
+                        editorSection.classList.remove('hidden');
+                    } else {
+                        ministriesContainer.classList.add('hidden');
+                        recipientContainer.classList.add('hidden');
+                        internalContainer.classList.add('hidden');
+                        editorSection.classList.add('hidden');
+                    }
+                });
+            });
+
+            toggleDocumentSource();
+        });
+        </script>
+        <script>
+            const ufsSelect = document.getElementById('ufs_officer_id');
+            const ccSelect = document.getElementById('cc_officer_id');
+
+            function updateCcOptions() {
+                const selectedUfs = ufsSelect.value;
+
+                Array.from(ccSelect.options).forEach(option => {
+                    option.disabled = false;
+
+                    if (selectedUfs && option.value === selectedUfs) {
+                        option.disabled = true;
+
+                        if (ccSelect.value === selectedUfs) {
+                            ccSelect.value = '';
+                        }
+                    }
+                });
+            }
+
+            ufsSelect.addEventListener('change', updateCcOptions);
+            updateCcOptions();
+        </script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+
+                const sourceTypeSelect = document.getElementById('source_type');
+                const organisationSelect = document.getElementById('organisation');
+
+                const onlineOption = document.getElementById('online-option');
+                const onlineRadio = onlineOption.querySelector('input[value="online"]');
+
+                // logged-in ministry id from backend
+                const loggedInMinistryId = @json(auth()->user()->ministry_id);
+
+                function toggleOnlineSection() {
+                    const sourceType = sourceTypeSelect.value;
+                    const sourceId = organisationSelect.value;
+
+                    const disableOnline =
+                        sourceType === 'identity_organisation' &&
+                        parseInt(sourceId) !== parseInt(loggedInMinistryId);
+
+                    if (disableOnline) {
+                        onlineRadio.checked = false;
+                        onlineRadio.disabled = true;
+
+                        onlineOption.classList.add(
+                            'opacity-50',
+                            'pointer-events-none',
+                            'bg-gray-100'
+                        );
+                    } else {
+                        onlineRadio.disabled = false;
+
+                        onlineOption.classList.remove(
+                            'opacity-50',
+                            'pointer-events-none',
+                            'bg-gray-100'
+                        );
+                    }
+                }
+
+                sourceTypeSelect.addEventListener('change', toggleOnlineSection);
+                organisationSelect.addEventListener('change', toggleOnlineSection);
+
+                toggleOnlineSection();
+            });
+        </script>
 </div>
 @endsection
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

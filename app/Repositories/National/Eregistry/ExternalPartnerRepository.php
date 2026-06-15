@@ -79,13 +79,17 @@ class ExternalPartnerRepository extends BaseRepository
      * @param bool $trashed
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function getForDataTable($search = '', $order_by = 'id', $sort = 'asc', $trashed = false)
+    public function getForDataTable($ministryId, $search = '', $order_by = 'id', $sort = 'asc', $trashed = false)
     {
         $query = $this->model()::query()->select(['external_partners.id as id',
                                                  'external_partners.name as name', 
                                                  'identity_organisations.name as identity_organisation_name',
                                                  DB::raw("COALESCE(identity_types.name, organisation_types.name) as organisation_type_name")])
                                                 
+                                                ->join('ministries', function ($join) use ($ministryId) {
+                                                           $join->on('ministries.id', '=', 'external_partners.ministry_id')
+                                                                ->where('external_partners.ministry_id', $ministryId);
+                                                })
                                                 ->leftJoin('identity_organisations', 'external_partners.identity_organisation_id', '=', 'identity_organisations.id')
                                                 ->leftJoin('organisation_types', 'external_partners.organisation_type_id', '=', 'organisation_types.id')
                                                 ->leftJoin('organisation_types as identity_types', 'identity_organisations.organisation_type_id', '=', 'identity_types.id');
@@ -126,14 +130,13 @@ class ExternalPartnerRepository extends BaseRepository
      * @param string $key
      * @return \Illuminate\Support\Collection
      */
-    public function list($column = 'name', $key = 'id') //return all organisations with only their id, name, code, location and organisation_type_id
-
+    public function list($ministryId = null, $column = 'name')
     {
         return $this->model()::query()
+            ->where('ministry_id', $ministryId)
             ->orderBy('id')
             ->orderBy($column)
             ->get(['id', 'name']);
-
     }
 
 

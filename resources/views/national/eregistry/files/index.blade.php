@@ -28,35 +28,144 @@
         </div>
     @endif
 
-    <div class="container mx-auto px-4 py-8 max-w-7xl rounded-md min-h-screen">
-        <div class="mt-2 mb-6 flex items-start justify-between">
+    <div class="container mx-auto px-4 py-8 max-w-full rounded-md min-h-screen">
+        <div class="mb-4 flex items-center justify-between">
             <div>
-                <h1 class="text-3xl font-bold">Files</h1>
-                <p class="text-base text-gray-500 mt-1">
-                    View and manage all files from your ministry.
-                </p>
+                <h1 class="text-2xl font-semibold text-gray-800">Correspondence Files</h1>
             </div>
-
-            <a href="{{ route('registry.files.create') }}"
-                class="inline-flex items-center mt-5 gap-2 px-4 py-2 bg-cyan-600 text-white text-sm rounded-md hover:bg-cyan-700 transition">
-                <i class="fas fa-plus"></i>
-                Create File
-            </a>
+            <div>
+                <a href="{{ route('registry.files.create') }}"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white text-sm font-medium rounded-lg shadow-sm hover:bg-cyan-700 transition">
+                    <i class="fas fa-plus text-xs"></i>
+                    Correspondence File
+                </a>
+            </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">        
-            <table id="filesTable" class="bg-gray-50 text-gray-600 text-sm tracking-wide">
+        <!-- Tabs -->
+        <div class=" border-b border-gray-200">
+            <nav class="flex space-x-8">
+                <!-- Active -->
+                <a href="{{ route('registry.files.index', ['type' => 'active']) }}"
+                    class="pb-3 text-sm font-semibold border-b-2 transition
+                    {{ request('type', 'active') === 'active'
+                        ? 'border-cyan-600 text-cyan-700'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+                    Active Files
+                </a>
+
+                @if(auth()->user()->hasRole(['registry', 'admin', 'sro']))
+                    <!-- Closed -->
+                    <a href="{{ route('registry.files.index', ['type' => 'closed']) }}"
+                        class="pb-3 text-sm font-semibold border-b-2 transition
+                        {{ request('type') === 'closed'
+                            ? 'border-cyan-600 text-cyan-700'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+                        Closed Files
+                    </a>
+
+                    <!-- Archived -->
+                    <a href="{{ route('registry.files.index', ['type' => 'archived']) }}"
+                        class="pb-3 text-sm font-semibold border-b-2 transition
+                        {{ request('type') === 'archived'
+                            ? 'border-cyan-600 text-cyan-700'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+                        Archived Files
+                    </a>
+                @endif
+            </nav>
+        </div>
+
+        @if(auth()->user()->hasRole(['registry', 'admin', 'sro']))
+            @if(request('type') === 'closed')
+                <div class="bg-gray-50 p-3 rounded-md">
+                    <div class="grid grid-cols-2 md:grid-cols-6 gap-2 text-sm">
+
+                        <!-- Year -->
+                        <div>
+                            <label class="block text-gray-500 mb-1 font-semibold">Type</label>
+                            <select id="initialtypeFilter"
+                                class="w-full rounded-md border-gray-200 text-sm focus:ring-cyan-500 focus:border-cyan-500">
+                                <option value="all">All</option>
+                                <option value="dispatch">Dispatched</option>
+                                <option value="received">Received</option>
+                                <option value="internal">Internal</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-500 mb-1 font-semibold">Organisation</label>
+                            <select id="organisationFilter"
+                                            name="organisation"
+                                            class="w-full rounded-md border-gray-200 text-sm focus:ring-cyan-500 focus:border-cyan-500">
+                                        <option value="">All</option>
+                                        @foreach ($organisations as $org)
+                                            <option value="{{ $org->id }}">{{ $org->name }}</option>
+                                        @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-500 mb-1 font-semibold">File Type</label>
+                            <select id="fileType"
+                                            name="organisation"
+                                            class="w-full rounded-md border-gray-200 text-sm focus:ring-cyan-500 focus:border-cyan-500">
+                                        <option value="">All</option>
+                                        @foreach ($file_types as $fileType)
+                                            <option value="{{ $fileType->id }}">{{ $fileType->name }}</option>
+                                        @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-500 mb-1 font-semibold">Category</label>
+                            <select id="category"
+                                            name="organisation"
+                                            class="w-full rounded-md border-gray-200 text-sm focus:ring-cyan-500 focus:border-cyan-500">
+                                        <option value="">All</option>
+                                        @foreach ($categories as $cat)
+                                            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                                        @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-500 mb-1 font-semibold">From Date</label>
+                            <input type="date" id="dateFrom"
+                                class="w-full rounded-md border-gray-200 text-sm focus:ring-cyan-500 focus:border-cyan-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-500 mb-1 font-semibold">To Date</label>
+                            <input type="date" id="dateTo"
+                                class="w-full rounded-md border-gray-200 text-sm focus:ring-cyan-500 focus:border-cyan-500">
+                        </div>
+
+                        <!-- Reset -->
+                        <div class="flex items-end">
+                            <button id="reset-filters"
+                                class="w-full text-xs font-semibold px-2 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-md">
+                                Reset
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            @endif
+        @endif
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-2">        
+            <table id="filesTable" class="bg-gray-50 text-gray-800 text-sm divide-y divide-gray-200 stripe">
                 <thead>
                     <tr>
-                        <th>REFERENCE NO</th>
-                        <th>SUBJECT</th>
-                        <th>DUE DATE</th>
-                        <th>STATUS</th>
-                        {{-- <th>DATE DISPATCHED/RECEIVED</th> --}}
-                        {{-- <th>DIVISION</th>
-                        <th>DISPATCH DATE</th>
-                        <th>DISPATCHED BY</th>  --}}
-                        <th class="w-29">ACTIONS</th>
+                        <th>ID</th>
+                        <th>Reference No</th>
+                        <th>Name/Subject</th>
+                        <th>File Type</th>
+                        <th>Correspondence Type</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th class="w-28">ACTIONS</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y"></tbody> <!-- DataTable will populate this -->
@@ -67,31 +176,40 @@
 @push('styles')
     <style>
         /* Table Styles */
-    table.dataTable {
+        table.dataTable {
             width: 100%;
-            border-collapse: collapse;
-            /* font-size: 0.85rem; */
-            border-left: 0.5px solid #d3d3d8;
-            border-right: 0.5px solid #d3d3d8;
+            border-collapse: separate;
+            border-spacing: 0;
+            border: 0.5px solid #d3d3d8;
+            border-radius: 8px;
+            overflow: hidden;
         }
 
         /* Header */
         #filesTable thead {
-            background-color: #f9fafb;
-            color: #6b7280;
-            text-transform: uppercase;
+            background-color: #e9edee;
+            color: #5c5d5f;
             font-size: 12px;
         }
 
+        #filesTable thead th {
+            padding: 8px 10px;
+            font-weight: 600;
+            
+        }
+
         /* Cells */
-        #filesTable th,
         #filesTable td {
-            padding: 14px 16px;
+            padding: 12px 14px;
+            white-space: normal !important;
+            border-bottom: 1px solid #cfd4d7;
         }
 
         /* Row divider */
         #filesTable tbody tr {
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1.5px solid #6b6969;
+            border-top: 1.5px solid #6b6969;
+            background-color: #ffffff;
         }
 
         /* Hover effect */
@@ -99,11 +217,6 @@
             background-color: #f9fafb;
         }
 
-        /* Fix long text */
-        #filesTable td {
-            white-space: normal !important;
-            /* word-break: break-word; */
-        }
         .dataTables_filter input {
             border: 1px solid #d1d5db;
             border-radius: 8px;
@@ -195,8 +308,8 @@
                 .excel-export-btn {
                     border: none !important;       /* Ensures no border, overrides any border below */
                     border-radius: 6px !important;
-                    background-color: rgb(32, 180, 39) !important;
-                    color: #ffffff;
+                    background-color: rgba(234, 236, 241, 0.76) !important;
+                    color: #000000;
                     padding: 0.25rem 0.75rem !important;   /* smaller padding */
                     box-shadow: none !important;          /* removes inner or outer shadow */
                     background-image: none !important;    /* removes gradient */
@@ -215,8 +328,8 @@
                 .pdf-export-btn {
                     border: none !important;       /* Ensures no border, overrides any border below */
                     border-radius: 6px !important;
-                    background-color: rgb(238, 45, 45) !important;
-                    color: #ffffff;
+                    background-color:  rgba(234, 236, 241, 0.76) !important;
+                    color: #000000;
                     padding: 0.25rem 0.75rem !important;   /* smaller padding */
                     box-shadow: none !important;          /* removes inner or outer shadow */
                     background-image: none !important;    /* removes gradient */
@@ -265,7 +378,7 @@
                 }
 
                 // Initialize DataTable
-                $('#filesTable').DataTable({
+                let table = $('#filesTable').DataTable({
                     processing: true,
                     serverSide: true,
                     ajax: {
@@ -273,11 +386,32 @@
                         type: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') 
+                        },
+                        data: function (d) {
+                            d.type = "{{ request('type', 'active') }}";
+
+                            d.selected_type = $('#initialtypeFilter').val() || '';
+                            d.organisation_id = $('#organisationFilter').val() || '';
+                            d.file_type = $('#fileType').val() || '';
+                            d.category = $('#category').val() || '';
+                            d.date_from = $('#dateFrom').val() || '';
+                            d.date_to = $('#dateTo').val() || '';
+
+                            console.log('DataTable sending:', {
+                                type: d.type,
+                                selected_type: d.selected_type,
+                                organisation_ids: d.organisation_id,
+                                date_from: d.date_from,
+                                date_to: d.date_to,
+                            });
                         }
                     },
                     columns: [
+                        { data: 'id' },
                         { data: 'reference_no' },
                         { data: 'file_subject' },
+                        { data: 'file_type'},
+                        { data: 'correspondence_type'},
                         {  data: 'due_date',
                             render: function (data) {
                                 if (!data) return 'N/A';
@@ -295,33 +429,27 @@
                                 let badgeClass = '';
 
                                 if (data === 'Pending Action') {
-                                    badgeClass = 'bg-red-500 text-xs px-2 py-1 rounded-full text-white';
+                                    badgeClass = 'bg-gray-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
                                 } else if (data === 'Dispatched') {
-                                    badgeClass = 'bg-cyan-500 text-xs px-2 py-1 rounded-full text-white';
+                                    badgeClass = 'bg-cyan-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
                                 } else if (data === 'Pending Review') {
-                                    badgeClass = 'bg-yellow-500 text-xs px-2 py-1 rounded-full text-white';
+                                    badgeClass = 'bg-yellow-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
                                 } else if (data === 'Reviewed') {
-                                    badgeClass = 'bg-green-500 text-xs px-2 py-1 rounded-full text-white';
-                                } else {
-                                    badgeClass = 'bg-gray-400 text-xs px-2 py-1 rounded-full text-white';
+                                    badgeClass = 'bg-blue-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
+                                } else if (data === 'Received') {
+                                    badgeClass = 'bg-blue-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
+                                } else if (data === 'Approved') {
+                                    badgeClass = 'bg-green-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
+                                } else if (data === 'Rejected') {
+                                    badgeClass = 'bg-red-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
+                                }
+                                else {
+                                    badgeClass = 'bg-gray-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
                                 }
 
                                 return `<span class="${badgeClass}">${data}</span>`;
                             }
                         },
-                        // { 
-                        //     data: 'dispatch_date',
-                        //     render: function (data) {
-                        //         if (!data) return 'N/A';
-                        //         const date = new Date(data);
-                        //         return date.toLocaleDateString('en-US', {
-                        //             year: 'numeric',
-                        //             month: 'short',
-                        //             day: 'numeric'
-                        //         });
-                        //     }  
-                        // },  
-                        // { data: 'dispatched_by_name', name: 'users.first_name' },
                         {
                             data: null, // means we'll render manually
                             name: 'actions',
@@ -329,35 +457,47 @@
                             searchable: false,
                             render: function (data, type, row) {
                                 let buttons = '';
+
+                                // Review officer / admin
                                 if (isReviewOfficer || isAdmin) {
-                                    // ONLY view button
                                     buttons = `
                                         <a href="/registry/files/${row.id}" 
-                                        class="btn btn-sm btn-outline-info" 
-                                        title="Review">
+                                            class="btn btn-sm btn-outline-info" 
+                                            title="Review">
                                             Review
                                         </a>
                                     `;
-                                } else {
-                                    // full actions
+
+                                // Pending action → View + Edit + Delete
+                                } else if (row.file_status === 'Pending Action' || row.file_status === 'Draft' ) {
                                     buttons = `
                                         <a href="/registry/files/${row.id}" 
-                                        class="btn btn-sm btn-outline-info" 
-                                        title="View">
-                                            View
+                                            class="inline-flex items-center justify-center hover:text-gray-600 transition"
+                                            title="View">
+                                            <i class="fa fa-eye text-sm"></i>
                                         </a>
 
-                                        <a href="/registry/files/${row.id}/edit/dispatch" 
-                                        class="btn btn-sm btn-outline-primary" 
-                                        title="Edit">
-                                            Edit
+                                        <a href="/registry/files/${row.id}/edit" 
+                                            class="inline-flex items-center justify-center hover:text-gray-600 transition ms-3"
+                                            title="Edit">
+                                            <i class="fa fa-pen text-sm"></i>
                                         </a>
 
-                                        <button class="btn btn-sm btn-outline-danger delete-action" 
+                                        <button class="inline-flex items-center justify-center hover:text-red-600 transition ms-3 delete-action" 
                                                 data-id="${row.id}" 
                                                 title="Delete">
-                                            Delete
+                                            <i class="fa fa-trash text-sm"></i>
                                         </button>
+                                    `;
+
+                                // Other statuses → View only
+                                } else {
+                                    buttons = `
+                                        <a href="/registry/files/${row.id}" 
+                                            class="inline-flex items-center justify-center hover:text-gray-600 transition"
+                                            title="View">
+                                            <i class="fa fa-eye text-sm"></i>
+                                        </a>
                                     `;
                                 }
                                 return buttons;
@@ -380,7 +520,7 @@
                     buttons: [
                         {
                             extend: 'excelHtml5',
-                            text: '<i class="fas fa-download"></i>EXCEL',
+                            text: '<i class="fas fa-download"></i> EXCEL',
                             className: 'excel-export-btn',
                             title: 'Outward Files Registry',
                             exportOptions: {
@@ -389,7 +529,7 @@
                         },
                         {
                             extend: 'pdfHtml5',
-                            text: '<i class="fas fa-download"></i>PDF',
+                            text: '<i class="fas fa-download"></i> PDF',
                             className: 'pdf-export-btn',
                             title: 'Outward Files Registry',
                             exportOptions: {
@@ -398,38 +538,32 @@
                         }
                     ]
                 })
-            });
 
-                // Handle archive action
-                $(document).on('click', '.archive-action', function(e) {
-                    // alert('Archive button clicked');
-                    e.preventDefault();
-                    const fileId = $(this).attr('data-file-id');
-                    console.log('File ID:', fileId);
-                    // alert('clicked');
+                  // Reload table when initial type changes
+                $('#initialtypeFilter').on('change', function() {
+                    table.ajax.reload();
+                }); 
 
-                    if (!confirm('Are you sure you want to archive this file?')) {
-                        return;
-                    }
-
-                    // console.log(route('registry.files.archive')); // should print /files/archive
-
-                    $.ajax({
-                        url: route('registry.files.archive'), // POST route
-                        type: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                        },
-                        data: { file_id: fileId }, // send ID in POST body
-                        success: function(res) {
-                            $('#dispatchesTable').DataTable().ajax.reload(); // refresh table
-                            alert('File archived successfully');
-                        },
-                        error: function(xhr) {
-                            alert(xhr.responseJSON?.error || 'Error archiving file');
-                        }
-                    });
+                // Reload table when organisation changes
+                $('#organisationFilter').on('change', function() {
+                    table.ajax.reload();
                 });
+
+                $('#category').on('change', function() {
+                    table.ajax.reload();
+                });
+
+                $('#fileType').on('change', function() {
+                    table.ajax.reload();
+                });
+
+                // Reload table when date range changes
+                $('#dateFrom, #dateTo').on('change', function() {
+                    table.ajax.reload();
+                });
+
+
+            });
 
                 // Handle delete action
                 $(document).on('click', '.delete-action', function(e) {
@@ -460,7 +594,6 @@
                         'registry.files.show': "{{ route('registry.files.show', ':id') }}".replace(':id', id),
                         'registry.files.edit': "{{ route('registry.files.edit', ':id') }}".replace(':id', id),
                         'registry.files.destroy': "{{ route('registry.files.destroy', ':id') }}".replace(':id', id),
-                        'registry.files.archive': "{{ route('registry.files.archive') }}",
                     }[name];
                 }
 
@@ -477,8 +610,8 @@
                 $('#closePdfModal').on('click', function() {
                     $('#pdfViewerModal').fadeOut();
                 });
+            
         
-
         </script>
     @endpush
 

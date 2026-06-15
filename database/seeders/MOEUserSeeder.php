@@ -55,39 +55,42 @@ class MOEUserSeeder extends Seeder
          $user1 = User::withTrashed()->updateOrCreate(
             ['email' => 'secretary@moe.gov.ki'],
             [
-                'first_name' => 'Roreti',
-                'last_name' => 'David',
+                'first_name' => 'Jane',
+                'last_name' => 'Doe',
                 'password' => Hash::make('sec'),
                 'ministry_id' => $ministry->id,
                 'division_id' => $headquartersDivision->id,
+                'designation' => 'Secretary',
                 'deleted_at' => null
             ]
         );
-        $user1->assignRole('admin');
+        $user1->assignRole('ministry-admin');
         // $ministry->review_officer_id = $user1->id;
         // $ministry->save();
 
         $user2 = User::withTrashed()->updateOrCreate(
             ['email' => 'ds@moe.gov.ki'],
             [
-                'first_name' => 'Jane',
-                'last_name' => 'Austin',
+                'first_name' => 'Tematang',
+                'last_name' => 'Iaoniman',
                 'password' => Hash::make('ds'),
                 'ministry_id' => $ministry->id,
                 'division_id' => $headquartersDivision->id,
+                'designation' => 'Deputy Secretary',
                 'deleted_at' => null
             ]
         );
-        $user2->assignRole('admin');
+        $user2->assignRole('ministry-admin');
 
         $user3 = User::withTrashed()->updateOrCreate(
-            ['email' => 'sss.officer@moe.gov.ki'],
+            ['email' => 'cdrc.director@moe.gov.ki'],
             [
-                'first_name' => 'Tematang',
-                'last_name' => 'Tekanene',
-                'password' => Hash::make('ds'),
+                'first_name' => 'Teeta',
+                'last_name' => 'Kabiriera',
+                'password' => Hash::make('director'),
                 'ministry_id' => $ministry->id,
                 'division_id' => $sssDivision->id,
+                'designation' => 'Director of CDRC',
                 'deleted_at' => null
             ]
         );
@@ -98,9 +101,10 @@ class MOEUserSeeder extends Seeder
             [
                 'first_name' => 'Turia',
                 'last_name' => 'Toabwa',
-                'password' => Hash::make('custom'),
+                'password' => Hash::make('jss'),
                 'ministry_id' => $ministry->id,
                 'division_id' => $jssDivision->id,
+                'designation' => 'Junior Secondary Officer',
                 'deleted_at' => null
             ]
         );
@@ -109,9 +113,10 @@ class MOEUserSeeder extends Seeder
         $user5 = User::withTrashed()->updateOrCreate(
             ['email' => 'om@moe.gov.ki'],
             [
-                'first_name' => 'Anre',
-                'last_name' => 'Toabwa',
+                'first_name' => 'NeiOm',
+                'last_name' => 'Tennaewa',
                 'password' => Hash::make('om'),
+                'designation' => 'Office Manager',
                 'ministry_id' => $ministry->id,
                 'division_id' => $headquartersDivision->id,
                 'deleted_at' => null

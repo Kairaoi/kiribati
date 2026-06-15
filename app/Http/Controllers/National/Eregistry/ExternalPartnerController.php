@@ -42,11 +42,12 @@ class ExternalPartnerController extends Controller
      */
     public function getDataTables(Request $request)
     {
-        $search = $request->get('search', '');
+        $ministryId = auth()->user()->ministry_id;
+        $search = $request->get('search');
         if (is_array($search)) {
             $search = $search['value'];
         }
-        $query = $this->externalPartners->getForDataTable($search);
+        $query = $this->externalPartners->getForDataTable($ministryId, $search);
 
         $data = $query->get();
         Log::info('External Partners Results:', $data->toArray());

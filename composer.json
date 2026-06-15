@@ -7,6 +7,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "barryvdh/laravel-dompdf": "^3.1",
         "blade-ui-kit/blade-heroicons": "^2.6",
         "diglactic/laravel-breadcrumbs": "^10.0",
         "laravel/framework": "^11.44.1",
@@ -14,6 +15,9 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "livewire/livewire": "^3.5",
+        "owen-it/laravel-auditing": "^14.0",
+        "setasign/fpdf": "^1.9",
+        "setasign/fpdi": "^2.6",
         "spatie/laravel-activitylog": "^4.12",
         "spatie/laravel-permission": "^6.14",
         "yajra/laravel-datatables-oracle": "^11.1"

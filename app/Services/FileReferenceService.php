@@ -63,7 +63,7 @@ class FileReferenceService
             }
 
             return strtoupper(
-                "{$ministryCode}/{$typeCode}/{$year}/" .
+                "{$ministryCode}-{$typeCode}-{$year}-" .
                 str_pad($number, 4, '0', STR_PAD_LEFT)
             );
         });

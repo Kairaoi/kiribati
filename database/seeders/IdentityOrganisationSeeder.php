@@ -6,7 +6,8 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class IdentityOrganisationSeeder extends Seeder
+
+class IdentityOrganisationSeeder extends Seeder 
 {
     /**
      * Run the database seeds.
@@ -79,7 +80,6 @@ class IdentityOrganisationSeeder extends Seeder
             ['organisation_type_id' => '3',   'name' => "Embassy of the People's Republic of China",              'code' => 'EC',   'location' => 'Bairiki',  'created_by' => '1', 'updated_by' => '1'],
 
 
-
             // International Organisations
             ['organisation_type_id' => '4',   'name' => 'United Nations Development Programme',                   'code' => 'UNDP',  'location' => 'Bairiki',  'created_by' => '1', 'updated_by' => '1'],
             ['organisation_type_id' => '4',   'name' => 'World Health Organisation',                              'code' => 'WHO',   'location' => 'Bairiki',  'created_by' => '1', 'updated_by' => '1'],
@@ -89,17 +89,15 @@ class IdentityOrganisationSeeder extends Seeder
             ['organisation_type_id' => '4',   'name' => "World Bank Group",                                      'code' => 'WBG',   'location' => 'Bairiki',  'created_by' => '1', 'updated_by' => '1'],
             ['organisation_type_id' => '4',   'name' => "Asian Development Bank",                                'code' => 'ADB',   'location' => 'Bairiki',  'created_by' => '1', 'updated_by' => '1'],
             ['organisation_type_id' => '4',   'name' => "International Monetary Fund",                           'code' =>  'IMF',  'location' =>  'Bairiki',  'created_by' =>  '1',  'updated_by' =>  '1'],
-            ['organisation_type_id' => '4',   'name' => "Other International Organisation",                      'code' =>  'OTG',  'location' =>  'Bairiki',  'created_by' =>  '1',  'updated_by' =>  '1'],
 
 
             // Religious Organisations
-            ['organisation_type_id' => '5',   'name' => 'Catholic Church',                                       'code' =>  'RM',  'location' =>  'Bairiki',  'created_by' =>  '1',  'updated_by' =>  '1'],
-            ['organisation_type_id' => '5',   'name' => 'Kiribati Uniting Church',                               'code' =>  'KUC',  'location' =>  'Bairiki',  'created_by' =>  '1',  'updated_by' =>  '1'],
-            ['organisation_type_id' => '5',   'name' => 'Kiribati Protestant Church',                            'code' =>  'KPC',  'location' =>  'Bairiki',  'created_by' =>  '1',  'updated_by' =>  '1'],
-            ['organisation_type_id' => '5',   'name' => 'The Church of Jesus Christ of Latter-day Saints',       'code' =>  'LDS',  'location' =>  'Bairiki',  'created_by' =>  '1',  'updated_by' =>  '1'],
-            ['organisation_type_id' => '5',   'name' => 'Bahai Faith',                                           'code' =>  'BF',  'location' =>   'Bairiki', 'created_by' =>  '1',  'updated_by' =>  '1'],
-            ['organisation_type_id' => '5',   'name' => 'Seventh-day Adventist Church',                          'code' =>  'SDA',  'location' =>  'Bairiki',  'created_by' =>  '1',  'updated_by' =>  '1'],
-            ['organisation_type_id' => '5',   'name' => 'Other Religion',                                        'code' =>  'OR',  'location' =>  'Bairiki',  'created_by' =>  '1',  'updated_by' =>  '1'],
+            ['organisation_type_id' => '8',   'name' => 'Catholic Church',                                       'code' =>  'RM',  'location' =>  'Bairiki',  'created_by' =>  '1',  'updated_by' =>  '1'],
+            ['organisation_type_id' => '8',   'name' => 'Kiribati Uniting Church',                               'code' =>  'KUC',  'location' =>  'Bairiki',  'created_by' =>  '1',  'updated_by' =>  '1'],
+            ['organisation_type_id' => '8',   'name' => 'Kiribati Protestant Church',                            'code' =>  'KPC',  'location' =>  'Bairiki',  'created_by' =>  '1',  'updated_by' =>  '1'],
+            ['organisation_type_id' => '8',   'name' => 'The Church of Jesus Christ of Latter-day Saints',       'code' =>  'LDS',  'location' =>  'Bairiki',  'created_by' =>  '1',  'updated_by' =>  '1'],
+            ['organisation_type_id' => '8',   'name' => 'Bahai Faith',                                           'code' =>  'BF',  'location' =>   'Bairiki', 'created_by' =>  '1',  'updated_by' =>  '1'],
+            ['organisation_type_id' => '8',   'name' => 'Seventh-day Adventist Church',                          'code' =>  'SDA',  'location' =>  'Bairiki',  'created_by' =>  '1',  'updated_by' =>  '1'],
 
         ]);
 

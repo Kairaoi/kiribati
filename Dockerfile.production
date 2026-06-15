@@ -1,0 +1,39 @@
+# Dockerfile.production
+FROM php:8.4-fpm-alpine
+
+# Install production dependencies only
+RUN apk add --no-cache \
+    nginx \
+    supervisor \
+    && docker-php-ext-install pdo_mysql opcache
+
+# RUN apt-get update && apt-get install -y \
+#     libpng-dev \
+#     libjpeg62-turbo-dev \
+#     libfreetype6-dev \
+#     && docker-php-ext-configure gd --with-freetype --with-jpeg \
+#     && docker-php-ext-install gd
+
+RUN apk add --no-cache \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd
+
+# Copy application files
+COPY --chown=www-data:www-data . /var/www/html
+
+# Install Composer dependencies without dev packages
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+RUN composer install --no-dev --optimize-autoloader --no-interaction
+
+# Configure PHP for production
+# COPY docker/php.ini /usr/local/etc/php/conf.d/custom.ini
+
+# Set proper permissions
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+
+EXPOSE 80
+#CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["php-fpm"]

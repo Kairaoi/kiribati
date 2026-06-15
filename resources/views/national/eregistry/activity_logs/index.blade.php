@@ -4,7 +4,7 @@
 
 <div class="container mx-auto font-poppins px-4 py-8 max-w-6xl mt-3 rounded-md min-h-screen">
 
-    <h1 class="text-2xl font-bold mb-6">Activity Logs</h1>
+    <h1 class="text-xl font-bold mb-6">Activity Logs</h1>
 
     <div class="bg-white shadow rounded-lg overflow-hidden">
 

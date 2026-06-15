@@ -18,11 +18,7 @@ class MFEDUserSeeder extends Seeder
         // Reset cached roles and permissions
         app()['cache']->forget('spatie.permission.cache');
 
-        // Create roles: admin, registry, and user
-        $roles = ['admin', 'registry', 'user'];
-        foreach ($roles as $roleName) {
-            Role::firstOrCreate(['name' => $roleName]);
-        }
+       
 
         //GET THE MFED MINISTRY
         $ministry = Ministry::where('code', 'MFED')->first();
@@ -57,10 +53,11 @@ class MFEDUserSeeder extends Seeder
                 'password' => Hash::make('sec'),
                 'ministry_id' => $ministry->id,
                 'division_id' => $headquartersDivision->id,
+                'designation' => 'Secretary',
                 'deleted_at' => null
             ]
         );
-        $user1->assignRole('admin');
+        $user1->assignRole('ministry-admin');
         // $ministry->review_officer_id = $user1->id;
         // $ministry->save();
 
@@ -72,10 +69,11 @@ class MFEDUserSeeder extends Seeder
                 'password' => Hash::make('ds'),
                 'ministry_id' => $ministry->id,
                 'division_id' => $headquartersDivision->id,
+                'designation' => 'Deputy Secretary',
                 'deleted_at' => null
             ]
         );
-        $user2->assignRole('admin');
+        $user2->assignRole('ministry-admin');
 
         $user3 = User::withTrashed()->updateOrCreate(
             ['email' => 'sas@mfed.gov.ki'],
@@ -85,10 +83,11 @@ class MFEDUserSeeder extends Seeder
                 'password' => Hash::make('sas'),
                 'ministry_id' => $ministry->id,
                 'division_id' => $headquartersDivision->id,
+                'designation' => 'Senior Administrative Officer',
                 'deleted_at' => null
             ]
         );
-        $user3->assignRole('admin');
+        $user3->assignRole('ministry-admin');
 
         $user4 = User::withTrashed()->updateOrCreate(
             ['email' => 'custom@mfed.gov.ki'],
@@ -98,6 +97,7 @@ class MFEDUserSeeder extends Seeder
                 'password' => Hash::make('custom'),
                 'ministry_id' => $ministry->id,
                 'division_id' => $customsDivision->id,
+                'designation' => 'Customs Officer',
                 'deleted_at' => null
             ]
         );
@@ -111,6 +111,7 @@ class MFEDUserSeeder extends Seeder
                 'password' => Hash::make('om'),
                 'ministry_id' => $ministry->id,
                 'division_id' => $headquartersDivision->id,
+                'designation' => 'Office Manager',
                 'deleted_at' => null
             ]
         );

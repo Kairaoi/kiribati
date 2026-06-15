@@ -4,7 +4,7 @@ namespace App\Http\Controllers\National\Eregistry;
 
 use App\Http\Controllers\Controller;
 use App\Models\National\Eregistry\FileType;
-// use App\Repositories\National\Eregistry\FolderRepository;
+use App\Models\National\Eregistry\Ministry;
 use App\Repositories\National\Eregistry\DivisionRepository;
 use App\Repositories\National\Eregistry\FileTypeRepository;
 use App\Repositories\National\Eregistry\MinistryRepository;
@@ -27,7 +27,6 @@ class FileTypeController extends Controller {
                                 DivisionRepository $divisions)
     {
         $this->fileTypes = $fileTypes;
-        // $this->folders = $folders;
         $this->ministries = $ministries;
         $this->divisions = $divisions;
     }
@@ -43,6 +42,7 @@ class FileTypeController extends Controller {
         $selectedType = $request->get('selected_type');
 
         $ministryId = auth()->user()?->ministry_id;
+        $user = auth()->user();
 
         if (!$ministryId) {
             abort(403, 'Ministry not found');
@@ -53,9 +53,13 @@ class FileTypeController extends Controller {
             $search = $search['value'];
         }
         
-        $query = $this->fileTypes->getForDataTable($selectedType, $ministryId, $search);
+        $query = $this->fileTypes->getForDataTable($selectedType, $ministryId, $user, $search);
         
-        $datatables = DataTables::make($query)->make(true);
+        $datatables = DataTables::make($query)
+                        ->addColumn('can_edit', function ($row) {
+                            return auth()->user()->hasRole('system-admin');
+                        })
+                        ->make(true);
         
         return $datatables;
     }
@@ -67,7 +71,7 @@ class FileTypeController extends Controller {
      */
     public function index()
     {
-
+    
         return view('national.eregistry.file_types.index');
     }
 
@@ -86,29 +90,28 @@ class FileTypeController extends Controller {
         return view('national.eregistry.file_types.create')->with('fileTypes', $fileTypes);
     }
 
-    public function dynamicForm($fileTypeId)
-    { 
-        \Log::info('Dynamic form called with ID: ' . $fileTypeId);
+    // public function dynamicForm($fileTypeId)
+    // { 
+    //     \Log::info('Dynamic form called with ID: ' . $fileTypeId);
 
-        $fileType = $this->fileTypes->getById($fileTypeId);
+    //     $fileType = $this->fileTypes->getById($fileTypeId);
         
-        if (!$fileType) {
-            return response()->json(['message' => 'File type not found'], 404);
-        }
+    //     if (!$fileType) {
+    //         return response()->json(['message' => 'File type not found'], 404);
+    //     }
         
-        if ($fileType->type === 'Outward') {
-            return view('national.eregistry.outward_files.create', [
-                // 'folders' => $this->folders->pluck(),
-                'organisations' => $this->organisations->pluck(),
-                'divisions' => $this->divisions->pluck(),
-                'fileTypes' => $this->fileTypes->pluck(),
-            ])->render();
-        } elseif ($fileType->type === 'Inward') {
-            return view('national.eregistry.file_types.inward_create')->render();
-        }
+    //     if ($fileType->type === 'Outward') {
+    //         return view('national.eregistry.outward_files.create', [
+    //             'organisations' => $this->organisations->pluck(),
+    //             'divisions' => $this->divisions->pluck(),
+    //             'fileTypes' => $this->fileTypes->pluck(),
+    //         ])->render();
+    //     } elseif ($fileType->type === 'Inward') {
+    //         return view('national.eregistry.file_types.inward_create')->render();
+    //     }
         
-        return response()->json(['message' => 'Invalid file type'], 400);
-    }
+    //     return response()->json(['message' => 'Invalid file type'], 400);
+    // }
     
 
     /**
@@ -171,7 +174,6 @@ class FileTypeController extends Controller {
         ]);
 
         return redirect()->route('registry.file-types.index')->with('message', 'File Type created successfully.');
-    
     }
 
      /**
@@ -180,15 +182,13 @@ class FileTypeController extends Controller {
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(FileType $fileType)
     {
-        if (!Auth::user()->can('file_type.show')) {
-            abort(403, 'Unauthorized action.');
-        }
+        // if (!Auth::user()->can('file_type.show')) {
+        //     abort(403, 'Unauthorized action.');
+        // }
 
-        $fileType = $this->fileTypes->getById($id);
-
-        return view('national.eregistry.file_types.show')->with('fileType', $fileType);
+        return view('national.eregistry.file_types.show', compact('fileType'));
     }
 
 
@@ -230,9 +230,9 @@ class FileTypeController extends Controller {
      */
     public function edit($id)
     {
-        if (!Auth::user()->can('file_type.edit')) {
-            abort(403, 'Unauthorized action.');
-        }
+        // if (!Auth::user()->can('file_type.edit')) {
+        //     abort(403, 'Unauthorized action.');
+        // }
 
         $fileType = $this->fileTypes->getById($id);
 
