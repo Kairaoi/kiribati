@@ -84,6 +84,75 @@ class PdfOverlayService
     {
         switch ($overlay->overlay_type) {
 
+            case 'review_comment':
+
+                $content = $overlay->content;
+                $status = strtoupper($content['status'] ?? '');
+                $date = $content['date'] ?? '';
+                $comment = $content['comment'] ?? '';
+                $status = $content['status'] ?? '';
+                $reference = $content['reference'] ?? '';
+                $approvedBy = $content['approved_by' ?? ''];
+                $designation = $content['designation'] ?? '';
+
+                // dd($comment);
+                $pageWidth = $pdf->GetPageWidth();
+                $pageHeight = $pdf->GetPageHeight();
+
+                $canvasWidth = $overlay->content['canvas_width'] ?? 794;
+                $canvasHeight = $overlay->content['canvas_height'] ?? 1123;
+
+                $scaleX = $pageWidth / $canvasWidth;
+                $scaleY = $pageHeight / $canvasHeight;
+
+                $x = $overlay->x_position * $scaleX;
+                $y = $overlay->y_position * $scaleY;
+                $w = $overlay->width * $scaleX;
+                $h = $overlay->height * $scaleY;
+                // dd([$x, $y, $w]);
+                $padding = 8;
+                
+                $pdf->SetAutoPageBreak(false);
+
+                // Border box
+                $pdf->Rect($x, $y, $w, $overlay->height);
+
+                // Status
+                $pdf->SetXY($x, $y);
+                $pdf->SetFont('Helvetica', 'B', 20);
+                $pdf->Cell($x, $y, $status);
+
+                // Details
+                $detailsY = $pdf->GetY() + 4;
+
+                // $pdf->SetXY($x + $padding, $detailsY);
+                // $pdf->SetFont('Helvetica', '', $overlay->font_size ?? 13);
+
+                $text = $comment .
+                        "\nApproved by: " . $approvedBy .
+                        "\nDesignation: " . $designation .
+                        "\nDate: " . $date .
+                        "\nRef No: " . $reference;
+
+                $pdf->SetXY($x, $y);
+                $pdf->SetFont('Helvetica', 'B', 11);
+                $pdf->MultiCell($y, $y, $text);
+
+                // Signature
+                // if ($signaturePath) {
+                //     $path = Storage::disk('public')->path($signaturePath);
+                //     if (file_exists($path)) {
+                //         $pdf->Image(
+                //             $path,
+                //             $x + $padding,
+                //             $pdf->GetY() + 3,
+                //             40
+                //         );
+                //     }
+                // }
+
+                break;
+
             case 'signature':
 
                 $pdf->Image(

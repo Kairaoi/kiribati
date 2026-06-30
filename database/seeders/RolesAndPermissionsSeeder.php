@@ -18,6 +18,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $ministryadmin = Role::create(['name' => 'ministry-admin']);
         $registry = Role::create(['name' => 'registry']);
         $sro = Role::create(['name' => 'sro']);
+        $hod = Role::create(['name' => 'hod']);
         $user = Role::create(['name' => 'user']);
         $review_officer = Role::create(['name' => 'review-officer']);
 

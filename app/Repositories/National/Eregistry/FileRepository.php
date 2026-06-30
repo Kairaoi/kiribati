@@ -105,7 +105,7 @@ class FileRepository extends BaseRepository
                                 'files.id as id',
                                 'files.subject as file_subject',
                                 'files.status as file_status',
-                                'files.correspondence_type as correspondence_type',
+                                'fc.id as circulation_id',
                                 'fc.status as circulation_status',
                                 'fc.to_ministry_id as circulation_ministry_id',
                                 'files.reference_no as reference_no',
@@ -113,8 +113,11 @@ class FileRepository extends BaseRepository
                                 'files.ministry_id as ministry_id',
                                 'files.due_date as due_date',
                                 'categories.name as category',
-                                'file_types.name as file_type'
-                            
+                                'file_types.name as file_type',
+                                'dispatches.dispatch_date as dispatch_date',
+                                'fc.received_at as received_at',
+                                // 'fc.received_by as received_by',
+                                // DB::raw("CONCAT(received_by.first_name, ' ', received_by.last_name) as received_by_name"),
                             ])
                             ->join('ministries', 'files.ministry_id', '=', 'ministries.id')
                             ->leftJoin('categories', 'categories.id', '=', 'files.category_id')
@@ -123,7 +126,7 @@ class FileRepository extends BaseRepository
                                 $join->on('files.id', '=', 'fc.file_id')
                                     ->where('fc.to_ministry_id', $userMinistryId);
                             })
-
+                            ->leftJoin('users as received_user', 'fc.received_by', '=', 'received_user.id')
                             ->leftJoin('file_assignments as fa', function ($join) use ($user) {
                                 $join->on('fa.file_circulation_id', '=', 'fc.id')
                                     ->where('fa.officer_id', $user->id)
@@ -131,11 +134,12 @@ class FileRepository extends BaseRepository
                             })
 
                             ->leftJoin('dispatches', function ($join) {
-                                $join->on('dispatches.file_id', '=', 'files.id')
-                                    ->on('dispatches.id', '=', 'fc.dispatch_id');
+                                $join->on('dispatches.file_id', '=', 'files.id');
+                                    // ->on('dispatches.id', '=', 'fc.dispatch_id');
                             });
 
             
+
         if (!$user->hasRole('system-admin')) {
             $query->where(function ($query) use ($userMinistryId, $user) {
                 $query->where('files.ministry_id', $userMinistryId)
@@ -147,7 +151,6 @@ class FileRepository extends BaseRepository
             });
         }
 
-
         if ($user->hasRole(['user', 'ministry-admin'])) {
             $query->where(function ($q) use ($user) {
                 $q->where(function ($assigned) use ($user) {
@@ -157,9 +160,27 @@ class FileRepository extends BaseRepository
                 ->orWhere(function ($ufs) use ($user) {
                     $ufs->where('files.internal_ufs_id', $user->id)
                         ->where('files.status', 'Pending UFS');
+                })
+                ->orWhere(function ($created_by) use ($user) {
+                    $created_by->where('files.created_by', $user->id);
+                })
+                ->orWhere(function ($review) use ($user) {
+                    $review->where('fc.review_officer', $user->id);
+                })
+                ->orWhere(function ($colleagueReview) use ($user) {
+                    $colleagueReview->where('fc.colleague_id', $user->id);
                 });
             });
         }
+
+        // if ($user->hasRole('hod')) {
+        //     $query->where(function ($q) use ($user) {
+        //         $q->where(function ($approve) use ($user) {
+        //              ->where('fa.officer_id', $user->id);
+        //         });
+        //     });
+        // }
+
 
         if ($type === 'active') {
             $query->whereNotExists(function ($query) use ($userMinistryId) {

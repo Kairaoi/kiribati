@@ -201,6 +201,7 @@ class File extends Model implements Auditable
         return $this->hasMany(FileCirculation::class);
     }
 
+    
     // File.php
     public function signature()
     {

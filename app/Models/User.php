@@ -41,7 +41,9 @@ class User extends Authenticatable implements Auditable
         'last_name',
         'email',
         'password',
-        'signature_path'
+        'signature_path',
+        'created_by',
+        'created_at'
     ];
 
     /**
@@ -75,6 +77,7 @@ class User extends Authenticatable implements Auditable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean'
         ];
     }
 
@@ -83,14 +86,20 @@ class User extends Authenticatable implements Auditable
         return $this->belongsTo(Ministry::class);
     }
 
-   public function getNameAttribute()
-{
-    return trim($this->first_name . ' ' . $this->last_name);
-}
-
+    
     public function division()
     {
-        return $this->belongsTo(Division::class);
+        return $this->belongsTo(Division::class, 'division_id');
+    }
+
+   public function getNameAttribute()
+    {
+        return trim($this->first_name . ' ' . $this->last_name);
+    }
+
+    public function headDivision()
+    {
+        return $this->hasOne(Division::class, 'hod_id');
     }
 
     public function assignedCirculations()

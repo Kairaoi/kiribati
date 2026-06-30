@@ -95,7 +95,7 @@
             </div>
 
             <!-- Role -->
-            <div>
+            {{-- <div>
                 <label for="role" class="block text-sm font-medium text-gray-700">Select Role: <span class="text-red-600">*</span></label>
                 <select name="role" id="role" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm">
                     <option value=""> Select a role</option>
@@ -103,7 +103,7 @@
                         <option value="{{ $role->name }}">{{ $role->name }}</option>
                     @endforeach
                 </select>
-            </div>
+            </div> --}}
                           
         </div>
             <button type="submit" class="w-full bg-cyan-600 text-white py-2 px-4 rounded-md hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">

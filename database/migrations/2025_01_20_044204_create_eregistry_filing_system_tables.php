@@ -107,6 +107,7 @@ class CreateEregistryFilingSystemTables extends Migration
             $table->string('email')->nullable();
             $table->boolean('is_active')->default(true);
             $table->foreignId('ministry_id')->constrained('ministries');
+            $table->foreignId('hod_id')->nullable()->constrained('users');
             $table->timestamps();
         });
 
@@ -183,13 +184,14 @@ class CreateEregistryFilingSystemTables extends Migration
             $table->foreignId('dispatch_id')->nullable()->constrained('dispatches')->nullOnDelete();
             $table->foreignId('to_ministry_id')->constrained('ministries');
             $table->foreignId('received_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->datetime('received_at')->default(now());
+            $table->datetime('received_at')->nullable();
             $table->foreignId('circulated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->datetime('circulated_at')->default(now());
-            $table->enum('status', ['Pending Circulation',
-                                    'Pending',
+            $table->enum('status', ['Pending',
                                     'Received',
                                     'Pending Review', 
+                                    'Pending Receipt',
+                                    'Pending Approval',
                                     'Pending UFS',
                                     'Reviewed', 
                                     'UFS Approved',
@@ -197,17 +199,27 @@ class CreateEregistryFilingSystemTables extends Migration
                                     'Approved',
                                     'Rejected',
                                     'Dispatched',
-                                    'Closed', 
-                                    'Archived']);
+                                    'Returned for Amendment',
+                                    'Pending SRO Submission',
+                                    'Pending SRO Approval',
+                                    'Pending HOD Review',
+                                    'Pending Colleague Review'
+                    ]);
+            $table->enum('ufs_status', ['Pending', 'Approved', 'Rejected'])->nullable();
             $table->foreignId('updated_by')->nullable()->constrained('users');            
             $table->datetime('read_at')->nullable();                     
             $table->boolean('read_status')->default(false);
             $table->text('review_comment')->nullable();
             $table->foreignId('review_officer')->nullable()->constrained('users'); 
+            $table->foreignId('reviewed_by')->nullable()->constrained('users'); 
+            $table->foreignId('colleague_id')->nullable()->constrained('users');
+            $table->string('colleague_comment')->nullable();
+            $table->string('approval_comment')->nullable();
+            $table->foreignId('approved_by')->nullable()->constrained('users');
+            $table->datetime('approved_at')->nullable();
             $table->datetime('date_reviewed')->nullable();
             $table->boolean('requires_action')->default(false);    
             $table->text('action_taken')->nullable();          
-            $table->foreignId('ufs_id')->nullable()->constrained('users'); 
             $table->datetime('ufs_approved_at')->nullable();
             $table->datetime('ufs_rejected_at')->nullable();
             $table->string('ufs_comment')->nullable();
@@ -224,7 +236,6 @@ class CreateEregistryFilingSystemTables extends Migration
 
         
 
-
         Schema::create('file_assignments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('file_circulation_id')->constrained()->cascadeOnDelete();
@@ -232,11 +243,14 @@ class CreateEregistryFilingSystemTables extends Migration
             $table->foreignId('assigned_by')->constrained('users')->cascadeOnDelete();
             $table->timestamp('assigned_date')->nullable();
             $table->boolean('is_active')->default(true);
-            $table->enum('status', ['pending', 'accepted', 'declined'])->default('pending'); // Added status field
+            $table->enum('status', ['pending', 'accepted', 'reassigned', 'completed'])->default('pending'); // Added status field
             // for reassignment tracking
             $table->foreignId('reassigned_from')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('reassign_comment')->nullable();
             $table->datetime('accepted_at')->nullable();
             $table->timestamps();
+
+            $table->unique(['file_circulation_id',  'officer_id']); 
         });
 
 
@@ -256,6 +270,8 @@ class CreateEregistryFilingSystemTables extends Migration
             $table->integer('font_size')->default(12);
             $table->boolean('is_locked')->default(false);
             $table->foreignId('created_by')->constrained('users');
+            $table->decimal('canvas_width', 10, 2)->nullable();
+            $table->decimal('canvas_height', 10, 2)->nullable();  
             $table->timestamps();
         });
 

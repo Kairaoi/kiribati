@@ -158,12 +158,12 @@
         <tr>
             <td class="label">From</td>
             <td class="value">
-                {{ auth()->user()->designation ?? 'No designation set' }}
+                {{ $file->internal_from_field }}
             </td>
 
             <td class="label">To</td>
             <td class="value to-cell">
-                {{ auth()->user()->ministry?->reviewer_title ?? 'Reviewer officer not set' }}
+                {{ $file->internal_to_field }}
             </td>
         </tr>
 

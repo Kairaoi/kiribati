@@ -6,133 +6,52 @@
 <div class="max-w-3xl mx-auto">
     <div class="mt-4 mb-4 shadow rounded-lg">
 
-        <form action="{{ route('registry.users.update', $user) }}" method="POST">
+        <form action="{{ route('registry.divisions.update', $division) }}" method="POST">
             @csrf
             @method('PUT')
 
             <div class="rounded-xl border border-gray-200 bg-white shadow-sm">
                 <div class="border-b border-gray-200 px-6 py-4">
                     <h2 class="text-lg font-semibold text-gray-900">
-                       Edit User
+                       Edit Division
                     </h2>
                 </div>
 
                 <dl>
                     <div class="grid grid-cols-1 gap-2 px-6 py-4 sm:grid-cols-3">
                         <dt class="text-sm font-medium text-gray-500">
-                            First Name
+                            Division Name
                         </dt>
 
                         <dd class="sm:col-span-2">
                             <input
                                 type="text"
-                                name="first_name"
-                                id="first_name"
-                                value="{{ old('first_name', $user->first_name) }}"
+                                name="name"
+                                id="name"
+                                value="{{ old('name', $division->name) }}"
                                 class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
                                 required
                             >
 
-                            @error('first_name')
+                            @error('name')
                                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </dd>
                     </div>
 
                     <div class="grid grid-cols-1 gap-2 px-6 py-4 sm:grid-cols-3">
-                        <dt class="text-sm font-medium text-gray-500">
-                            Last Name
-                        </dt>
+                        <dt class="text-sm font-medium text-gray-500">Current HOD</dt>
+                        <dd class="text-sm text-gray-900 sm:col-span-2">
+                            {{ $division->hod?->name ?? 'No HOD assigned' }}
 
-                        <dd class="sm:col-span-2">
-                            <input
-                                type="text"
-                                name="last_name"
-                                id="last_name"
-                                value="{{ old('last_name', $user->last_name) }}"
-                                class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                required
-                            >
-
-                            @error('last_name')
-                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
+                            <div class="mt-2">
+                                <a href="{{ route('registry.divisions.assign-hod', $division) }}"
+                                class="text-xs font-medium text-cyan-600 hover:text-cyan-800">
+                                    Change HOD
+                                </a>
+                            </div>
                         </dd>
                     </div>
-
-                    <div class="grid grid-cols-1 gap-2 px-6 py-4 sm:grid-cols-3">
-                        <dt class="text-sm font-medium text-gray-500">
-                            Designation
-                        </dt>
-
-                        <dd class="sm:col-span-2">
-                            <input
-                                type="text"
-                                name="designation"
-                                id="desination"
-                                value="{{ old('designation', $user->designation) }}"
-                                class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                required
-                            >
-
-                            @error('designation')
-                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </dd>
-                    </div>
-
-                    <div class="grid grid-cols-1 gap-2 px-6 py-4 sm:grid-cols-3">
-                        <dt class="text-sm font-medium text-gray-500">
-                            Email
-                        </dt>
-
-                        <dd class="sm:col-span-2">
-                            <input
-                                type="text"
-                                name="email"
-                                id="email"
-                                value="{{ old('email', $user->email) }}"
-                                class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                required
-                            >
-
-                            @error('email')
-                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </dd>
-                    </div>
-
-                    <div class="grid grid-cols-1 gap-2 px-6 py-4 sm:grid-cols-3">
-                        <dt class="text-sm font-medium text-gray-500">
-                            Division
-                        </dt>
-
-                        <dd class="sm:col-span-2">
-                            <select
-                                name="division_id"
-                                id="division_id"
-                                class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                            >
-                                <option value="">Select a division</option>
-
-                                @foreach($divisions as $division)
-                                    @if($division->organisation_id == auth()->user()->organisation_id)
-                                        <option
-                                            value="{{ $division->id }}"
-                                            @selected(old('division_id', $user->division_id) == $division->id)
-                                        >
-                                            {{ $division->name }}
-                                        </option>
-                                    @endif
-                                @endforeach
-                            </select>
-
-                            @error('division_id')
-                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </dd>
-                    </div>
-
 
                     <div class="flex justify-end border-t border-gray-200 px-6 py-4">
                         <button

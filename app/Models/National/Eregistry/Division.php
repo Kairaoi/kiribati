@@ -2,8 +2,11 @@
 
 namespace App\Models\National\Eregistry;
 
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
+
 use OwenIt\Auditing\Contracts\Auditable;
 
 
@@ -19,11 +22,17 @@ class Division extends Model implements Auditable
         'name',
         'location',
         'is_active',
+        'hod_id'
        
     ];
 
     public function ministry()
     {
         return $this->belongsTo(Ministry::class);
+    }
+
+    public function hod()
+    {
+        return $this->belongsTo(User::class, 'hod_id');
     }
 }

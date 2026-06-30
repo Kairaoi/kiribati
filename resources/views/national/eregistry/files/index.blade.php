@@ -7,14 +7,14 @@
             x-show="show"
             x-transition.opacity.scale.80
             x-init="setTimeout(() => show = false, 4000)" 
-            class="fixed right-0 bg-cyan-400 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 z-50">
+            class="fixed right-0 bg-cyan-400 px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 z-50">
             <!-- Icon -->
             <svg xmlns="http://www.w3.org/2000/svg" 
                 fill="none" 
                 viewBox="0 0 24 24" 
                 stroke-width="2" 
                 stroke="currentColor" 
-                class="w-6 h-6 text-white">
+                class="w-6 h-6">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
             </svg>
 
@@ -22,7 +22,7 @@
             <span class="font-medium">{{ session('success') }}</span>
 
             <!-- Close button -->
-            <button @click="show = false" class="ml-4 text-white hover:text-gray-200">
+            <button @click="show = false" class="ml-4 hover:text-gray-200">
                 &times;
             </button>
         </div>
@@ -159,12 +159,15 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Reference No</th>
-                        <th>Name/Subject</th>
-                        <th>File Type</th>
-                        <th>Correspondence Type</th>
-                        <th>Due Date</th>
-                        <th>Status</th>
+                        <th>Circulation ID</th>
+                        <th class="uppercase">Reference No</th>
+                        <th class="uppercase">Name/Subject</th>
+                        <th class="uppercase">File Type</th>
+                        <th class="uppercase">Due Date</th>
+                        <th class="uppercase">Dispatch Date</th>
+                        <th class="uppercase">Received Date</th>
+                        <th class="uppercase">Status</th>
+                        <th class="uppercase">Circulation Status</th>
                         <th class="w-28">ACTIONS</th>
                     </tr>
                 </thead>
@@ -348,7 +351,6 @@
 
     </style>
 @endpush
-
     @push('scripts')
         <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
         <script src="https://cdn.datatables.net/buttons/2.3.5/js/dataTables.buttons.min.js"></script>
@@ -361,6 +363,7 @@
                 let activeDropdown = null;
                 const isReviewOfficer = @json(auth()->user()->hasRole('review-officer'));
                 const isAdmin = @json(auth()->user()->hasRole('admin'));
+                const isRegistry = @json(auth()->user()->hasRole('registry'));
 
                 // Close dropdown when clicking outside
                 $(document).on('click', function(e) {
@@ -407,19 +410,49 @@
                         }
                     },
                     columns: [
-                        { data: 'id' },
+                        { data: 'id', name: 'files.id', visible: false},
+                        { data: 'circulation_id', name: 'fc.id', visible: false},
                         { data: 'reference_no' },
                         { data: 'file_subject' },
                         { data: 'file_type'},
-                        { data: 'correspondence_type'},
                         {  data: 'due_date',
                             render: function (data) {
-                                if (!data) return 'N/A';
+                                if (!data) return '-';
                                 const date = new Date(data);
                                 return date.toLocaleDateString('en-US', {
                                     year: 'numeric',
                                     month: 'short',
                                     day: 'numeric'
+                                });
+                            }
+                        },
+                        {
+                            data: 'dispatch_date',
+                            render: function (data) {
+                                if (!data) return '-';
+                                const date = new Date(data);
+                                return date.toLocaleString('en-US', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: true
+                                });
+                            }
+                        },
+                       {
+                            data: 'received_at',
+                            render: function (data) {
+                                if (!data) return '-';
+                                const date = new Date(data);
+                                return date.toLocaleString('en-US', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: true
                                 });
                             }
                         },
@@ -429,11 +462,13 @@
                                 let badgeClass = '';
 
                                 if (data === 'Pending Action') {
-                                    badgeClass = 'bg-gray-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
+                                    badgeClass = 'bg-red-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
                                 } else if (data === 'Dispatched') {
                                     badgeClass = 'bg-cyan-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
                                 } else if (data === 'Pending Review') {
-                                    badgeClass = 'bg-yellow-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
+                                    badgeClass = 'bg-yellow-200 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
+                                } else if (data === 'Pending SRO Approval') {
+                                    badgeClass = 'bg-yellow-200 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
                                 } else if (data === 'Reviewed') {
                                     badgeClass = 'bg-blue-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
                                 } else if (data === 'Received') {
@@ -450,26 +485,17 @@
                                 return `<span class="${badgeClass}">${data}</span>`;
                             }
                         },
+                        { data: 'circulation_status', name: 'fc.status', visible: false},
                         {
-                            data: null, // means we'll render manually
+                            data: null,
                             name: 'actions',
                             orderable: false,
                             searchable: false,
                             render: function (data, type, row) {
                                 let buttons = '';
 
-                                // Review officer / admin
-                                if (isReviewOfficer || isAdmin) {
-                                    buttons = `
-                                        <a href="/registry/files/${row.id}" 
-                                            class="btn btn-sm btn-outline-info" 
-                                            title="Review">
-                                            Review
-                                        </a>
-                                    `;
-
                                 // Pending action → View + Edit + Delete
-                                } else if (row.file_status === 'Pending Action' || row.file_status === 'Draft' ) {
+                                if (row.file_status === 'Pending Action' && isRegistry) {
                                     buttons = `
                                         <a href="/registry/files/${row.id}" 
                                             class="inline-flex items-center justify-center hover:text-gray-600 transition"
@@ -491,6 +517,23 @@
                                     `;
 
                                 // Other statuses → View only
+                                } else if ((row.circulation_status === 'Reviewed' || row.circulation_status === 'Approved' || row.circulation_status === 'Rejected') && isReviewOfficer) {
+                                    buttons = `
+                                        <a href="/registry/file-circulations/${row.circulation_id}/overlays/edit" 
+                                            class="inline-flex items-center justify-center hover:text-gray-600 transition"
+                                            title="Edit Overlays">
+                                            Edit Overlays
+                                        </a>
+                                    `;
+                                } else if (isReviewOfficer){
+                                    buttons = `
+                                        <a href="/registry/files/${row.id}" 
+                                            class="inline-flex items-center justify-center hover:text-gray-600 transition"
+                                            title="View">
+                                            Review
+                                        </a>
+                                    `;
+                                
                                 } else {
                                     buttons = `
                                         <a href="/registry/files/${row.id}" 
@@ -593,6 +636,7 @@
                     return {
                         'registry.files.show': "{{ route('registry.files.show', ':id') }}".replace(':id', id),
                         'registry.files.edit': "{{ route('registry.files.edit', ':id') }}".replace(':id', id),
+                        'registry.file-circulations.edit': "{{ route('registry.file-circulations.edit', ':circulation_id') }}".replace(':circulation_id', circulation_id),
                         'registry.files.destroy': "{{ route('registry.files.destroy', ':id') }}".replace(':id', id),
                     }[name];
                 }
@@ -614,5 +658,4 @@
         
         </script>
     @endpush
-
 @endsection

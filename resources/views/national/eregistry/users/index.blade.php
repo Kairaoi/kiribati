@@ -55,8 +55,7 @@
                     <th>Division</th>
                     <th>Designation</th>
                     <th>Role</th>
-                    <th>Created At</th>
-                    <th>Updated At</th>
+                    <th>Status</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -283,31 +282,21 @@ $(document).ready(function() {
             }
         },
         columns: [
-            { data: 'ministry_name' },
+            { data: 'ministry_code' },
             { data: 'first_name' },
             { data: 'last_name' },
             { data: 'division_name' }, 
             { data: 'designation' },
             { data: 'role_names' },  
-            { data: 'created_at', 
-                render(data) {
-                    return new Date(data).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                    });
-                }
-            },
-            { data: 'updated_at', 
-                render(data) {
-                    return new Date(data).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                    });
-                }
-            },
 
+            {
+                data: 'status',
+                render: function (data) {
+                    return Number(data) === 1
+                        ? '<span class="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">Active</span>'
+                        : '<span class="inline-flex rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800">Inactive</span>';
+                }
+            },
             { 
                 data: null,
                 name: 'actions',
@@ -315,13 +304,13 @@ $(document).ready(function() {
                 searchable: false,
                 render(data, type, row) {
                     return `
-                                        <a href="/registry/files/${row.id}" 
+                                        <a href="/registry/users/${row.id}" 
                                             class="inline-flex items-center justify-center hover:text-gray-600 transition"
                                             title="View">
                                             <i class="fa fa-eye text-sm"></i>
                                         </a>
 
-                                        <a href="/registry/files/${row.id}/edit" 
+                                        <a href="/registry/users/${row.id}/edit" 
                                             class="inline-flex items-center justify-center hover:text-gray-600 transition ms-3"
                                             title="Edit">
                                             <i class="fa fa-pen text-sm"></i>

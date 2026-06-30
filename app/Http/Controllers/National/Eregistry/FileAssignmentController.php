@@ -40,99 +40,37 @@ class FileAssignmentController extends Controller
         $this->fileCirculations = $fileCirculations;    
     }
 
+
+    
     /*
-    * Assign multiple officers to a file circulation
+    * Review a file circulation - (HOD & SRO)
     */
-    public function assign(Request $request, $fileCirculationId)
+    public function review(Request $request, $fileCirculationId)
     {
+        if (!auth()->user()->hasRole(['hod','sro'])) {
+            abort(403, 'Not authorised can review this document.');
+        }
         // dd($request->all());
         $ministryId = auth()->user()->ministry_id;
     
         $validated = $request->validate([
-            'officers' => ['nullable', 'array'],
-            'officers.*' => ['nullable:users,id'],
             'comment' => 'nullable|string',
             'file_id' => 'required|exists:files,id',
             'status' => 'required|in:Reviewed,Approved,Rejected',
         ]);
 
-        if (!auth()->user()->hasRole('review-officer')) {
-            abort(403, 'Only a Review Officer can review the documents.');
-        }
-
         $reviewOfficerId = auth()->id();
-
-        if (!empty($validated['officers'])) {
-            foreach ($validated['officers'] as $officerId) {
-                FileAssignment::create([
-                    'file_circulation_id' => $fileCirculationId,
-                    'officer_id'          => $officerId,
-                    'assigned_by'         => auth()->id(),
-                    'assigned_date'       => now(),
-                    'is_active'           => true,
-                    'review_officer'      => $reviewOfficerId,
-                ]);
-            }
-        }
 
         $fileCirculation = FileCirculation::findOrFail($fileCirculationId);
         $fileCirculation->update([
-            'review_comment' => $validated['comment'] ?? null,
-            'date_reviewed' => now(),
+            'approval_comment' => $validated['comment'] ?? null,
             'status' => $validated['status'],
+            'approved_by' => auth()->user()->id,
+            'approved_at' => now(),
             'updated_by' => auth()->id()
         ]);
 
         $file = File::findOrFail($validated['file_id']);
-
-        if ($file->document_source === 'upload') {
-            if ($validated['comment']) {
-                DocumentOverlay::create([
-                    'file_id' => $file->id,
-                    'file_circulation_id' => $fileCirculation->id,
-                    'page_number' => 1,
-                    'overlay_type' => 'review_comment',
-                    'content' => json_encode([
-                        'status' => $validated['status'],
-                        'comment' => $validated['comment'],
-                        'date' => now()->format('d M Y'),
-                        'reference' => $file->reference_no,
-
-                        'signature_path' => auth()->user()->signature_path,
-                        'approved_by' => auth()->user()->name,
-                        'designation' => auth()->user()->designation,
-                    ]),
-                    'x_position' => 60,
-                    'y_position' => 700,
-                    'width' => 300,
-                    'height' => 80,
-                    'font_size' => 13,
-                    'created_by' => auth()->id(),
-                ]);
-            }
-
-            if (!empty($validated['status'])) {
-                DocumentOverlay::create([
-                    'file_id' => $file->id,
-                    'file_circulation_id' => $fileCirculation->id,
-                    'page_number' => 1,
-                    'overlay_type' => 'status',
-                    'content' => [
-                        'status' => $validated['status'],
-                        'label' => strtoupper($validated['status']),
-                    ],
-                    'x_position' => 60,
-                    'y_position' => 700,
-                    'width' => 300,
-                    'height' => 80,
-                    'font_size' => 20,
-                    'created_by' => auth()->id(),
-                ]);
-            }
-
-            return redirect()->route('registry.overlays.edit', $fileCirculation);
-        }
-
 
         if (auth()->user()->signature_path) {
             // 1. Store signature details first
@@ -180,6 +118,53 @@ class FileAssignmentController extends Controller
         return redirect()->route('registry.files.index');
     }
 
+
+    /*
+    * Assign officers
+    */
+    public function assign(Request $request, $fileCirculationId)
+    {
+
+        $fileCirculation = FileCirculation::findOrFail($fileCirculationId);
+        
+        // $this->authorize('assign', $fileCirculation);
+
+        $ministryId = auth()->user()->ministry_id;
+    
+        $validated = $request->validate(
+            [
+                'officers' => ['required', 'array'],
+                'officers.*' => ['exists:users,id'],
+                'file_id' => ['required', 'exists:files,id'],
+            ],
+            [
+                'officers.required' => 'Please select at least one officer.',
+                'officers.array' => 'Please select one or more officers.',
+                'officers.*.exists' => 'One or more selected officers are invalid.',
+            ]
+        );
+
+        if (!empty($validated['officers'])) {
+            foreach ($validated['officers'] as $officerId) {
+                FileAssignment::create([
+                    'file_circulation_id' => $fileCirculationId,
+                    'officer_id'          => $officerId,
+                    'assigned_by'         => auth()->id(),
+                    'assigned_date'       => now(),
+                    'is_active'           => true,
+                ]);
+            }
+        }
+       
+        $fileCirculation->update([
+            'updated_by' => auth()->id()
+        ]);
+
+        $file = File::findOrFail($fileCirculation['file_id']);
+
+        return redirect()->route('registry.files.show', $file);
+    }
+
     /*
     * Reassign an office by deactivating the old assignment and creating a new one
     * If the user accepts the assignment, update the status to 'received' and set the received_at timestamp
@@ -187,51 +172,49 @@ class FileAssignmentController extends Controller
     */
     public function reassign(Request $request, $fileCirculationId)
     {
+        
         $validated = $request->validate([
+            'reassign_comment' => 'required|string',
             'action' => ['required', 'in:reassign,accepted'],
-            'new_officer_id' => [
-                'nullable',
-                'required_if:action,reassign',
-                Rule::exists('users', 'id')->where(fn ($q) =>
-                    $q->where('division_id', auth()->user()->division_id)
-                ),
-            ]
+            'officers' => ['nullable', 'array'],
+            'officers.*' => ['exists:users,id'],
         ]);
-
+      
         $fileAssignment = FileAssignment::where('file_circulation_id', $fileCirculationId)
                                             ->where('officer_id', auth()->user()->id)
                                             ->where('is_active', true)
                                             ->firstOrFail();
+
         // dd($fileAssignment);
-        // If the user accepts the assignment, update the status to 'received' and set the received_at timestamp
-        if($request->action === 'accepted' && $fileAssignment->officer_id == auth()->user()->id) {
-            // dd($fileAssignment);
+        if($validated['action'] === 'accepted' && $fileAssignment->officer_id == auth()->user()->id) {
             $fileAssignment->update([
                 'status' => 'accepted',
                 'accepted_at' => now(),
             ]);
             return back()->with('success', 'File marked as accepted');
 
-        } else if($request->action === 'reassign') {
+        } else if($validated['action'] === 'reassign') {
+            // $fileAssignment->update([
+            //     'status' => 'reassigned',
+            // ]);
+
             $old_officer_id = $fileAssignment->officer_id;
 
-            // deactivate old assignment
-            FileAssignment::where('file_circulation_id', $fileCirculationId)
-                ->where('officer_id', $old_officer_id)
-                ->where('is_active', true)
-                ->update(['is_active' => false]);
-
-            // create new assignment
-            FileAssignment::create([
-                'file_circulation_id' => $fileCirculationId,
-                'officer_id'          => $validated['new_officer_id'],
-                'assigned_by'         => auth()->id(),
-                'assigned_date'       => now(),
-                'is_active'           => true,
-                'reassigned_from'     => $old_officer_id,
-            ]);
-
-            return back()->with('success', 'Officer reassigned successfully');
+            if (!empty($validated['officers'])) {
+                foreach ($validated['officers'] as $officerId) {
+                    FileAssignment::create([
+                        'file_circulation_id' => $fileCirculationId,
+                        'officer_id'          => $officerId,
+                        'assigned_by'         => auth()->id(),
+                        'assigned_date'       => now(),
+                        'is_active'           => true,
+                        'reassigned_from'     => $old_officer_id,
+                        'reassign_comment'    => $validated['reassign_comment']
+                    ]);
+                }
+            }
+            // dd($file);
+            return back()->with('success', 'Officers reassigned successfully');
 
         } else {
             return back()->with('error', 'Invalid action or you are not assigned to this file');

@@ -48,37 +48,37 @@ Route::group([
 
     // Division Routes
     Route::match(['get', 'post'], 'divisions/datatables', [DivisionController::class, 'getDataTables'])->name('divisions.datatables');
+    Route::get('divisions/{division}/assign-hod', [DivisionController::class, 'assignHod'])->name('divisions.assign-hod');
+    Route::put('divisions/{division}/update-hod', [DivisionController::class, 'updateHod'])->name('divisions.update-hod');
     Route::resource('divisions', DivisionController::class);
-
     
     // File Routes
     Route::match(['get', 'post'], 'files/datatables', [FileController::class, 'getDataTables'])->name('files.datatables');
     Route::match(['get', 'post'], 'files/assigned/datatables', [FileController::class, 'getAssignedDataTables'])->name('files.assigned.datatables');
 
-
+    Route::get('files/{file}/preview', [FileController::class, 'preview'])->name('files.preview');
     Route::get('files', [FileController::class, 'index'])->name('files.index');
-    Route::get('files/assigned', [FileController::class, 'assignedIndex'])->name('files.assigned.index');
-    Route::resource('files', FileController::class)->except(['index']);
-    Route::get('/files/{file}/audits', [FileController::class, 'viewAudit'])->name('files.audits');
+
+    Route::get('files/{file}/audits', [FileController::class, 'viewAudit'])->name('files.audits');
+
     Route::get('files/{file}/pdf', [FileController::class, 'exportPdf'])->name('files.pdf');
 
+    Route::resource('files', FileController::class)->except(['index']);
     
+    Route::get('files/{file}/download', [FileController::class, 'download'])->name('files.download');
     Route::get('files/{id}/view', [FileController::class, 'viewFile'])->name('files.view');
     Route::get('files/{id}/download', [FileController::class, 'download'])->name('files.download.main');
     Route::get('files/{id}/download-additional/{number}', [FileController::class, 'downloadAdditionalFile'])->name('files.download.additional');
     
 
     // Route::match(['get', 'post'], 'files/datatables', [FileController::class, 'getArchiveFiles'])->name('files.archive.datatables');
+
+    Route::post('files/{file}/ufs', [FileController::class, 'ufsCirculate'])->name('files.ufsCirculate');
     Route::post('files/{file}/archive', [FileController::class, 'archive'])->name('files.archive');
     Route::post('files/{file}/close', [FileController::class, 'close'])->name('files.close');
     Route::get('files/archives/by-organisation/{id}', [FileController::class, 'filesByOrganisation']);
 
-  
-    // File Type Routes
-    // Route::get('/registry/file-types/{fileTypeId}/dynamic-form', [
-    //     'as' => 'file-types.dynamic-form',
-    //     'uses' => 'App\Http\Controllers\National\Eregistry\FileTypeController@dynamicForm'
-    // ]);
+
     Route::get('/file-types/name/suggestions', [FileTypeController::class, 'suggestions'])->name('file-types.name.suggestions');
     Route::get('/file-types/code/suggestions', [FileTypeController::class, 'codeSuggestions'])->name('file-types.code.suggestions');
 
@@ -87,6 +87,7 @@ Route::group([
     Route::resource('file-types', FileTypeController::class);
 
 
+    Route::get('/external-partners/name/suggestions', [ExternalPartnerController::class, 'suggestions'])->name('external-partners.name.suggestions');
     Route::match(['get', 'post'], 'external-partners/datatables', [ExternalPartnerController::class, 'getDataTables'])->name('external-partners.datatables');
     Route::resource('external-partners', ExternalPartnerController::class);
     
@@ -104,38 +105,39 @@ Route::group([
     
     
     // File Circulation Routes
-    Route::match(['get', 'post'], 'file-circulations/initial/datatables', [FileCirculationController::class, 'getDataTables'])->name('file-circulations.datatables');
-    Route::match(['get', 'post'], 'file-circulations/review/datatables', [FileCirculationController::class, 'getReviewDataTables'])->name('file-circulations.reviews.datatables');
-    Route::match(['get', 'post'], 'file-circulations/assigned/datatables', [FileCirculationController::class, 'getAssignedDataTables'])->name('file-circulations.assigned.datatables');
-    Route::match(['get', 'post'], 'file-circulations/activity/datatables', [FileCirculationController::class, 'getActivityDataTables'])->name('file-circulations.activity.datatables');
-    Route::match(['get', 'post'], 'file-circulations/sec/reviews/datatables', [FileCirculationController::class, 'getAllReviewDataTables'])->name('file-circulations.all.reviews.datatables');
-
+    // Route::match(['get', 'post'], 'file-circulations/initial/datatables', [FileCirculationController::class, 'getDataTables'])->name('file-circulations.datatables');
+    // Route::match(['get', 'post'], 'file-circulations/review/datatables', [FileCirculationController::class, 'getReviewDataTables'])->name('file-circulations.reviews.datatables');
+    // Route::match(['get', 'post'], 'file-circulations/assigned/datatables', [FileCirculationController::class, 'getAssignedDataTables'])->name('file-circulations.assigned.datatables');
+    // Route::match(['get', 'post'], 'file-circulations/activity/datatables', [FileCirculationController::class, 'getActivityDataTables'])->name('file-circulations.activity.datatables');
+    // Route::match(['get', 'post'], 'file-circulations/sec/reviews/datatables', [FileCirculationController::class, 'getAllReviewDataTables'])->name('file-circulations.all.reviews.datatables');
     
     Route::resource('file-circulations', FileCirculationController::class);
+
     Route::get('/file-circulations/review/index', [FileCirculationController::class, 'reviewIndex'])->name('file-circulations.review.index');
+
     Route::get('/file-circulations/{fileCirculation}/review', [FileCirculationController::class, 'reviewFile'])->name('file-circulations.review.file');
-    Route::patch('/file-circulations/{fileCirculation}/store/assigned-officers/', [FileCirculationController::class, 'storeAssignedOfficers'])->name('file-circulations.store.assigned-officers');
+    Route::patch('/file-circulations/{fileCirculation}/receive', [FileCirculationController::class, 'receive'])->name('file-circulations.receive');
+    Route::patch('/file-circulations/{fileCirculation}/store/complete', [FileCirculationController::class, 'storeComplete'])->name('file-circulations.store.complete');
+
+    Route::post('/file-circulations/colleague/store', [FileCirculationController::class, 'colleagueStore'])->name('file-circulations.colleague.store');
+    Route::post('/file-circulations/colleague/review', [FileCirculationController::class, 'colleagueUpdate'])->name('file-circulations.colleague.update');
+
     Route::get('/file-circulations/assigned/index', [FileCirculationController::class, 'assignedIndex'])->name('file-circulations.assigned.index');
     Route::get('/file-circulations/activity/index', [FileCirculationController::class, 'activityIndex'])->name('file-circulations.activity.index');
-
-    Route::patch('/file-circulations/{fileCirculation}/receive', [FileCirculationController::class, 'receive'])->name('file-circulations.receive');
 
     Route::post('/file-circulations/{fileCirculation}/ufs-approve', [UfsApprovalController::class, 'approve'])->name('ufs.approve');
     Route::post('/file-circulations/{fileCirculation}/ufs-reject', [UfsApprovalController::class, 'reject'])->name('ufs.reject');
 
-    Route::get('/file-circulations/reviews/all/index', [FileCirculationController::class, 'allReceivedIndex'])->name('file-circulations.all.reviews.index'); //for secretary, minister
-    Route::patch('/file-circulations/{fileCirculation}/store/complete', [FileCirculationController::class, 'storeComplete'])->name('file-circulations.store.complete');
-
     Route::get('/file-circulations/{fileCirculation}/overlays/edit', [DocumentOverlayController::class, 'edit'])->name('overlays.edit');
-
     Route::post('/file-circulations/{fileCirculation}/overlays/save', [DocumentOverlayController::class, 'save'])->name('overlays.save');
-
     Route::post('/file-circulations/{fileCirculation}/overlays/finalize', [DocumentOverlayController::class, 'finalize'])->name('overlays.finalize');
 
     Route::prefix('file-circulations/{fileCirculation}')->group(function () {
+        Route::post('/review', [FileAssignmentController::class, 'review'])->name('file.review');
         Route::post('/assign', [FileAssignmentController::class, 'assign'])->name('file.assign');
         Route::post('/reassign', [FileAssignmentController::class, 'reassign'])->name('file.reassign');
     });
+
 
     // User Routes
     Route::match(['get', 'post'], 'users/datatables', [UserController::class, 'getDataTables'])->name('users.datatables');
@@ -145,7 +147,6 @@ Route::group([
     Route::patch('users/update-review-officer', [UserController::class, 'updateReviewOfficer'])->name('users.update-review-officer');
 
     Route::resource('users', UserController::class);
-
 
     // Activity Log Routes
     Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity.logs');

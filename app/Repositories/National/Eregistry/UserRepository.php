@@ -91,7 +91,8 @@ class UserRepository extends BaseRepository
             'users.updated_at',
             'users.profile_photo_path',
             'divisions.name as division_name',
-            'ministries.name as ministry_name',
+            'ministries.code as ministry_code',
+            'users.is_active as status',
             DB::raw('GROUP_CONCAT(roles.name SEPARATOR ", ") as role_names')
         ])
         ->leftJoin('divisions', 'users.division_id', '=', 'divisions.id')
@@ -175,5 +176,30 @@ class UserRepository extends BaseRepository
     }
 
 
+      /**
+     * Get users in the same division in the same organisation
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getDivisionUsers($userDivisionId)
+    {
+
+        return $this->model->query()
+            ->select('users.id', 
+                    'users.division_id', 
+                    'users.first_name', 
+                    'users.last_name', 
+                    'divisions.name as division_name',
+                    'users.email as email',
+                    'users.designation as designation',
+                    'users.is_active as is_active')
+            ->join('divisions', 'users.division_id', '=', 'divisions.id')
+            ->where('users.ministry_id', Auth::user()->ministry_id)->where('users.email', '!=', 'admin@system.gov.ki')
+            ->where('users.division_id', $userDivisionId)
+            ->orderBy('divisions.name')
+            ->orderBy('users.first_name')
+            ->orderBy('users.last_name')
+            ->get();
+    }
 
 }

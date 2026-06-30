@@ -35,7 +35,6 @@ class DocumentOverlayController extends Controller
     public function edit(FileCirculation $fileCirculation)
     {
         $fileCirculation->load('file', 'overlays');
-        // dd($fileCirculation);
 
         return view('national.eregistry.overlays.edit', [
             'fileCirculation' => $fileCirculation,
@@ -47,28 +46,36 @@ class DocumentOverlayController extends Controller
 
     public function save(Request $request, FileCirculation $fileCirculation)
     {
+
         $validated = $request->validate([
-            'overlay_id' => 'required|exists:document_overlays,id',
-            'x_position' => 'required|numeric',
-            'y_position' => 'required|numeric',
+            'overlays' => ['required', 'array'],
+            'overlays.*.id' => ['required', 'exists:document_overlays,id'],
+            'overlays.*.x_position' => ['required', 'numeric'],
+            'overlays.*.y_position' => ['required', 'numeric'],
+            'overlays.*.canvas_height' => ['required', 'numeric'],
+            'overlays.*.canvas_width' => ['required', 'numeric'],
         ]);
 
-        $overlay = DocumentOverlay::where('id', $validated['overlay_id'])
-            ->where('file_circulation_id', $fileCirculation->id)
-            ->where('is_locked', false)
-            ->firstOrFail();
+        foreach ($validated['overlays'] as $overlayData) {
+            DocumentOverlay::where('id', $overlayData['id'])
+                ->where('file_circulation_id', $fileCirculation->id)
+                ->where('is_locked', false)
+                ->update([
+                    'x_position' => $overlayData['x_position'],
+                    'y_position' => $overlayData['y_position'],
+                    'canvas_height' => $overlayData['canvas_height'],
+                    'canvas_width' => $overlayData['canvas_width'],
+                ]);
+        }
 
-        $overlay->update([
-            'x_position' => $validated['x_position'],
-            'y_position' => $validated['y_position'],
+        return response()->json([
+            'success' => true,
         ]);
-
-        return response()->json(['success' => true]);
     }
 
     public function finalize(FileCirculation $fileCirculation)
     {
-        $this->pdfOverlayService->render($fileCirculation);
+        $renderedPath = $this->pdfOverlayService->render($fileCirculation);
 
         $fileCirculation->overlays()->update([
             'is_locked' => true,

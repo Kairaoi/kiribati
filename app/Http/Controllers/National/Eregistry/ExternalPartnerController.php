@@ -129,6 +129,20 @@ class ExternalPartnerController extends Controller
         return redirect()->route('registry.external-partners.index')->with('message', 'External Partner created successfully.');
     }
 
+    public function suggestions(Request $request)
+    {
+        $query = $request->q;
+        $orgId = auth()->user()->ministry_id;
+
+        return ExternalPartner::where('name', 'LIKE', "%{$query}%")
+            ->where(function ($q) use ($orgId) {
+                $q->where('ministry_id', $orgId)
+                ->orWhere('is_global', 1);
+            })
+            ->distinct()
+            ->pluck('name');
+      
+    }
     /**
      * Display the specified resource.
      */

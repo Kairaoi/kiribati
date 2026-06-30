@@ -22,7 +22,6 @@ class FileCirculation extends Model implements Auditable
         'to_ministry_id',
         'circulated_by',
         'circulated_at',
-        'review_officer',
         'read_at',
         'read_status',
         'requires_action',
@@ -30,8 +29,10 @@ class FileCirculation extends Model implements Auditable
         'updated_by',
         'review_comment',
         'date_reviewed',
+        'review_officer',
+        'reviewed_by',
         'status',
-        'ufs_id',
+        'ufs_status',
         'ufs_approved_at',
         'ufs_rejected_at',
         'ufs_comment',
@@ -43,6 +44,11 @@ class FileCirculation extends Model implements Auditable
         'rendered_pdf_path',
         'rendered_pdf_hash',
         'rendered_pdf_at',
+        'approval_comment',
+        'approved_by',
+        'approved_at',
+        'colleague_comment',
+        'colleague_id',
     ];
 
 
@@ -61,6 +67,10 @@ class FileCirculation extends Model implements Auditable
         return $this->belongsTo(Dispatch::class);
     }
 
+    public function colleague()
+    {
+        return $this->belongsTo(User::class, 'colleague_id');
+    }
 
     public function signedBy()
     {
@@ -87,9 +97,32 @@ class FileCirculation extends Model implements Auditable
         return $this->belongsTo(User::class, 'circulated_by');
     }
 
+    public function ufsApprovedBy()
+    {
+        return $this->belongsTo(User::class, 'ufs_approved_by');
+    }
+
+    public function ufsRejectedBy()
+    {
+        return $this->belongsTo(User::class, 'ufs_rejected_by');
+    }
+
+
+    //officer selected to review
     public function reviewOfficer()
     {
         return $this->belongsTo(User::class, 'review_officer');
+    }
+
+    //officer that actually reviews the file/circulation
+    public function reviewedBy()
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    public function approvedBy()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
     }
 
     public function assignments()

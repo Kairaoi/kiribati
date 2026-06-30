@@ -38,20 +38,27 @@ class UfsApprovalController extends Controller
     }
 
 
+
+
+
+
     public function approve(FileCirculation $fileCirculation)
     {
-        abort_unless(auth()->id() === $fileCirculation->ufs_id, 403);
+        abort_unless(auth()->id() === $fileCirculation->file->internal_ufs_id, 403);
 
         // abort_unless($fileCirculation->initial_type === 'internal', 403);
 
-
         $fileCirculation->update([
             'status' => 'UFS Approved',
+            'ufs_status' => 'Approved',
             'ufs_approved_by' => auth()->id(),
             'ufs_approved_at' => now(),
         ]);
 
-        return back()->with('success', 'File approved and sent to Review Officer.');
+        $file = File::where('id', $fileCirculation['file_id'])->first();
+        $file->status = $fileCirculation->status;
+
+        return redirect()->route('registry.files.index')->with('success', 'File successfully UFS approved');
     }
 
 
@@ -63,6 +70,7 @@ class UfsApprovalController extends Controller
 
             $fileCirculation->update([
                 'status' => 'UFS Rejected',
+                'ufs_status' => 'Rejected',
                 'ufs_rejected_by' => auth()->id(),
                 'ufs_rejected_at' => now(),
             ]);

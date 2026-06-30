@@ -71,8 +71,7 @@ layer.destroyChildren();
 
 overlays.forEach(item => {
 
-    const data = JSON.parse(item.content);
-
+    const data = item.content ?? {};
     const group = new Konva.Group({
         x: Number(item.x_position),
         y: Number(item.y_position),
@@ -81,25 +80,15 @@ overlays.forEach(item => {
     });
 
     const signatureHeight = data.signature_path ? 60 : 0;
-    const signatureGap = data.signature_url ? 12 : 0;
-    const padding = 10;
-
-    // const text = new Konva.Text({
-    //     text: content,
-    //     x: padding,
-    //     y: padding,
-    //     width: Number(item.width ?? 350) - (padding * 2),
-    //     fontSize: Number(item.font_size) || 14,
-    //     align: 'left',
-    //     listening: false,
-    // });
+    const signatureGap = data.signature_path ? 12 : 0;
+    const padding = 8;
 
     const statusColor = {
-    APPROVED: '#16a34a', // green
-    REJECTED: '#dc2626', // red
-    REVIEWED: '#2563eb', // blue
-    RECEIVED: '#ea580c', // orange
-}[data.status?.toUpperCase()] ?? '#000';
+        APPROVED: '#16a34a', // green
+        REJECTED: '#dc2626', // red
+        REVIEWED: '#2563eb', // blue
+        RECEIVED: '#ea580c', // orange
+    }[data.status?.toUpperCase()] ?? '#000';
 
     const statusText = new Konva.Text({
         x: padding,
@@ -108,7 +97,6 @@ overlays.forEach(item => {
         width: Number(item.width ?? 350) - (padding * 2),
         fontSize: 20,
         fontStyle: 'bold',
-       
         listening: false,
     });
 
@@ -121,17 +109,49 @@ overlays.forEach(item => {
             '\n\nApproved by: ' + (data.approved_by ?? '') +
             '\nDesignation: ' + (data.designation ?? '') +
             '\n\nDate: ' + (data.date ?? '') +
-            '\nReference: ' + (data.reference ?? ''),
+            '\nRef No: ' + (data.reference ?? ''),
         fontSize: Number(item.font_size ?? 13),
         fill: '#000',
         listening: false,
     });
 
+    // Signature block goes here
+    if (data.signature_path) {
+        const imageObj = new Image();
 
-    const boxHeight =
-        statusText.height() + detailsText.height() + signatureGap + signatureHeight + (padding * 2);
+        imageObj.onload = function () {
+            const signatureY =
+                detailsText.y() +
+                detailsText.getClientRect().height +
+                signatureGap;
 
-        const box = new Konva.Rect({
+            const signature = new Konva.Image({
+                image: imageObj,
+                x: padding,
+                y: signatureY,
+                width: 150,
+                height: signatureHeight,
+            });
+
+            group.add(signature);
+
+            box.height(
+                signature.y() +
+                signature.height() +
+                padding
+            );
+
+            layer.draw();
+        };
+
+        imageObj.src = '/storage/' + data.signature_path;
+    }
+
+    const boxHeight = detailsText.getClientRect().y +
+                      detailsText.getClientRect().height +
+                      padding;
+
+    const box = new Konva.Rect({
         width: Number(item.width ?? 350),
         height: boxHeight,
         stroke: item.overlay_type.includes('approved') ? 'green' : 'black',
@@ -142,40 +162,66 @@ overlays.forEach(item => {
     group.add(box);
     group.add(statusText);
     group.add(detailsText);
+    layer.add(group);
 
-    // Signature block goes here
-    if (data.signature_path) {
-        const imageObj = new Image();
-        imageObj.onload = function () {
-            const signature = new Konva.Image({
-                image: imageObj,
-                x: 10,
-                y: statusText.height() + detailsText.height() + signatureGap + padding,
-                width: 120,
-                height: 60,
-            });
-            group.add(signature);
-            layer.draw();
-        };
-        imageObj.src = '/storage/' + data.signature_path;
+    group.on('dragend', function () {
+        item.x_position = group.x();
+        item.y_position = group.y();
+    });
+
+   
+});
+
+function bindSaveButton() {
+    const saveButton = document.getElementById('save-overlays');
+    // console.log('Save button found:', saveButton);
+
+    if (!saveButton) {
+        return;
     }
 
-    group.on('dragend', async () => {
-        await fetch(saveUrl, {
+    saveButton.addEventListener('click', function () {
+        alert('Save button clicked');
+
+        const payload = [];
+        const canvasWidth = stage.width();
+        const canvasHeight = stage.height();
+
+        stage.find('Group').forEach(group => {
+            payload.push({
+                id: group.id(),
+                x_position: group.x(),
+                y_position: group.y(),
+                canvas_width: canvasWidth,
+                canvas_height: canvasHeight,
+
+            });
+        });
+
+        console.log('Payload:', payload);
+
+        fetch(window.overlayConfig.saveUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrf,
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': window.overlayConfig.csrf,
             },
             body: JSON.stringify({
-                overlay_id: item.id,
-                x_position: group.x(),
-                y_position: group.y(),
+                overlays: payload,
             }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Save response:', data);
+            alert('Overlay positions saved.');
+        })
+        .catch(error => {
+            console.error('Save error:', error);
         });
     });
+}
 
-    layer.add(group);
-});
+bindSaveButton();
 
 layer.draw();

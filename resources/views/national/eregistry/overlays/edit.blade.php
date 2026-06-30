@@ -10,10 +10,19 @@
 </div>
 
 <div class ="flex justify-center gap-4 mb-4">
- <form method="POST" action="{{ route('registry.overlays.finalize', $fileCirculation) }}">
+    <form method="POST" action="{{ route('registry.overlays.save', $fileCirculation) }}">
+        @csrf
+        <button
+            id="save-overlays"
+            type="button"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            Save Overlays
+        </button>
+    </form>
+    <form method="POST" action="{{ route('registry.overlays.finalize', $fileCirculation) }}">
         @csrf
         <button class="px-4 py-2 bg-green-600 text-white rounded">
-            Finalize PDF
+            Finalize PDF 
         </button>
     </form>
 </div>

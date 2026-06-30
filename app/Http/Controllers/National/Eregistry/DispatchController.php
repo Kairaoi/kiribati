@@ -164,7 +164,7 @@ class DispatchController extends Controller
                     'to_ministry_id' => $ministryId,
                     'circulated_by' => auth()->user()->id,
                     'circulated_at' => now(),
-                    'status' => 'Pending',
+                    'status' => 'Pending Receipt',
                     'updated_by' => auth()->user()->id          
                 ]);
             }

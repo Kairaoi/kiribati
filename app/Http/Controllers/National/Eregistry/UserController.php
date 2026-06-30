@@ -82,8 +82,10 @@ class UserController extends Controller
         $divisions = $this->divisions->listWithMinistry($ministryId); // Fetch divisions for the logged-in ministry
         $ministries = $this->ministries->listAll();
         $roles = Role::all();
+        
         return view('national.eregistry.users.create', compact('divisions', 'roles', 'ministries'));
     }
+
 
     /**
      * Store a newly created resource in storage.
@@ -104,13 +106,11 @@ class UserController extends Controller
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:8',
-            'role' => 'required|string|exists:roles,name',
             'division_id' => 'required|integer|exists:divisions,id',
             'designation' => 'required|string|max:255',
             'is_active' => 'sometimes|boolean',
         ]);
 
-    
         // Create the user
        $user = User::create([
             'first_name'  => $request->first_name,
@@ -120,14 +120,12 @@ class UserController extends Controller
             'division_id' => $request->division_id,
             'ministry_id' => auth()->user()->ministry_id,
             'designation' => $request->designation,
-            'is_active'   => $request->is_active ?? true,
-            'created_by'  => auth()->id(),
-            'updated_by'  => auth()->id(),
+            'is_active'   => $request->is_active ?? true
         ]);
     
         // Assign role via Spatie
-        $user->assignRole($request->role);
-        // dd($user);
+        $user->assignRole('user');
+
         return redirect()->route('registry.users.index')->with('success', 'New user created successfully!');
     }
     
@@ -160,14 +158,15 @@ class UserController extends Controller
         // if (!Auth::user()->can('user.edit')) {
         //     abort(403, 'Unauthorized action.');
         // }
-
-        // $user = $this->users->getById($id);
+        // dd($user);
+    
         $organisationId = Auth::user()->organisation_id;
-        $divisions = $this->divisions->listWithOrganisation($organisationId); // Fetch divisions for the logged-in organisation
+        $divisions = $this->divisions->listWithMinistry(auth()->user()->ministry_id); // Fetch divisions for the logged-in organisation
         $roles = Role::all();
         
         return view('national.eregistry.users.edit', compact('user', 'divisions', 'roles'));
     }
+
 
     public function editSignature()
     {
@@ -208,16 +207,30 @@ class UserController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, User $user)
     {
         // if (!Auth::user()->can('user.update')) {
         //     abort(403, 'Unauthorized action.');
         // }
 
-        $user = $this->users->getById($id);
-        $this->users->update($user, $request->all());
+        $validated = $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'email' => [
+                    'required',
+                    'email',
+                    Rule::unique('users', 'email')->ignore($user->id),
+            ],
+            'role' => 'required|string|exists:roles,name',
+            'division_id' => 'required|integer|exists:divisions,id',
+            'designation' => 'required|string|max:255',
+            'is_active' => 'sometimes|boolean',
+        ]);
 
-        return redirect()->route('user.index')->with('message', 'User updated successfully.');
+        $user->update($validated);
+        $user->syncRoles($validated['role']);
+
+        return redirect()->route('registry.users.index')->with('message', 'User updated successfully.');
     }
 
 
@@ -271,7 +284,6 @@ class UserController extends Controller
         return back()->with('success', 'Review officer updated successfully.');
 
     }
-
 
 
     /**

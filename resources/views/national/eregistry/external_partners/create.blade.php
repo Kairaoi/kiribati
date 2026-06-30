@@ -61,7 +61,7 @@
         {{-- Optional link to Identity Organisation --}}
             <div class="mb-5">
                 <label class="block text-sm font-medium text-gray-700">
-                    Link to Identity Organisation <span class="text-gray-400">(optional)</span>
+                    Link to Identity Organisation <span class="text-gray-400">(required if no category is selected)</span>
                 </label>
 
                 <select name="identity_organisation_id" id="identity_organisation_id"

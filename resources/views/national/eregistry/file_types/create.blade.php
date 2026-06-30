@@ -84,6 +84,9 @@
                 <div id="code-suggestions" 
                     class="absolute z-10 w-full bg-white border rounded-md mt-1 hidden shadow">
                 </div>
+                <p id="code-warning" class="text-sm text-red-600 mt-1 hidden">
+                    This code already exists.
+                </p>
 
                 <!-- Optional validation error -->
                 @error('code')
@@ -203,77 +206,101 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function () {
 
-        const input = document.getElementById('code');
-        const box = document.getElementById('code-suggestions');
-        const suggestionUrl = "{{ route('registry.file-types.code.suggestions') }}";
+    const input = document.getElementById('code');
+    const box = document.getElementById('code-suggestions');
+    const warning = document.getElementById('code-warning');
 
-        if (!input || !box) {
-            console.error('Input or suggestion box not found');
+    const suggestionUrl = "{{ route('registry.file-types.code.suggestions') }}";
+
+    let currentSuggestions = [];
+
+    if (!input || !box || !warning) return;
+
+    function checkDuplicate(value) {
+        const exists = currentSuggestions.some(
+            name => name.toLowerCase() === value.toLowerCase()
+        );
+
+        if (exists) {
+            warning.classList.remove('hidden');
+        } else {
+            warning.classList.add('hidden');
+        }
+    }
+
+    input.addEventListener('input', function () {
+
+        let query = this.value.trim();
+
+        checkDuplicate(query);
+
+        if (query.length < 2) {
+            box.classList.add('hidden');
+            warning.classList.add('hidden');
             return;
         }
 
-        input.addEventListener('input', function () {
-            let query = this.value.trim();
+        fetch(`${suggestionUrl}?q=${encodeURIComponent(query)}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+            credentials: 'same-origin'
+        })
+        .then(res => res.json())
+        .then(data => {
 
-            if (query.length < 1 ) {
+            currentSuggestions = data; // store for duplicate check
+
+            box.innerHTML = '';
+
+            if (!data.length) {
                 box.classList.add('hidden');
                 return;
             }
 
-            fetch(`${suggestionUrl}?q=${encodeURIComponent(query)}`, {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json',
-                },
-                credentials: 'same-origin' // ensures auth session is sent
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Request failed: ' + response.status);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Suggestions:', data); 
+            box.classList.remove('hidden');
 
-                box.innerHTML = '';
+            // Header
+            const header = document.createElement('div');
+            header.className = "px-2 py-1 text-xs text-gray-500 border-b";
+            header.textContent = "Existing file-types:";
+            box.appendChild(header);
 
-                if (!data.length) {
+            data.forEach(name => {
+
+                const isExact = name.toLowerCase() === query.toLowerCase();
+
+                const item = document.createElement('div');
+                item.className = `
+                    p-2 cursor-pointer text-sm
+                    ${isExact ? 'bg-red-50 text-red-600 font-medium' : 'hover:bg-gray-100'}
+                `;
+                item.textContent = name;
+
+                item.addEventListener('click', () => {
+                    input.value = name;
                     box.classList.add('hidden');
-                    return;
-                }
 
-                box.classList.remove('hidden');
-
-                // ADD HEADER HERE
-                const header = document.createElement('div');
-                header.className = "px-2 py-1 text-xs text-gray-500 border-b";
-                header.textContent = "Existing codes:";
-                box.appendChild(header);
-
-                data.forEach(name => {
-                    const item = document.createElement('div');
-                    item.className = "p-2 cursor-pointer hover:bg-gray-100 text-sm";
-                    item.textContent = name;
-
-                    item.addEventListener('click', () => {
-                        input.value = name;
-                        box.classList.add('hidden');
-                    });
-
-                    box.appendChild(item);
+                    // show warning immediately
+                    warning.classList.remove('hidden');
                 });
-            })
-            .catch(error => {
-                console.error('Fetch error:', error);
-                box.classList.add('hidden');
-            });
-        });
 
+                box.appendChild(item);
+            });
+
+            // re-check after fetch
+            checkDuplicate(query);
+        })
+        .catch(() => {
+            box.classList.add('hidden');
+        });
     });
+
+});
 </script>
 @endpush
 @endsection

@@ -204,8 +204,7 @@ class FileTypeController extends Controller {
             })
             ->distinct()
             ->pluck('name');
-        // Log::info('suggestions called by user: ' . auth()->id());
-        // return ['Test1', 'Test2', 'Test3'];
+      
     }
 
     public function codeSuggestions(Request $request)
@@ -222,6 +221,7 @@ class FileTypeController extends Controller {
             ->pluck('code');
     }
 
+    
     /**
      * Show the form for editing the specified resource.
      *

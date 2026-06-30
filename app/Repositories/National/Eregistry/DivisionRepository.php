@@ -4,6 +4,7 @@ namespace App\Repositories\National\Eregistry;
 use App\Repositories\BaseRepository;
 use App\Models\National\Eregistry\Division;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class DivisionRepository extends BaseRepository
 {
@@ -74,13 +75,15 @@ class DivisionRepository extends BaseRepository
 
         $query = $this->model->query()
             ->select(['divisions.id as id', 
-                      'ministries.name as ministry_name', 
+                      'ministries.code as ministry_code', 
                       'divisions.name as division_name', 
                       'divisions.location as location', 
                       'divisions.is_active as is_active',
                       'divisions.created_at as created_at',
+                      DB::raw("CONCAT(users.first_name, ' ', users.last_name) as hod_name"),
                       'divisions.updated_at as updated_at'])
-            ->join('ministries', 'divisions.ministry_id', '=', 'ministries.id');
+            ->join('ministries', 'divisions.ministry_id', '=', 'ministries.id')
+            ->leftJoin('users', 'divisions.hod_id', '=', 'users.id');
 
             if($user && $user->hasRole('system-admin')) {
                 // System Admin can see all divisions, no additional filtering needed
@@ -137,7 +140,7 @@ class DivisionRepository extends BaseRepository
     public function listWithMinistry($ministryId)
     {
         return $this->model->query()
-            ->with('ministry') // Eager load the ministry relationship
+            ->select('id', 'name')
             ->where('ministry_id', $ministryId)
             ->orderBy('name')
             ->get();

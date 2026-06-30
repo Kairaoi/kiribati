@@ -35,6 +35,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Validation\Rule;
 
 class FileController extends Controller
 {
@@ -217,7 +218,7 @@ class FileController extends Controller
             'document_source' => 'required|in:upload,online',
             'from_division_id' => 'nullable|exists:divisions,id',
             'subject' => 'required|string|max:255',
-            'main_file' => 'required_if:document_source,upload|file|mimes:pdf|max:10240',
+            'main_file' => 'required_if:document_source,upload|file|mimes:pdf,jpg,jpeg,png,gif,webp,tif,tiff|max:10240',
             'content' => [
                     'exclude_unless:document_source,online',
                     'required',
@@ -347,6 +348,27 @@ class FileController extends Controller
             return redirect()->route('registry.files.index')->with('success', 'File created successfully!');
     }
 
+
+    public function preview(File $file)
+    {
+        $path = storage_path('app/public/' . $file->main_file_path);
+
+        abort_unless(file_exists($path), 404);
+
+        return response()->file($path);
+    }
+
+
+    public function download(File $file)
+    {
+        abort_unless($file->main_file_path, 404);
+
+        return Storage::disk('public')->download(
+            $file->main_file_path,
+            basename($file->main_file_path)
+        );
+    }
+
     
     /**
      * Display the specified file.
@@ -356,6 +378,7 @@ class FileController extends Controller
      */
     public function show(File $file)
     {
+        $userId = auth()->user()->id;
         $ministryId = auth()->user()->ministry_id;
         $fileId = $file->id;
         $closedRecord = DB::table('ministry_closed_files')
@@ -374,8 +397,7 @@ class FileController extends Controller
         $closedDate = $closedRecord?->closed_at ?? null;
 
         $ministrySource = $file->isOwnedByMinistry(auth()->user()->ministry_id);
-        // dd($ministrySource);
-        // $fileCirculations = $this->fileCirculations->ministryCirculations($fileId, $ministryId)->latest()->get();
+    
         $fileCirculations = $this->fileCirculations
                                 ->ministryCirculations($fileId, $ministryId)
                                 ->with('activeAssignments')
@@ -385,6 +407,8 @@ class FileController extends Controller
     
         $fileAssignment = $circulation?->activeAssignments()->where('officer_id', Auth::id())->first(); // Get the file assignment for the logged-in user, if it exists
         
+        // dd($fileAssignment);
+
         $dispatchedMinistries = $fileCirculations->pluck('to_ministry_id')->unique()->toArray();
         $ministries = $this->ministries->list()
                                        ->where('id', '!=', $file->ministry_id)
@@ -394,9 +418,19 @@ class FileController extends Controller
         $reviewOfficer = User::role('review-officer')
                                 ->where('ministry_id', $ministryId)
                                 ->first();
+
         $usersWithDivision = $this->users->getUsersDivision();
+
+        $divisionUsers = $this->users->getDivisionUsers(auth()->user()->division_id);
+
+        $assignedOfficerIds = $circulation?->activeAssignments
+            ->pluck('officer_id')
+            ->toArray();
+
+        $notAssignedOfficers = $usersWithDivision->whereNotIn('id', $assignedOfficerIds);
         
-        return view('national.eregistry.files.show', compact('file', 
+        return view('national.eregistry.files.show', compact('userId',
+                                                            'file', 
                                                              'ministrySource', 
                                                              'fileId', 
                                                              'isClosed', 
@@ -410,7 +444,9 @@ class FileController extends Controller
                                                              'usersWithDivision', 
                                                              'fileCirculations',
                                                              'circulation', 
-                                                             'fileAssignment'));
+                                                             'fileAssignment',
+                                                             'notAssignedOfficers',
+                                                             'divisionUsers'));
     }
 
 
@@ -519,6 +555,70 @@ class FileController extends Controller
                 basename($file->main_file_path) . '"'
         ]);
     }
+
+
+    
+    public function ufsCirculate(Request $request, File $file) 
+    {
+        // dd($request);
+        $validated = $request->validate([
+            'internal_ufs_id' => [
+                'required',
+                Rule::exists('users', 'id')->where(fn ($q) =>
+                    $q->where('division_id', auth()->user()->division_id)
+                ),
+            ],
+        ]);
+
+        $ministryId = Auth::user()->ministry_id;
+
+        $fileCirculation = FileCirculation::updateOrCreate(
+            [
+                'file_id'        => $file->id,
+                'to_ministry_id' => $ministryId,
+            ],
+            [
+                'circulated_by'  => auth()->id(),
+                'circulated_at'  => now(),
+                'updated_by'     => auth()->id(),
+                'status'         => 'Pending UFS',
+                'ufs_status'     => 'Pending',
+            ]
+        );
+
+        $file->status = $fileCirculation->status;
+        $file->save();
+
+        return redirect()->route('registry.files.index')->with('success', 'File circulated');
+    }
+
+
+    public function storeInternalReviewer(Request $request, File $file) 
+    {
+        // dd($request);
+        $validated = $request->validate([
+            'review_officer' => 'required|exists:users,id'
+        ]);
+
+        $ministryId = Auth::user()->ministry_id;
+        
+        $fileCirculation = FileCirculation::updateOrCreate(
+            [
+                'file_id'        => $file->id,
+                'to_ministry_id' => $ministryId,
+            ],
+            [
+                'circulated_by'  => auth()->id(),
+                'circulated_at'  => now(),
+                'updated_by'     => auth()->id(),
+                'status'         => 'Pending Review',
+                'review_officer' => $validated['review_officer']
+            ]
+        );
+        
+        return redirect()->route('registry.files.index')->with('success', 'File circulated ');
+    }
+
 
     
     public function edit(File $file)
@@ -674,21 +774,21 @@ class FileController extends Controller
      * @param int $id
      * @return \Illuminate\Http\Response
      */
-    public function download($id)
-    {
-        if (!auth()->check()) {
-            abort(403, 'Unauthorized access.');
-        }
-        $file = $this->files->getById($id);
-        // dd($file->main_file_path);
-        if (!$file->main_file_path) {
-            abort(404, 'File path not set.');
-        }
-        if (!Storage::disk('local')->exists($file->main_file_path)) {
-            abort(404, 'File not found.');
-        }
-        return Storage::disk('local')->download($file->main_file_path, basename($file->main_file_path));
-    }
+    // public function download($id)
+    // {
+    //     if (!auth()->check()) {
+    //         abort(403, 'Unauthorized access.');
+    //     }
+    //     $file = $this->files->getById($id);
+    //     // dd($file->main_file_path);
+    //     if (!$file->main_file_path) {
+    //         abort(404, 'File path not set.');
+    //     }
+    //     if (!Storage::disk('local')->exists($file->main_file_path)) {
+    //         abort(404, 'File not found.');
+    //     }
+    //     return Storage::disk('local')->download($file->main_file_path, basename($file->main_file_path));
+    // }
 
 
     public function downloadAdditionalFile($id, $number)

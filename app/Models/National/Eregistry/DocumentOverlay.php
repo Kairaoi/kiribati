@@ -28,12 +28,15 @@ class DocumentOverlay extends Model implements Auditable
         'width',
         'height',
         'font_size',
+        'canvas_width',
+        'canvas_height',
         'is_locked',
         'created_by',
     ];
 
     protected $casts = [
         'content' => 'array',
+        'is_locked' => 'boolean'
     ];
 
     public function file()

@@ -173,8 +173,7 @@
                                     class="relative">
 
                                     <x-nav-link href="#"
-                                        class="flex items-center h-full"
-                                        :active="request()->routeIs('registry.file-types.*')">
+                                        class="flex items-center h-full">
 
                                         <span class="leading-none flex items-center">
                                             {{ __('Ministry') }}
@@ -205,9 +204,8 @@
                                             User & Role Management
                                         </a>
 
-
                                         <!-- Nested Templates Dropdown -->
-                                        <div class="relative"
+                                        {{-- <div class="relative"
                                             @mouseenter="templateOpen = true"
                                             @mouseleave="templateOpen = false">
 
@@ -241,7 +239,7 @@
                                                 </a>
                                             </div>
                                         </div>
-                                        
+                                         --}}
                                     </div>
                                 </div>
 

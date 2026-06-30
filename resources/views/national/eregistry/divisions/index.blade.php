@@ -43,6 +43,12 @@
             <i class="fas fa-plus"></i>
             Create New Division
         </a>
+{{-- 
+        <a href="{{ route('registry.divisions.create') }}"
+            class="inline-flex items-center mt-5 gap-2 px-4 py-2 bg-cyan-600 text-white text-sm rounded-md hover:bg-cyan-700 transition">
+            <i class="fas fa-plus-officer"></i>
+            Assign HOD
+        </a> --}}
     </div>
 
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-2">
@@ -51,6 +57,7 @@
                 <tr>
                     <th>Ministry</th>
                     <th>Name</th>
+                    <th>Head of Division</th>
                     <th>Created At</th>
                     <th>Updated At</th>
                     <th>Actions</th>
@@ -279,8 +286,9 @@ $(document).ready(function() {
             }
         },
         columns: [
-            { data: 'ministry_name' },
+            { data: 'ministry_code' },
             { data: 'division_name' },
+            { data: 'hod_name'},
             { data: 'created_at', 
                 render(data) {
                     return new Date(data).toLocaleDateString('en-US', {
@@ -308,16 +316,19 @@ $(document).ready(function() {
                 render(data, type, row) {
 
                     let actions = `
-                        <a href="/registry/files/${row.id}" 
-                            class="inline-flex items-center justify-center hover:text-gray-600 transition"
-                            title="View">
-                            <i class="fa fa-eye text-sm"></i>
+                        <a href="/registry/divisions/${row.id}" 
+                            class="text-cyan-600 hover:text-cyan-800 transition">
+                            View
                         </a>
 
-                        <a href="/registry/files/${row.id}/edit" 
-                            class="inline-flex items-center justify-center hover:text-gray-600 transition ms-3"
-                            title="Edit">
-                            <i class="fa fa-pen text-sm"></i>
+                        <a href="/registry/divisions/${row.id}/edit" 
+                            class="text-amber-600 hover:text-amber-800 transition ms-3">
+                            Edit
+                        </a>
+
+                        <a href="/registry/divisions/${row.id}/assign-hod" 
+                            class="text-emerald-600 hover:text-emerald-800 transition ms-3">
+                            Assign HOD
                         </a>
                     `;
 
