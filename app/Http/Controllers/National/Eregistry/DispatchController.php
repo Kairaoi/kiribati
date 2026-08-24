@@ -21,6 +21,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 use Spatie\Activitylog\Models\Activity;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\FileDeliveredNotification;
 
 use function Symfony\Component\Clock\now;
 
@@ -97,10 +99,10 @@ class DispatchController extends Controller
      */
     public function index()
     {
-        // if (!auth()->user()->hasRole(['registry','admin'])) {
+        // if (!Auth::user()->hasRole(['registry','admin'])) {
         //     abort(403, 'Unauthorized access');
         // }
-        return view('national.eregistry.dispatches.index');
+        // return view('national.eregistry.dispatches.index');
     }
 
 
@@ -132,23 +134,20 @@ class DispatchController extends Controller
             'recipient_ministries.*' => 'exists:ministries,id',
         ]);    
 
-        // dd($validated);
-        //create dispatch record and circulation record for each recipient ministry
-
         try {
             
             $dispatch = Dispatch::create([
                 'file_id' => $validated['file_id'],
-                'dispatched_by' => auth()->user()->id,
+                'dispatched_by' => Auth::user()->id,
                 'dispatch_date' => now(),
-                'updated_by' => auth()->user()->id,
+                'updated_by' => Auth::user()->id,
             ]);
 
             $file = File::findOrFail($validated['file_id']);
             $file->status = 'Dispatched';
             $file->save();
 
-            $fileOwnerCirculation = $this->fileCirculations->thisCirculation($validated['file_id'], auth()->user()->ministry_id);
+            $fileOwnerCirculation = $this->fileCirculations->thisCirculation($validated['file_id'], Auth::user()->ministry_id);
 
             if ($fileOwnerCirculation) {
                 $fileOwnerCirculation->update([
@@ -158,26 +157,40 @@ class DispatchController extends Controller
             }
 
             foreach ($validated['recipient_ministries'] as $ministryId) {
-                FileCirculation::create([                                                       
+                $circulation = FileCirculation::create([
                     'file_id' => $validated['file_id'],
                     'dispatch_id' => $dispatch->id,
                     'to_ministry_id' => $ministryId,
-                    'circulated_by' => auth()->user()->id,
+                    'circulated_by' => auth()->id(),
                     'circulated_at' => now(),
                     'status' => 'Pending Receipt',
-                    'updated_by' => auth()->user()->id          
+                    'updated_by' => auth()->id(),
                 ]);
+
+                $circulation->load([
+                    'file.ministry',
+                    'toMinistry',
+                ]);
+
+                $recipients = User::query()
+                    ->where('ministry_id', $ministryId)
+                    ->where('is_active', true)
+                    ->whereNotNull('email')
+                    ->role('registry')
+                    ->get();
+
+                Notification::send(
+                    $recipients,
+                    new FileDeliveredNotification($circulation)
+                );
             }
 
-            //for activity log
-            // activity()
-            //     ->causedBy(auth()->user())
-            //     ->performedOn($dispatch)
-            //     ->log('File is dispatched');
-
-            if(auth()->user()->hasRole('registry')) {
-                return redirect()->route('registry.files.index')->with('success', 'File dispatched successfully!');
+            if (Auth::user()->hasRole('registry')) {
+                return redirect()
+                    ->route('registry.files.index')
+                    ->with('success', 'File dispatched successfully!');
             }
+
 
         } catch (\Exception $e) {
             Log::error('Exception while creating file circulation', [

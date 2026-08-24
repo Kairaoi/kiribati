@@ -21,6 +21,7 @@ use phpDocumentor\Reflection\Types\Nullable;
 use Spatie\Permission\Models\Role;
 use Yajra\DataTables\Facades\DataTables;
 use App\Models\National\Eregistry\DocumentOverlay;
+use App\Notifications\ReviewOfficerPendingReviewNotification;
 
 
 
@@ -94,35 +95,6 @@ class FileCirculationController extends Controller
                     
         return $datatables;
     }
-
-
-
-
-    // public function getAssignedDataTables(Request $request)
-    // {
-    //     $search = $request->get('search', '');
-    //     if (is_array($search)) {
-    //         $search = $search['value'];
-    //     }
-    //     $query = $this->fileCirculations->getForAssignedDataTable($search);
-
-    //     $datatables = DataTables::of($query)->make(true);
-                        
-    //     return $datatables;            
-    // }      
-
-    // public function getActivityDataTables(Request $request)
-    // {
-    //     $search = $request->get('search', '');
-    //     if (is_array($search)) {
-    //         $search = $search['value'];
-    //     }
-    //     $query = $this->fileCirculations->getForActivityDataTable($search);
-
-    //     $datatables = DataTables::of($query)->make(true);
-                        
-    //     return $datatables;            
-    // }
  
 
     /**
@@ -191,43 +163,6 @@ class FileCirculationController extends Controller
     }
 
 
-    // public function reviewIndex()// This method is used to display the review page for file circulations
-    // {
-    //     // if (!Auth::user()->can('division.create')) {
-    //     //     abort(403, 'Unauthorized action.');
-    //     // }
-
-    //     return view('national.eregistry.circulations.reviewIndex');
-    // }
-
-    // public function allReceivedIndex()  // for secretary, HM
-    // {
-    //     if (!Auth::user()->hasRole('sro')) {
-    //         abort(403, 'Unauthorized action.');
-    //     }
-
-    //     return view('national.eregistry.circulations.allReviewIndex');
-    // }
-
-
-    // public function assignedIndex()  // This method is used to display the review page for file circulations
-    // {
-    //     // if (!Auth::user()->can('division.create')) {
-    //     //     abort(403, 'Unauthorized action.');
-    //     // }
-
-    //     return view('national.eregistry.circulations.assignedIndex');
-    // }
-
-    // public function activityIndex()  // This method is used to display the activity page for file circulations
-    // {
-    //     // if (!Auth::user()->can('division.create')) {
-    //     //     abort(403, 'Unauthorized action.');
-    //     // }
-
-    //     return view('national.eregistry.circulations.activityIndex');
-    // }
-
 
     /**
      * Store the circulation of the file when registry users circulate file to Review Officer
@@ -244,6 +179,12 @@ class FileCirculationController extends Controller
 
         $ministryId = Auth::user()->ministry_id;
 
+        $reviewOfficer = User::role('review-officer')
+            ->where('ministry_id', $ministryId)
+            ->where('is_active', true)
+            ->whereNotNull('email')
+            ->first();
+
         $fileCirculation = FileCirculation::updateOrCreate(
             [
                 'file_id'        => $validated['file_id'],
@@ -254,6 +195,7 @@ class FileCirculationController extends Controller
                 'circulated_at'  => now(),
                 'updated_by'     => auth()->id(),
                 'status'         => 'Pending SRO Approval',
+                'review_officer' => $reviewOfficer ? $reviewOfficer->id : null,
             ]
         );
 
@@ -261,6 +203,12 @@ class FileCirculationController extends Controller
             'status' => 'Pending SRO Approval',
         ]);
 
+        if ($reviewOfficer) {
+            $reviewOfficer->notify(
+                new ReviewOfficerPendingReviewNotification($fileCirculation)
+            );
+        }
+        
         return redirect()->route('registry.files.index')->with('success', 'File circulated ');
     }
 
@@ -268,7 +216,8 @@ class FileCirculationController extends Controller
 
     public function update(Request $request, FileCirculation $fileCirculation) 
     {
-
+        $previousStatus = $fileCirculation->status;
+        
         $fileCirculation->update(
             [
                 'updated_by' => auth()->id(),
@@ -276,7 +225,29 @@ class FileCirculationController extends Controller
                 'status'     => 'Pending SRO Approval',
             ]
         );
-        
+
+        if ($previousStatus !== 'Pending SRO Approval') {
+            $reviewOfficer = User::role('review-officer')
+                ->where('ministry_id', $fileCirculation->to_ministry_id)
+                ->where('is_active', true)
+                ->whereNotNull('email')
+                ->first();
+
+            $fileCirculation->update(
+            [
+                'review_officer' => $reviewOfficer ? $reviewOfficer->id : null,
+            ]
+        );
+
+
+            if ($reviewOfficer) {
+                $reviewOfficer->notify(
+                    new ReviewOfficerPendingReviewNotification($fileCirculation)
+                );
+            }
+
+        }
+
         return redirect()->route('registry.files.index')->with('success', 'File circulated ');
     }
 
@@ -313,13 +284,13 @@ class FileCirculationController extends Controller
                 'circulated_by'  => auth()->id(),
                 'circulated_at'  => now(),
                 'updated_by'     => auth()->id(),
-                'status'         => 'Pending Colleague Review',
+                'status'         => 'Pending HOD Review',
                 'colleague_id'   => $validated['colleague']
             ]
         );
 
         $fileCirculation->file()->update([
-            'status' => 'Pending Colleague Review',
+            'status' => 'Pending HOD Review',
         ]);
 
         return redirect()->route('registry.files.index')->with('success', 'File circulated ');
@@ -333,45 +304,29 @@ class FileCirculationController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function colleagueUpdate(Request $request)
+    public function colleagueUpdate(Request $request, FileCirculation $fileCirculation)
     {
         // dd($request);
         $validated = $request->validate([
-            'colleague_comment' => ['required', 'string'],
-            'action' => ['required', 'in:return,approve'],
-            'circulation' => 'required|exists:file_circulations,id'
+            'hod_comment' => 'required|string|max:255',
         ]);
 
-
-        // Ensure only assigned reviewer can review
-        // if ($circulation->review_officer !== auth()->id()) {
-        //     abort(403);
-        // }
-
-        $circulation = FileCirculation::with('file')
-            ->findOrFail($validated['circulation']);
-
-        $status = match ($validated['action']) {
-            'return'  => 'Returned for Amendment',
-            'approve' => 'Pending SRO Approval',
-            default   => $circulation->status,
-        };
-
-        $circulation->update([
-            'colleague_comment' => $validated['colleague_comment'],
-            'reviewed_by'       => auth()->id(),
-            'date_reviewed'     => now(),
+        $fileCirculation->update([
+            'colleague_comment' => $validated['hod_comment'],
             'updated_by'        => auth()->id(),
-            'status'            => $status,
+            'status'            => 'Returned for Amendment',
         ]);
 
-        $circulation->file->update([
-            'status' => $status,
+        $file = $this->files->getById($fileCirculation->file_id); 
+
+        $file->update([
+            'status' => 'Returned for Amendment',
+            'updated_at' => now(),
+            'updated_by' => Auth::user()->id,
         ]);
 
         return redirect()
-            ->route('registry.files.show', $circulation->file_id)
-            ->with('success', 'File reviewed');
+            ->route('registry.files.index')->with('success', 'File reviewed');
     }
 
     public function receive(FileCirculation $fileCirculation)
@@ -388,9 +343,6 @@ class FileCirculationController extends Controller
 
         return redirect()->route('registry.files.index')->with('message', 'File marked as Received successfully.');
     }
-
-
-  
 
 
     /**

@@ -3,11 +3,12 @@
 namespace App\Http\Controllers\National\Eregistry;
 
 use App\Http\Controllers\Controller;
-use App\Models\Role;
 use App\Models\User;
 use App\Repositories\National\Eregistry\DivisionRepository;
 use App\Repositories\National\Eregistry\MinistryRepository;
 use App\Repositories\National\Eregistry\UserRepository;
+use App\Repositories\National\Eregistry\UnitRepository;
+use Spatie\Permission\Models\Role;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,15 +22,17 @@ class UserController extends Controller
     private $users;
     private $divisions;
     private $ministries;
-
+    private $units;
 
     public function __construct(UserRepository $users,
                                 DivisionRepository $divisions,
-                                MinistryRepository $ministries)
+                                MinistryRepository $ministries,
+                                UnitRepository $units)
     {
         $this->users = $users;
         $this->divisions = $divisions;
         $this->ministries = $ministries;
+        $this->units = $units;
     }
 
     /**
@@ -40,11 +43,14 @@ class UserController extends Controller
      */
     public function getDataTables(Request $request)
     {
+        $this->authorize('viewAny', User::class);
+        
         $search = $request->get('search', '');
         if (is_array($search)) {
             $search = $search['value'];
         }
-        $query = $this->users->getForDataTable($search, auth()->user());
+        
+        $query = $this->users->getForDataTable($search, Auth::user());
         $datatables = DataTables::make($query)
                                 ->addColumn('role_name', function ($user) {
                                     return $user->role_name ?? '';
@@ -64,6 +70,8 @@ class UserController extends Controller
      */
     public function index()
     {
+        $this->authorize('viewAny', User::class);
+
         return view('national.eregistry.users.index');
     }
 
@@ -74,16 +82,23 @@ class UserController extends Controller
      */
     public function create()
     {
-        // if (!Auth::user()->can('user.create')) {
-        //     abort(403, 'Unauthorized action.');
-        // }
+        $this->authorize('create', User::class);
 
         $ministryId = Auth::user()->ministry_id;
         $divisions = $this->divisions->listWithMinistry($ministryId); // Fetch divisions for the logged-in ministry
+        $units = $this->units->listWithMinistry($ministryId); // Fetch units for the logged-in ministry
         $ministries = $this->ministries->listAll();
-        $roles = Role::all();
+        $roles = Role::query()
+                    ->whereNotIn('name', [
+                        'system-admin',
+                        'ministry-admin',
+                        'hod',
+                        'admin',
+                        'review-officer'
+                    ])
+                    ->pluck('name', 'id');
         
-        return view('national.eregistry.users.create', compact('divisions', 'roles', 'ministries'));
+        return view('national.eregistry.users.create', compact('divisions', 'units', 'roles', 'ministries'));
     }
 
 
@@ -95,12 +110,7 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        // Authorization (uncomment if needed)
-        // if (!Auth::user()->can('user.store')) {
-        //     abort(403, 'Unauthorized action.');
-        // }
-    
-        // dd($request->all());
+        
         $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -109,24 +119,28 @@ class UserController extends Controller
             'division_id' => 'required|integer|exists:divisions,id',
             'designation' => 'required|string|max:255',
             'is_active' => 'sometimes|boolean',
+            'role'    => [
+                'required',
+                Rule::exists('roles', 'id'),
+            ],
+
         ]);
 
-        // Create the user
        $user = User::create([
             'first_name'  => $request->first_name,
             'last_name'   => $request->last_name,
             'email'       => $request->email,
             'password'    => Hash::make($request->password),
             'division_id' => $request->division_id,
-            'ministry_id' => auth()->user()->ministry_id,
+            'ministry_id' => Auth::user()->ministry_id,
             'designation' => $request->designation,
             'is_active'   => $request->is_active ?? true
         ]);
     
-        // Assign role via Spatie
-        $user->assignRole('user');
+        $role = Role::findOrFail($request->role);
+        $user->assignRole($role);
 
-        return redirect()->route('registry.users.index')->with('success', 'New user created successfully!');
+        return redirect()->route('registry.users.index')->with('success', 'New user created!');
     }
     
 
@@ -138,9 +152,7 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        // if (!auth()->user()->hasRole(['registry','admin'])) {
-        //     abort(403, 'Unauthorized access');
-        // }
+        $this->authorize('view', $user);
 
         $user = $this->users->getById($user->id);
         
@@ -155,16 +167,30 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        // if (!Auth::user()->can('user.edit')) {
-        //     abort(403, 'Unauthorized action.');
-        // }
-        // dd($user);
     
+        $this->authorize('view', $user);
+
         $organisationId = Auth::user()->organisation_id;
-        $divisions = $this->divisions->listWithMinistry(auth()->user()->ministry_id); // Fetch divisions for the logged-in organisation
-        $roles = Role::all();
+        $divisions = $this->divisions->listWithMinistry(Auth::user()->ministry_id); // Fetch divisions for the logged-in organisation
+        $units = $this->units->listWithMinistry(Auth::user()->ministry_id); // Fetch units for the logged-in ministry
+        $roles = Role::query()
+                    ->whereNotIn('name', [
+                        'system-admin',
+                        'ministry-admin',
+                        'hod',
+                        'admin',
+                        'review-officer'
+                    ])
+                    ->pluck('name', 'id');
+
+        $currentRole = $user->roles->whereIn('name', $roles->values())
+                                   ->first();
         
-        return view('national.eregistry.users.edit', compact('user', 'divisions', 'roles'));
+        return view('national.eregistry.users.edit', compact('user', 
+                                                             'currentRole',
+                                                             'divisions', 
+                                                             'units', 
+                                                             'roles'));
     }
 
 
@@ -179,10 +205,15 @@ class UserController extends Controller
     {
         // dd($request->all());
         $request->validate([
-            'signature' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'signature' => 'required|image|mimes:jpeg,png,jpg|max:3072', // 3 MB
+        ], [
+            'signature.required' => 'Please upload your signature.',
+            'signature.image'    => 'The signature must be an image.',
+            'signature.mimes'    => 'The signature must be a JPG or PNG image.',
+            'signature.max'      => 'The signature must not exceed 2 MB.',
         ]);
 
-        $user = auth()->user();
+        $user = Auth::user();
         // dd($user);
         if ($request->hasFile('signature')) {
             $file = $request->file('signature');
@@ -199,7 +230,6 @@ class UserController extends Controller
     }
 
 
-
     /**
      * Update the specified resource in storage.
      *
@@ -209,30 +239,31 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        // if (!Auth::user()->can('user.update')) {
-        //     abort(403, 'Unauthorized action.');
-        // }
-
+        // dd($request->all());
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => [
-                    'required',
-                    'email',
-                    Rule::unique('users', 'email')->ignore($user->id),
+                'required',
+                'email',
+                Rule::unique('users', 'email')->ignore($user->id),
             ],
-            'role' => 'required|string|exists:roles,name',
+            'role' => [
+                'required',
+                Rule::exists('roles', 'id'),
+            ],
             'division_id' => 'required|integer|exists:divisions,id',
             'designation' => 'required|string|max:255',
             'is_active' => 'sometimes|boolean',
         ]);
 
-        $user->update($validated);
-        $user->syncRoles($validated['role']);
+        $this->users->update($user, $validated);
 
-        return redirect()->route('registry.users.index')->with('message', 'User updated successfully.');
+        // Handle the editable/main role separately
+        $this->users->updateMainRole($user, $validated['role']);
+
+        return redirect()->route('registry.users.index')->with('success', 'User updated successfully.');
     }
-
 
      /**
      * Update the specified resource in storage.
@@ -243,7 +274,7 @@ class UserController extends Controller
      */
     public function editReviewOfficer()
     {
-        $ministryId = auth()->user()->ministry_id;
+        $ministryId = Auth::user()->ministry_id;
         $usersWithDivision = $this->users->getUsersDivision();
         $reviewOfficer = User::role('review-officer')
                                 ->where('ministry_id', $ministryId)
@@ -262,7 +293,7 @@ class UserController extends Controller
      */
     public function updateReviewOfficer(Request $request)
     {
-        $ministryId = auth()->user()->ministry_id;
+        $ministryId = Auth::user()->ministry_id;
         $request->validate([
             'review_officer_id' => [
                 'required',
@@ -271,6 +302,7 @@ class UserController extends Controller
                 }),
             ],
         ]);
+
         $currentReviewOfficer = User::role('review-officer')
             ->where('ministry_id', $ministryId)
             ->first();
@@ -292,15 +324,16 @@ class UserController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function deactivate(User $user)
     {
-        if (!Auth::user()->can('user.delete')) {
-            abort(403, 'Unauthorized action.');
-        }
+        $user->update([
+            'is_active' => false,
+            'updated_by' => auth()->id(),
+        ]);
 
-        $user = $this->users->getById($id);
-        $this->users->delete($user);
-
-        return redirect()->route('user.index')->with('message', 'User deleted successfully.');
+        // dd('ikai');
+        return response()->json([
+            'message' => 'User deactivated raoi successfully.'
+        ]);
     }
 }

@@ -18,11 +18,13 @@ class FileType extends Model implements Auditable
         'description',
         'code',
         'ministry_id',
-        'is_global'
+        'is_global',
+        'is_active'
     ];
 
     protected $casts = [
         'is_global' => 'boolean',
+        'is_active' => 'boolean'
     ];
 
     

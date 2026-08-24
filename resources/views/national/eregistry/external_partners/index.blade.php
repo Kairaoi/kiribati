@@ -15,15 +15,16 @@
         </a>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">        
+    <div class="bg-white shadow-sm border border-gray-100 p-4">        
         <table id="externalPartnersTable" class="w-full text-sm text-left">
             <thead class="bg-gray-50 text-gray-600 text-sm uppercase tracking-wide">
                 <tr>
-                    <th>ID</th>
                     <th>NAME</th>
-                    <th>LINKED TO</th>
                     <th>Category</th>
-                    <th class="w-28">Actions</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Status</th>
+                    <th class="w-29">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y"></tbody> <!-- DataTable will populate this -->
@@ -35,12 +36,12 @@
 @push('styles')
 <style>
     /* Table Styles */
-   table.dataTable {
+    table.dataTable {
         width: 100%;
         border-collapse: collapse;
         /* font-size: 0.85rem; */
         border-left: 0.5px solid #d3d3d8;
-        border-right: 0.5px solid #d3d3d8;
+        border-right: 0.5px solid #d3d3d8;  
     }
 
     /* Header */
@@ -54,12 +55,14 @@
     /* Cells */
     #externalPartnersTable th,
     #externalPartnersTable td {
-        padding: 12px 14px;
+        padding: 8px 10px;
+         border: 1px solid #dbdbe2;
     }
 
     /* Row divider */
     #externalPartnersTable tbody tr {
         border-bottom: 1px solid #e5e7eb;
+        border: 1px solid #59595a;
     }
 
     /* Hover effect */
@@ -70,6 +73,7 @@
     /* Fix long text */
     #externalPartnersTable td {
         white-space: normal !important;
+        border: 1px solid #dbdbe2;
         /* word-break: break-word; */
     }
     .dataTables_filter input {
@@ -249,25 +253,64 @@ $(document).ready(function() {
            
        },
        columns: [
-           { data: 'id'},
-           { data: 'name' },
-           { data: 'identity_organisation_name' },
+            { data: 'name' },
             { data: 'organisation_type_name' },
-           {
+            { data: 'email' },
+            { data: 'phone' },
+            {
+                data: 'is_active',
+                render: function (data, type, row) {
+                    return data
+                        ? `
+                            <span class="inline-flex items-center rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 ring-1 ring-green-100">
+                                <span class="mr-1.5 h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                                Active
+                            </span>
+                        `
+                        : `
+                            <span class="inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700 ring-1 ring-red-100">
+                                <span class="mr-1.5 h-1.5 w-1.5 rounded-full bg-red-500"></span>
+                                Inactive
+                            </span>
+                        `;
+                }
+            },
+            {
                 data: null,
                 orderable: false,
                 name: 'actions',
                 searchable: false,
                 render: function (data, type, row) {
                     let buttons = `
-                        <a href="/registry/external-partners/${row.id}/edit" 
-                        class="btn btn-sm btn-outline-info"
-                        style="display: inline-flex; align-items: center; gap: 4px;">
-                        <i class="fas fa-edit"></i>    Edit
+                        <a href="/registry/external-partners/${row.id}"
+                            class="inline-flex items-center border justify-center gap-2 rounded-md px-4 py-2 text-xs font-medium shadow-sm transition hover:bg-gray-100"
+                            title="View">
+                            View
                         </a>
-
                     `;
-                    
+
+                    const isActive = Number(row.is_active);
+
+                    if (isActive === 1) {
+                        buttons += `
+                            <button
+                                data-id="${row.id}"
+                                class="inline-flex items-center mt-1 border justify-center gap-2 rounded-md px-4 py-2 text-xs font-medium shadow-sm transition hover:bg-gray-100 deactivate-action"
+                                title="Deactivate">
+                                Deactivate
+                            </button>
+                        `;
+                    } else {
+                        buttons += `
+                            <button
+                                data-id="${row.id}"
+                                class="inline-flex items-center mt-1 border justify-center gap-2 rounded-md px-4 py-2 text-xs font-medium shadow-sm transition hover:bg-gray-100 activate-action"
+                                title="Activate">
+                                Activate
+                            </button>
+                        `;
+                    }
+
                     return buttons;
                 }
             },
@@ -276,31 +319,31 @@ $(document).ready(function() {
              "<'row'<'col-sm-12'tr>>" +
              "<'row mt-3'<'col-sm-5'i><'col-sm-7'p>>",
         language: {
-                        paginate: {
-                            previous: "←",
-                            next: "→"
-                        }
-                    },
-       buttons: [
-                        {
-                            extend: 'excelHtml5',
-                            text: '<i class="fas fa-download"></i>EXCEL',
-                            className: 'excel-export-btn',
-                            title: 'External Partners',
-                            exportOptions: {
-                                columns: ':not(:last-child)'
-                            }
-                        },
-                        {
-                            extend: 'pdfHtml5',
-                            text: '<i class="fas fa-download"></i>PDF',
-                            className: 'pdf-export-btn',
-                            title: 'External Partners',
-                            exportOptions: {
-                                columns: ':not(:last-child)'
-                            }
-                        }
-                    ]
+            paginate: {
+                previous: "←",
+                next: "→"
+            }
+        },
+        buttons: [
+            {
+                extend: 'excelHtml5',
+                text: '<i class="fas fa-download"></i>EXCEL',
+                className: 'excel-export-btn',
+                title: 'External Partners',
+                exportOptions: {
+                    columns: ':not(:last-child)'
+                }
+            },
+            {
+                extend: 'pdfHtml5',
+                text: '<i class="fas fa-download"></i>PDF',
+                className: 'pdf-export-btn',
+                title: 'External Partners',
+                exportOptions: {
+                    columns: ':not(:last-child)'
+                }
+            }
+        ]
    });
 
   
@@ -345,35 +388,64 @@ $(document).ready(function() {
        activeDropdown = button; 
    });
 
-   // Handle delete action
-   $(document).on('click', '.delete-action', function(e) {
-       e.preventDefault();
-       const id = $(this).data('id');
-       
-       if (confirm('Are you sure you want to delete this external partner?')) {
-           $.ajax({
-               url : route('registry.external-partners.destroy', id),
-               type : 'DELETE',
-               headers :{
-                   'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') 
-               },
-               success(response) {
-                   $('#externalPartnersTable').DataTable().ajax.reload();
-                   alert('External partner deleted successfully'); 
-               },
-               error(xhr) {
-                   alert('Error deleting external partner'); 
-               } 
-           });
-       }
-       closeAllDropdowns(); 
-   });
+   // Handle deactivate action
+    $(document).on('click', '.deactivate-action', function(e) {
+        e.preventDefault();
+
+        const id = $(this).data('id');
+
+        if (confirm('Are you sure you want to deactivate this external partner?')) {
+            $.ajax({
+                url: route('registry.external-partners.deactivate', id),
+                type: 'PATCH',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success(response) {
+                    $('#externalPartnersTable').DataTable().ajax.reload();
+                    alert('External Partner deactivated successfully.');
+                },
+                error(xhr) {
+                    alert('Unable to deactivate external partner.');
+                }
+            });
+        }
+
+        closeAllDropdowns();
+    });
+
+
+    // Handle activate action
+    $(document).on('click', '.activate-action', function(e) {
+        e.preventDefault();
+
+        const id = $(this).data('id');
+
+        if (confirm('Are you sure you want to activate this external partner?')) {
+            $.ajax({
+                url: route('registry.external-partners.activate', id),
+                type: 'PATCH',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success(response) {
+                    $('#externalPartnersTable').DataTable().ajax.reload();
+                    alert('External partner activated successfully.');
+                },
+                error(xhr) {
+                    alert('Unable to activate external partner.');
+                }
+            });
+        }
+        closeAllDropdowns();
+    });
 
    function route(name, id) {
       return {
           'registry.external-partners.show': "{{ route('registry.external-partners.show', ':id') }}".replace(':id', id),
           'registry.external-partners.edit': "{{ route('registry.external-partners.edit', ':id') }}".replace(':id', id),
-          'registry.external-partners.destroy': "{{ route('registry.external-partners.destroy', ':id') }}".replace(':id', id)
+          'registry.external-partners.deactivate': "{{ route('registry.external-partners.deactivate', ':id') }}".replace(':id', id),
+          'registry.external-partners.activate': "{{ route('registry.external-partners.activate', ':id') }}".replace(':id', id)
       }[name];
    }
 });

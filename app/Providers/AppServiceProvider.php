@@ -7,6 +7,9 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Socialite\Contracts\Factory as SocialiteFactory;
+use SocialiteProviders\Keycloak\KeycloakExtendSocialite;
+use SocialiteProviders\Manager\SocialiteWasCalled;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,6 +29,11 @@ class AppServiceProvider extends ServiceProvider
         if (config('app.env') === 'production') {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
+
+        // $this->app->make('events')->listen(
+        //     SocialiteWasCalled::class,
+        //     KeycloakExtendSocialite::class . '@handle'
+        // );
     }
 }
 

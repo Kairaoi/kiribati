@@ -36,14 +36,8 @@ class FileCirculation extends Model implements Auditable
         'ufs_approved_at',
         'ufs_rejected_at',
         'ufs_comment',
-        'signed_by',
-        'signature_path',
-        'signed_at',
         'received_at',
         'received_by',
-        'rendered_pdf_path',
-        'rendered_pdf_hash',
-        'rendered_pdf_at',
         'approval_comment',
         'approved_by',
         'approved_at',
@@ -72,10 +66,7 @@ class FileCirculation extends Model implements Auditable
         return $this->belongsTo(User::class, 'colleague_id');
     }
 
-    public function signedBy()
-    {
-        return $this->belongsTo(User::class, 'signed_by');
-    }
+  
 
     public function recipientMinistries()
     {
@@ -143,6 +134,11 @@ class FileCirculation extends Model implements Auditable
     public function updatedBy()
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function receivedBy()
+    {
+        return $this->belongsTo(User::class, 'received_by');
     }
 
 

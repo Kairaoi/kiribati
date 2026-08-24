@@ -375,6 +375,7 @@
                             next: "→"
                         }
                     },
+                    searching: true,
                     buttons: [
                         {
                             extend: 'excelHtml5',

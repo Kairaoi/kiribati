@@ -41,8 +41,8 @@ class FileTypeController extends Controller {
     {
         $selectedType = $request->get('selected_type');
 
-        $ministryId = auth()->user()?->ministry_id;
-        $user = auth()->user();
+        $ministryId = Auth::user()?->ministry_id;
+        $user = Auth::user();
 
         if (!$ministryId) {
             abort(403, 'Ministry not found');
@@ -57,7 +57,7 @@ class FileTypeController extends Controller {
         
         $datatables = DataTables::make($query)
                         ->addColumn('can_edit', function ($row) {
-                            return auth()->user()->hasRole('system-admin');
+                            return Auth::user()->hasRole('system-admin');
                         })
                         ->make(true);
         
@@ -132,7 +132,7 @@ class FileTypeController extends Controller {
                 'string',
                 function ($attribute, $value, $fail) {
 
-                    $orgId = auth()->user()->ministry_id;
+                    $orgId = Auth::user()->ministry_id;
 
                     $exists = DB::table('file_types')
                         ->where('name', $value)
@@ -155,7 +155,7 @@ class FileTypeController extends Controller {
                 'max:3',
                 'regex:/^[A-Z]{2,3}$/',
                 Rule::unique('file_types')->where(function ($query) {
-                    $orgId = auth()->user()->ministry_id;
+                    $orgId = Auth::user()->ministry_id;
 
                     $query->where(function ($q) use ($orgId) {
                         $q->where('is_global', 1)
@@ -169,7 +169,7 @@ class FileTypeController extends Controller {
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'code' => $validated['code'],
-            'ministry_id' => auth()->user()->ministry_id,
+            'ministry_id' => Auth::user()->ministry_id,
             'is_global' => false,
         ]);
 
@@ -184,18 +184,26 @@ class FileTypeController extends Controller {
      */
     public function show(FileType $fileType)
     {
-        // if (!Auth::user()->can('file_type.show')) {
-        //     abort(403, 'Unauthorized action.');
-        // }
+        
+        $totalFiles = $fileType->files()
+                                ->where('ministry_id', Auth::user()->ministry_id)
+                                ->count();
 
-        return view('national.eregistry.file_types.show', compact('fileType'));
+        $activeFiles = $fileType->files()
+            ->where('ministry_id', Auth::user()->ministry_id)
+            ->where('is_active', true)
+            ->count();
+
+        return view('national.eregistry.file_types.show', compact('fileType',
+                                                                   'totalFiles',
+                                                                   'activeFiles'));
     }
 
 
     public function suggestions(Request $request)
     {
         $query = $request->q;
-        $orgId = auth()->user()->ministry_id;
+        $orgId = Auth::user()->ministry_id;
 
         return FileType::where('name', 'LIKE', "%{$query}%")
             ->where(function ($q) use ($orgId) {
@@ -210,7 +218,7 @@ class FileTypeController extends Controller {
     public function codeSuggestions(Request $request)
     {
         $query = $request->q;
-        $orgId = auth()->user()->ministry_id;
+        $orgId = Auth::user()->ministry_id;
 
         return FileType::where('code', 'LIKE', "%{$query}%")
             ->where(function ($q) use ($orgId) {
@@ -236,7 +244,7 @@ class FileTypeController extends Controller {
 
         $fileType = $this->fileTypes->getById($id);
 
-        return view('national.eregistry.file_types.edit')->with('fileType', $fileType);
+        return view('national.eregistry.file_types.edit', compact('fileType'));
     }
 
     /**
@@ -246,33 +254,70 @@ class FileTypeController extends Controller {
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    // public function update(Request $request, FileType $fileType)
+    // {
+    //     $validated = $request->validate([
+    //         'name' => [
+    //             'required',
+    //             'string',
+    //             'max:255',
+    //             function ($attribute, $value, $fail) use ($fileType) {
+
+    //                 $orgId = Auth::user()->ministry_id;
+
+    //                 $exists = DB::table('file_types')
+    //                     ->where('name', trim($value))
+    //                     ->where('id', '!=', $fileType->id)
+    //                     ->where(function ($query) use ($orgId) {
+    //                         $query->where('is_global', true)
+    //                             ->orWhere('ministry_id', $orgId);
+    //                     })
+    //                     ->exists();
+
+    //                 if ($exists) {
+    //                     $fail('A file type with this name already exists.');
+    //                 }
+    //             },
+    //         ],
+    //         'description' => [
+    //             'required',
+    //             'string',
+    //             'max:255',
+    //         ],
+
+    //     ]);
+        
+
+    //     $fileType = $this->fileTypes->getById($id);
+
+    //     $this->fileTypes->update($fileType, $request->all());
+
+    //     return redirect()->route('file_type.index')->with('message', 'File Type updated successfully.');
+    // }
+
+
+    public function activate(FileType $fileType)
     {
-        if (!Auth::user()->can('file_type.update')) {
-            abort(403, 'Unauthorized action.');
-        }
+        $fileType->update([
+            'is_active' => true,
+            'updated_by' => auth()->id(),
+        ]);
 
-        $fileType = $this->fileTypes->getById($id);
-        $this->fileTypes->update($fileType, $request->all());
-
-        return redirect()->route('file_type.index')->with('message', 'File Type updated successfully.');
+        return response()->json([
+            'message' => 'File Type activated successfully.'
+        ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
+
+    public function deactivate(FileType $fileType)
     {
-        if (!Auth::user()->can('file_type.delete')) {
-            abort(403, 'Unauthorized action.');
-        }
+        $fileType->update([
+            'is_active' => false,
+            'updated_by' => auth()->id(),
+        ]);
 
-        $fileType = $this->fileTypes->getById($id);
-        $this->fileTypes->delete($fileType);
-
-        return redirect()->route('file_type.index')->with('message', 'File Type deleted successfully.');
+        return response()->json([
+            'message' => 'File Type deactivated successfully.'
+        ]);
     }
 }

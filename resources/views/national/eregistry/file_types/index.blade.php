@@ -25,13 +25,14 @@
     </div>
 
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">        
-        <table id="fileTypesTable" class="w-full text-sm text-left">
+        <table id="fileTypesTable" class="w-full text-sm table-auto">
             <thead class="bg-gray-50 text-gray-600 text-sm uppercase tracking-wide">
                 <tr>
                     <th>ID</th>
                     <th>FILE TYPE NAME</th>
                     <th>CODE</th>
                     <th>SCOPE</th>
+                    <th>STATUS</th>
                     <th class="w-28">Actions</th>
                 </tr>
             </thead>
@@ -44,12 +45,13 @@
 @push('styles')
 <style>
     /* Table Styles */
-   table.dataTable {
-        width: 100%;
-        border-collapse: collapse;
-        /* font-size: 0.85rem; */
-        border-left: 0.5px solid #d3d3d8;
-        border-right: 0.5px solid #d3d3d8;
+    #fileTypesTable {
+            width:100% !important;
+            border-collapse: separate;
+            table-layout:auto;
+            border: 0.5px solid #f2f2f5;
+            border-radius: 8px;
+            overflow: hidden;
     }
 
     /* Header */
@@ -58,29 +60,32 @@
         color: #6b7280;
         text-transform: uppercase;
         font-size: 12px;
+       
     }
 
     /* Cells */
     #fileTypesTable th,
     #fileTypesTable td {
-        padding: 14px 16px;
+        padding: 8px 10px;
     }
 
     /* Row divider */
     #fileTypesTable tbody tr {
-        border-bottom: 1px solid #e5e7eb;
+        border-bottom: 0.5px solid #ffffff;
+        padding: 8px 10px;
     }
 
     /* Hover effect */
     #fileTypesTable tbody tr:hover {
         background-color: #f9fafb;
-        bg-cyan-50/40 transition;
+        padding: 8px 10px;
     }
 
     /* Fix long text */
     #fileTypesTable td {
         white-space: normal !important;
-        /* word-break: break-word; */
+        border: 1px solid #dbdbe2;
+        word-break: break-word;
     }
     .dataTables_filter input {
         border: 1px solid #d1d5db;
@@ -101,7 +106,7 @@
     }
 
     /* Action Button Styles */ 
-     /* .action-btn {
+    .action-btn {
         cursor: pointer;
         padding: 0.5rem 1rem;
         border-radius: 9999px;
@@ -111,7 +116,7 @@
 
     .action-btn:hover {
         background-color: #e5e7eb;
-    } */
+    }
 
     /* Dropdown Menu Styles */
     .dropdown-menu {
@@ -231,7 +236,7 @@ $(document).ready(function() {
        if (!$(e.target).closest('.action-dropdown').length) {
            closeAllDropdowns();
        }
-   });
+    });
 
    function closeAllDropdowns() {
        $('.dropdown-menu').remove();
@@ -268,57 +273,106 @@ $(document).ready(function() {
            {
                 data: 'is_global',
                 render: function (data, type, row) {
-
                     return data
                         ? `
                             <span class="inline-flex items-center rounded-full bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-700 ring-1 ring-cyan-100">
                                 <span class="mr-1.5 h-1.5 w-1.5 rounded-full bg-cyan-500"></span>
-                                Global
+                                Government-wide
                             </span>
                         `
                         : `
                             <span class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-100">
                                 <span class="mr-1.5 h-1.5 w-1.5 rounded-full bg-amber-500"></span>
-                                Ministry
+                                Ministry-specific
                             </span>
                         `;
                 }
             },
-           {
+
+            {
+                data: 'is_active',
+                render: function (data, type, row) {
+                    return data
+                        ? `
+                            <span class="inline-flex items-center rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700 ring-1 ring-green-100">
+                                <span class="mr-1.5 h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                                Active
+                            </span>
+                        `
+                        : `
+                            <span class="inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700 ring-1 ring-red-100">
+                                <span class="mr-1.5 h-1.5 w-1.5 rounded-full bg-red-500"></span>
+                                Inactive
+                            </span>
+                        `;
+                }
+            },
+            {
                 data: null,
                 orderable: false,
                 name: 'actions',
                 searchable: false,
                 render: function (data, type, row) {
                     let buttons = `
-                        <a href="/registry/file-types/${row.id}/show" 
-                        class="btn btn-sm" 
-                        title="Show">
-                            <i class="fas fa-eye"></i>
+                        <a href="/registry/file-types/${row.id}"
+                            class="inline-flex items-center border justify-center gap-2 rounded-md px-4 py-2 text-xs font-medium shadow-sm transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+                            title="Show">
+                            View
                         </a>
-
                     `;
-                    if (!row.is_global || row.can_edit) {
+
+                    const isActive = Number(row.is_active);
+
+                    if ((!row.is_global || row.can_edit) && isActive === 1) {
                         buttons += `
-                            <a href="/registry/file-types/${row.id}/edit" 
-                            class="btn btn-sm" 
-                            title="Edit">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <button data-id="${row.id}" 
-                                class="btn btn-sm delete-btn" 
-                                title="Delete">
-                                <i class="fas fa-trash"></i>
+                            <button
+                                data-id="${row.id}"
+                                class="inline-flex items-center mt-1 border justify-center gap-2 rounded-md px-4 py-2 text-xs font-medium shadow-sm transition hover:bg-gray-100 deactivate-action"
+                                title="Deactivate">
+                                Deactivate
+                            </button>
+                        `;
+                    } else if ((!row.is_global || row.can_edit) && isActive === 0) {
+                        buttons += `
+                            <button
+                                data-id="${row.id}"
+                                class="inline-flex items-center mt-1 border justify-center gap-2 rounded-md px-4 py-2 text-xs font-medium shadow-sm transition hover:bg-gray-100 activate-action"
+                                title="Activate">
+                                Activate
                             </button>
                         `;
                     }
+
                     return buttons;
                 }
-            },
+            }
        ],
-        dom: "<'flex flex-col md:flex-row md:items-center md:justify-between mb-4'Bf>" +
-        "rt" +
-        "<'flex flex-col md:flex-row md:items-center md:justify-between mt-4'lip>",
+
+        columnDefs: [
+            
+            {
+                targets: 2, // Code
+                width: 'auto'
+            },
+            {
+                targets: 3, // Scope
+                width: 'auto'
+            },
+             {
+                targets: 4, // Scope
+                width: 'auto'
+            },
+            {
+                targets: 5, // Actions
+                width: 'auto',
+                orderable: false,
+                searchable: false
+            }
+        ],
+         dom:   "<'row mb-3'<'col-md-6 d-flex align-items-center'B><'col-12 col-md-6 text-md-end text-start'f>>" +
+                        "<'row'<'col-sm-12'tr>>" +
+                        "<'row mt-3'<'col-sm-5'i><'col-sm-7'p>>",
+
         language: {
                         paginate: {
                             previous: "←",
@@ -346,6 +400,8 @@ $(document).ready(function() {
                         }
                     ]
    });
+
+   table.columns.adjust();
 
    // Reload table when initial type changes
     $('#fileTypeFilter').on('change', function() {
@@ -393,35 +449,66 @@ $(document).ready(function() {
        activeDropdown = button; 
    });
 
-   // Handle delete action
-   $(document).on('click', '.delete-action', function(e) {
-       e.preventDefault();
-       const id = $(this).data('id');
-       
-       if (confirm('Are you sure you want to delete this file type?')) {
-           $.ajax({
-               url : route('registry.file-types.destroy', id),
-               type : 'DELETE',
-               headers :{
-                   'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') 
-               },
-               success(response) {
-                   $('#fileTypesTable').DataTable().ajax.reload();
-                   alert('File type deleted successfully'); 
-               },
-               error(xhr) {
-                   alert('Error deleting file type'); 
-               } 
-           });
-       }
-       closeAllDropdowns(); 
-   });
+    // Handle deactivate action
+    $(document).on('click', '.deactivate-action', function(e) {
+        e.preventDefault();
+
+        const id = $(this).data('id');
+
+        if (confirm('Are you sure you want to deactivate this file type?')) {
+            $.ajax({
+                url: route('registry.file-types.deactivate', id),
+                type: 'PATCH',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success(response) {
+                    $('#fileTypesTable').DataTable().ajax.reload();
+                    alert('File type deactivated successfully.');
+                },
+                error(xhr) {
+                    alert('Unable to deactivate file type.');
+                }
+            });
+        }
+
+        closeAllDropdowns();
+    });
+
+
+    // Handle activate action
+    $(document).on('click', '.activate-action', function(e) {
+        e.preventDefault();
+
+        const id = $(this).data('id');
+
+        if (confirm('Are you sure you want to activate this file type?')) {
+            $.ajax({
+                url: route('registry.file-types.activate', id),
+                type: 'PATCH',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success(response) {
+                    $('#fileTypesTable').DataTable().ajax.reload();
+                    alert('File type activated successfully.');
+                },
+                error(xhr) {
+                    alert('Unable to activate file type.');
+                }
+            });
+        }
+
+        closeAllDropdowns();
+    });
 
    function route(name, id) {
       return {
           'registry.file-types.show': "{{ route('registry.file-types.show', ':id') }}".replace(':id', id),
           'registry.file-types.edit': "{{ route('registry.file-types.edit', ':id') }}".replace(':id', id),
-          'registry.file-types.destroy': "{{ route('registry.file-types.destroy', ':id') }}".replace(':id', id)
+          'registry.file-types.deactivate': "{{ route('registry.file-types.deactivate', ':id') }}".replace(':id', id),
+          'registry.file-types.activate': "{{ route('registry.file-types.activate', ':id') }}".replace(':id', id)
+
       }[name];
    }
 });

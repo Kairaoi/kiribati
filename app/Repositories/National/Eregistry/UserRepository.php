@@ -7,6 +7,7 @@ use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Role;
 
 class UserRepository extends BaseRepository
 {
@@ -56,18 +57,19 @@ class UserRepository extends BaseRepository
      * @param array $input
      * @return bool
      */
-    public function update(User $model, array $input)
+    public function update(User $user, array $data): User
     {
-        $data = [
-            'first_name' => $input['first_name'] ?? $model->name,
-            'email' => $input['email'] ?? $model->email,
-            'password' => isset($input['password']) ? bcrypt($input['password']) : $model->password,
-            'current_team_id' => $input['current_team_id'] ?? $model->current_team_id,
-            'profile_photo_path' => $input['profile_photo_path'] ?? $model->profile_photo_path,
-            'updated_by' => Auth::id(),
-        ];
+        $user->update([
+            'first_name'  => $data['first_name'],
+            'last_name'   => $data['last_name'],
+            'email'       => $data['email'],
+            'division_id' => $data['division_id'],
+            'designation' => $data['designation'],
+            'is_active'   => $data['is_active'] ?? false,
+            'updated_by'  => auth()->id(),
+        ]);
 
-        return $model->update($data);
+        return $user;
     }
 
     /**
@@ -83,6 +85,7 @@ class UserRepository extends BaseRepository
         $query = $this->model->query()
         ->select([
             'users.id',
+            'users.uuid as uuid',
             'users.first_name',
             'users.last_name',
             'users.email',
@@ -107,7 +110,6 @@ class UserRepository extends BaseRepository
         
         );
 
-
         if ($user->hasRole('system-admin')) {
              // System admin sees all users
         } else if ($user->hasRole('ministry-admin') || $user->hasRole('registry')) {
@@ -118,7 +120,24 @@ class UserRepository extends BaseRepository
                 });
         }
 
-        
+           
+        if (!empty(trim($search))) {
+        $search = '%' . strtolower(trim($search)) . '%';
+
+        $query->where(function ($q) use ($search) {
+            $q->whereRaw('LOWER(users.first_name) LIKE ?', [$search])
+                ->orWhereRaw('LOWER(users.last_name) LIKE ?', [$search])
+                ->orWhereRaw(
+                    "LOWER(CONCAT(users.first_name, ' ', users.last_name)) LIKE ?",
+                    [$search]
+                )
+                ->orWhereRaw('LOWER(users.email) LIKE ?', [$search])
+                ->orWhereRaw('LOWER(users.designation) LIKE ?', [$search])
+                ->orWhereRaw('LOWER(divisions.name) LIKE ?', [$search])
+                ->orWhereRaw('LOWER(ministries.code) LIKE ?', [$search])
+                ->orWhereRaw('LOWER(roles.name) LIKE ?', [$search]);
+        });
+    }
         return $query->orderBy('users.created_at', 'desc');
     }
 
@@ -131,7 +150,7 @@ class UserRepository extends BaseRepository
      */
     public function pluck($column = 'first_name', $key = 'id')
     {
-        $ministry_id = auth()->user()->ministry_id;
+        $ministry_id = Auth::user()->ministry_id;
 
         //return users name and id for the logged in organisation 
         //and with the role of 'admin'
@@ -166,9 +185,11 @@ class UserRepository extends BaseRepository
         // dd(Auth::user()->ministry_id);
 
         return $this->model->query()
-            ->select('users.id', 'users.division_id', 'users.first_name', 'users.last_name', 'divisions.name as division_name')
+            ->select('users.id', 'users.division_id', 'users.first_name', 'users.last_name', 'divisions.name as division_name', 'users.designation')
             ->join('divisions', 'users.division_id', '=', 'divisions.id')
             ->where('users.ministry_id', Auth::user()->ministry_id)->where('users.email', '!=', 'admin@system.gov.ki')
+            ->where('users.id', '!=', Auth::user()->id)
+            ->where('users.is_active', true)
             ->orderBy('divisions.name')
             ->orderBy('users.first_name')
             ->orderBy('users.last_name')
@@ -176,11 +197,11 @@ class UserRepository extends BaseRepository
     }
 
 
-      /**
-     * Get users in the same division in the same organisation
-     *
-     * @return \Illuminate\Database\Eloquent\Collection
-     */
+    /**
+    * Get users in the same division in the same organisation
+    *
+    * @return \Illuminate\Database\Eloquent\Collection
+    */
     public function getDivisionUsers($userDivisionId)
     {
 
@@ -194,12 +215,33 @@ class UserRepository extends BaseRepository
                     'users.designation as designation',
                     'users.is_active as is_active')
             ->join('divisions', 'users.division_id', '=', 'divisions.id')
+            ->where('users.id', '!=', Auth::user()->id)
+            ->where('users.is_active', true)
             ->where('users.ministry_id', Auth::user()->ministry_id)->where('users.email', '!=', 'admin@system.gov.ki')
             ->where('users.division_id', $userDivisionId)
             ->orderBy('divisions.name')
             ->orderBy('users.first_name')
             ->orderBy('users.last_name')
             ->get();
+    }
+
+    public function updateMainRole(User $user, int $roleId): void
+    {
+        $role = Role::findOrFail($roleId);
+
+        $editableRoles = [
+            'user',
+            'registry',
+            'ministry-admin',
+        ];
+
+        foreach ($editableRoles as $editableRole) {
+            if ($user->hasRole($editableRole)) {
+                $user->removeRole($editableRole);
+            }
+        }
+
+        $user->assignRole($role);
     }
 
 }

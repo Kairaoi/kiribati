@@ -327,7 +327,7 @@ class FileCirculationRepository extends BaseRepository
      */
     public function pluck($column = 'name', $key = 'id')
     {
-        $ministryId = auth()->user()->ministry_id;
+        $ministryId = Auth::user()->ministry_id;
     
         return $this->model()::query()
                 ->where('to_ministry_id', $ministryId)

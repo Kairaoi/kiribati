@@ -53,7 +53,7 @@
                     Active Files
                 </a>
 
-                @if(auth()->user()->hasRole('registry'))
+                @if(Auth::user()->hasRole('registry'))
                     <!-- Closed -->
                     <a href="{{ route('registry.files.index', ['type' => 'closed']) }}"
                         class="pb-3 text-sm font-semibold border-b-2 transition
@@ -75,7 +75,7 @@
             </nav>
         </div> --}}
 {{-- 
-        @if(auth()->user()->hasRole('registry'))
+        @if(Auth::user()->hasRole('registry'))
             @if(request('type') === 'closed')
                 <div class="bg-gray-50 p-3 rounded-md">
                     <div class="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
@@ -332,8 +332,8 @@
         <script>
             $(document).ready(function() {
                 let activeDropdown = null;
-                const isReviewOfficer = @json(auth()->user()->hasRole('review-officer'));
-                const isAdmin = @json(auth()->user()->hasRole('admin'));
+                const isReviewOfficer = @json(Auth::user()->hasRole('review-officer'));
+                const isAdmin = @json(Auth::user()->hasRole('admin'));
 
                 // Close dropdown when clicking outside
                 $(document).on('click', function(e) {

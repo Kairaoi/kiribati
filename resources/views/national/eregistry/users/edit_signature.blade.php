@@ -11,10 +11,10 @@
         <p class="text-sm text-gray-600 mb-4">
             Signature images should be tightly cropped with little or no surrounding white space to ensure proper placement and appearance in generated documents and PDF files.
         </p>
-        @if(auth()->user()->signature_path)
+        @if(Auth::user()->signature_path)
             <div class="mb-6">
                 <div class="inline-block bg-white border rounded-xl p-4 shadow-sm">
-                    <img src="{{ Storage::url(auth()->user()->signature_path) }}"
+                    <img src="{{ Storage::url(Auth::user()->signature_path) }}"
                         alt="Official Signature"
                         class="h-24 object-contain">
                 </div>
@@ -27,6 +27,10 @@
             @method('PATCH')
             <input type="file" name="signature" class="w-full border border-gray-300 text-sm rounded-md px-4 py-2 focus:ring focus:ring-cyan-200">
 
+            @error('signature')
+                <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+            @enderror
+            
             <button type="submit"
                     class="w-full flex px-4 py-2 justify-center bg-cyan-600 hover:bg-cyan-700 text-white mt-2 rounded-md font-semibold">
                 Update Signature

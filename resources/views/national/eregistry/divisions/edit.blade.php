@@ -47,7 +47,7 @@
                             <div class="mt-2">
                                 <a href="{{ route('registry.divisions.assign-hod', $division) }}"
                                 class="text-xs font-medium text-cyan-600 hover:text-cyan-800">
-                                    Change HOD
+                                    Edit
                                 </a>
                             </div>
                         </dd>

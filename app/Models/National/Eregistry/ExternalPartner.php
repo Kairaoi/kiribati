@@ -18,12 +18,18 @@ class ExternalPartner extends Model implements Auditable
         'name',
         'location',
         'ministry_id',
+        'phone',
+        'email',
         'identity_organisation_id',
         'organisation_type_id',
         'is_active',
         'created_by',
         'updated_by',
         
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean'
     ];
 
     public function organisationType()

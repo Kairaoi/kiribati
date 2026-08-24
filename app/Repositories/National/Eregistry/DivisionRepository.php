@@ -30,8 +30,13 @@ class DivisionRepository extends BaseRepository
             'ministry_id' => $input['ministry_id'],
             'name' => $input['name'],
             'is_active' => $input['is_active'] ?? true,
-            'created_at' => Auth::id(),
-            'updated_at' => Auth::id(),
+            'created_at' => now(),
+            'updated_at' => now(),
+            'location' => $input['location'] ?? null,
+            'email' => $input['email'] ?? null,
+            'phone' => $input['phone'] ?? null,
+            'created_by' => Auth::id(),
+            'updated_by' => Auth::id(),
         ];
 
         $division = $this->model();
@@ -75,13 +80,14 @@ class DivisionRepository extends BaseRepository
 
         $query = $this->model->query()
             ->select(['divisions.id as id', 
-                      'ministries.code as ministry_code', 
                       'divisions.name as division_name', 
                       'divisions.location as location', 
                       'divisions.is_active as is_active',
                       'divisions.created_at as created_at',
                       DB::raw("CONCAT(users.first_name, ' ', users.last_name) as hod_name"),
                       'divisions.updated_at as updated_at'])
+
+                      
             ->join('ministries', 'divisions.ministry_id', '=', 'ministries.id')
             ->leftJoin('users', 'divisions.hod_id', '=', 'users.id');
 
@@ -91,13 +97,18 @@ class DivisionRepository extends BaseRepository
                 $query->where('divisions.ministry_id', $ministryId); // Filter by ministry
             }   
 
-        // Apply search filter if provided
-        if (!empty($search)) {
-            $search = '%' . strtolower($search) . '%';
+    
+        if (!empty(trim($search))) {
+            $search = '%' . strtolower(trim($search)) . '%';
+
             $query->where(function ($q) use ($search) {
-                $q->where('divisions.name', 'ILIKE', $search)
-                ->orWhere('divisions.code', 'ILIKE', $search)
-                ->orWhere('divisions.description', 'ILIKE', $search);
+                $q->whereRaw('LOWER(divisions.name) LIKE ?', [$search])
+                    ->orWhereRaw('LOWER(ministries.code) LIKE ?', [$search])
+                    ->orWhereRaw('LOWER(divisions.location) LIKE ?', [$search])
+                    ->orWhereRaw(
+                        "LOWER(CONCAT(users.first_name, ' ', users.last_name)) LIKE ?",
+                        [$search]
+                    );
             });
         }
 

@@ -46,7 +46,7 @@ class MFEDUserSeeder extends Seeder
         
 
         $user1 = User::withTrashed()->updateOrCreate(
-            ['email' => 'secretary@mfed.gov.ki'],
+            ['email' => 'secretarytest@mfed.gov.ki'],
             [
                 'first_name' => 'Domingo',
                 'last_name' => 'Kabunare',
@@ -62,7 +62,7 @@ class MFEDUserSeeder extends Seeder
         // $ministry->save();
 
         $user2 = User::withTrashed()->updateOrCreate(
-            ['email' => 'ds@mfed.gov.ki'],
+            ['email' => 'dstest@mfed.gov.ki'],
             [
                 'first_name' => 'Jane',
                 'last_name' => 'Austen',
@@ -76,7 +76,7 @@ class MFEDUserSeeder extends Seeder
         $user2->assignRole('ministry-admin');
 
         $user3 = User::withTrashed()->updateOrCreate(
-            ['email' => 'sas@mfed.gov.ki'],
+            ['email' => 'sastest@mfed.gov.ki'],
             [
                 'first_name' => 'Samuel',
                 'last_name' => 'Adams',
@@ -90,7 +90,7 @@ class MFEDUserSeeder extends Seeder
         $user3->assignRole('ministry-admin');
 
         $user4 = User::withTrashed()->updateOrCreate(
-            ['email' => 'custom@mfed.gov.ki'],
+            ['email' => 'customtest@mfed.gov.ki'],
             [
                 'first_name' => 'Teringa',
                 'last_name' => 'Toabwa',
@@ -104,7 +104,7 @@ class MFEDUserSeeder extends Seeder
         $user4->assignRole('user');
         
         $user5 = User::withTrashed()->updateOrCreate(
-            ['email' => 'om@mfed.gov.ki'],
+            ['email' => 'omtest@mfed.gov.ki'],
             [
                 'first_name' => 'Tetobi',
                 'last_name' => 'Mariko',

@@ -1,204 +1,188 @@
 @extends('layouts.app')
 
-@section('title', 'Assign HOD')
-
 @section('content')
-<div class="max-w-3xl mx-auto">
-    <div class="mt-4 mb-4 shadow rounded-lg">
+<div class="container mx-auto font-montserrat px-4 py-6 max-w-5xl">
+    <h1 class="flex mt-4 text-xl font-bold mb-6">Edit User</h1>
 
-        <form action="{{ route('registry.users.update', $user) }}" method="POST">
-            @csrf
-            @method('PUT')
+    @if ($errors->any())
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <ul class="list-disc pl-5">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+    <form action="{{ route('registry.users.update', $user) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+        @csrf
+        @method('PUT')
 
-            <div class="rounded-xl border border-gray-200 bg-white shadow-sm">
-                <div class="border-b border-gray-200 px-6 py-4">
-                    <h2 class="text-lg font-semibold text-gray-900">
-                       Edit User
-                    </h2>
-                </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
 
-                <dl>
-                    <div class="grid grid-cols-1 gap-2 px-6 py-4 sm:grid-cols-3">
-                        <dt class="text-sm font-medium text-gray-500">
-                            First Name
-                        </dt>
+              <!-- Ministry -->
+            <div>
+                <label for="ministry_id" class="block text-sm font-medium text-gray-700">Ministry/Public Body: <span class="text-red-600">*</span></label>
+                @role('registry')
+                    <input type="text"
+                            name="ministry_id"
+                            id="ministry_id"
+                            value="{{ Auth::user()->ministry?->name ?? 'N/A' }}"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-700 sm:text-sm"
+                            readonly>
+                @endrole
+                @hasrole('system-admin')
+                        <select name="ministry_id" id="ministry_id"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
+                            required>
+                            <option value="">-- Select Ministry --</option>
 
-                        <dd class="sm:col-span-2">
-                            <input
-                                type="text"
-                                name="first_name"
-                                id="first_name"
-                                value="{{ old('first_name', $user->first_name) }}"
-                                class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                required
-                            >
-
-                            @error('first_name')
-                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </dd>
-                    </div>
-
-                    <div class="grid grid-cols-1 gap-2 px-6 py-4 sm:grid-cols-3">
-                        <dt class="text-sm font-medium text-gray-500">
-                            Last Name
-                        </dt>
-
-                        <dd class="sm:col-span-2">
-                            <input
-                                type="text"
-                                name="last_name"
-                                id="last_name"
-                                value="{{ old('last_name', $user->last_name) }}"
-                                class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                required
-                            >
-
-                            @error('last_name')
-                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </dd>
-                    </div>
-
-                    <div class="grid grid-cols-1 gap-2 px-6 py-4 sm:grid-cols-3">
-                        <dt class="text-sm font-medium text-gray-500">
-                            Designation
-                        </dt>
-
-                        <dd class="sm:col-span-2">
-                            <input
-                                type="text"
-                                name="designation"
-                                id="desination"
-                                value="{{ old('designation', $user->designation) }}"
-                                class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                required
-                            >
-
-                            @error('designation')
-                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </dd>
-                    </div>
-
-                    <div class="grid grid-cols-1 gap-2 px-6 py-4 sm:grid-cols-3">
-                        <dt class="text-sm font-medium text-gray-500">
-                            Email
-                        </dt>
-
-                        <dd class="sm:col-span-2">
-                            <input
-                                type="text"
-                                name="email"
-                                id="email"
-                                value="{{ old('email', $user->email) }}"
-                                class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                required
-                            >
-
-                            @error('email')
-                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </dd>
-                    </div>
-
-                    <div class="grid grid-cols-1 gap-2 px-6 py-4 sm:grid-cols-3">
-                        <dt class="text-sm font-medium text-gray-500">
-                            Division
-                        </dt>
-
-                        <dd class="sm:col-span-2">
-                            <select
-                                name="division_id"
-                                id="division_id"
-                                class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                            >
-                                <option value="">Select a division</option>
-
-                                @foreach($divisions as $division)
-                                    @if($division->organisation_id == auth()->user()->organisation_id)
-                                        <option
-                                            value="{{ $division->id }}"
-                                            @selected(old('division_id', $user->division_id) == $division->id)
-                                        >
-                                            {{ $division->name }}
-                                        </option>
-                                    @endif
-                                @endforeach
-                            </select>
-
-                            @error('division_id')
-                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </dd>
-                    </div>
-
-
-                    <div class="flex justify-end border-t border-gray-200 px-6 py-4">
-                        <button
-                            type="submit"
-                            class="inline-flex items-center rounded-lg bg-cyan-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
-                        >
-                            Save Changes
-                        </button>
-                    </div>
-                </dl>
+                            @foreach($ministries as $ministry)
+                                <option value="{{ $ministry->id }}" {{ old('ministry_id') == $ministry->id ? 'selected' : '' }}>
+                                    {{ $ministry->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                @endhasrole
             </div>
 
-            {{-- <div class="mt-6 rounded-xl border border-gray-200 bg-white shadow-sm">
-                <div class="border-b border-gray-200 px-6 py-4">
-                    <h2 class="text-lg font-semibold text-gray-900">
-                        Users in this Division
-                    </h2>
-                </div>
+            <!-- Division -->
+            <div>
+                    <label for="division" class="block text-sm font-medium text-gray-700"> Select division: <span class="text-red-600">*</span></label>
+                    <select name="division_id" id="division_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm" required>
+                        <option value="">Select a division </option>
+                        @foreach($divisions as $division)
+                            @if($division->organisation_id == Auth::user()->organisation_id)
+                                <option value="{{ $division->id }}"
+                                        @selected(old('division_id', $user->division_id) == $division->id)
+                                >
+                                    {{ $division->name }}
+                                </option>                            
+                            @endif
+                        @endforeach
+                    </select>
+            </div> 
 
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200 text-sm">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left font-semibold text-gray-600">Name</th>
-                                <th class="px-6 py-3 text-left font-semibold text-gray-600">Email</th>
-                                <th class="px-6 py-3 text-left font-semibold text-gray-600">Designation</th>
-                                <th class="px-6 py-3 text-left font-semibold text-gray-600">Status</th>
-                            </tr>
-                        </thead>
+            <!-- First Name -->
+            <div>
+                <label for="first_name" class="block text-sm font-medium text-gray-700">First Name: <span class="text-red-600">*</span></label>
+                <input type="text" name="first_name" id="first_name" value="{{ old('first_name', $user->first_name) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm" required>
+            </div>
 
-                        <tbody class="divide-y divide-gray-200 bg-white">
-                            @forelse($users as $user)
-                                <tr>
-                                    <td class="px-6 py-4 text-gray-900">
-                                        {{ $user->name }}
-                                    </td>
-                                    <td class="px-6 py-4 text-gray-700">
-                                        {{ $user->email }}
-                                    </td>
-                                    <td class="px-6 py-4 text-gray-700">
-                                        {{ $user->designation ?? '-' }}
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        @if($user->is_active)
-                                            <span class="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
-                                                Active
-                                            </span>
-                                        @else
-                                            <span class="rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">
-                                                Inactive
-                                            </span>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="4" class="px-6 py-6 text-center text-sm text-gray-500">
-                                        No users assigned to this division.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div> --}}
-        </form>
-    </div>
+            <!-- Last Name -->
+            <div>
+                <label for="last_name" class="block text-sm font-medium text-gray-700">Last Name: <span class="text-red-600">*</span></label>
+                <input type="text" name="last_name" id="last_name" value="{{ old('last_name', $user->last_name) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm" required>
+            </div>
+
+            <!-- Designation -->
+            <div>
+                <label for="designation" class="block text-sm font-medium text-gray-700">Designation: <span class="text-red-600">*</span></label>
+                <input type="text" name="designation" id="designation" value="{{ old('designation', $user->designation) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm" required>
+            </div>
+
+            <!-- Email -->
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700">Email: <span class="text-red-600">*</span></label>
+                <input type="email" name="email" id="email" value="{{ old('email', $user->email) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm" required>
+            </div>
+
+            <!-- Role -->
+            <div>
+                <label for="role" class="block text-sm font-medium text-gray-700">Select Role: <span class="text-red-600">*</span></label>
+                <select name="role" id="role" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm">
+                    <option value=""> Select a role</option>
+                    @foreach ($roles as $id => $name)
+                        <option value="{{ $id }}"
+                            {{ old('role_id', $currentRole?->id) == $id ? 'selected' : '' }}>
+                            {{ ucfirst($name) }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+                          
+        </div>
+            <button type="submit" class="w-full bg-cyan-600 text-white py-2 px-4 rounded-md hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
+                Create User
+            </button>
+    </form>
+
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+        <!-- JavaScript to toggle all checkboxes -->
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function () {
+            let fileCounter = 1;  // Start with the initial file
+            const container = document.getElementById('file-upload-container');
+            const addButton = document.getElementById('add-file-button');
+
+            addButton.addEventListener('click', function () {
+                if (fileCounter >= 3) {
+                    alert('You can only add up to 3 files.');
+                    return;
+                }
+
+                fileCounter++;
+                const newFileInput = document.createElement('div');
+                newFileInput.classList.add('file-upload-item', 'mt-4', 'border', 'p-4', 'rounded', 'relative');
+
+                newFileInput.innerHTML = `
+                    <label for="file_${fileCounter}" class="block text-sm font-medium text-gray-700">
+                        Upload Additional File (PDF only)
+                    </label>
+                    <input type="file" name="additional_files[]" id="file_${fileCounter}" accept="application/pdf"
+                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm" required>
+                    <button type="button" class="remove-file-button mt-2 inline-flex items-center px-3 py-1 bg-red-600 text-white text-sm rounded-md hover:bg-red-700">
+                        Remove File
+                    </button>
+                `;
+
+                container.appendChild(newFileInput);
+
+                // Add remove functionality
+                const removeButton = newFileInput.querySelector('.remove-file-button');
+                removeButton.addEventListener('click', function () {
+                    container.removeChild(newFileInput);
+                    fileCounter--; // Allow adding again when one is removed
+                });
+            });
+        });
+
+
+        document.getElementById('select_all_organisations').addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('input[name="organisations[]"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+        });
+
+        // Initialize Select2 for the file type dropdown
+        $(document).ready(function() {
+            $('#file_type_id').select2({
+                placeholder: "Select File Type",
+                allowClear: true
+            });
+        });
+
+        // Initialize Select2 for the file category dropdown
+        $(document).ready(function() {
+            $('#file_type_id').select2({
+                placeholder: "Select File Type",
+                allowClear: true
+            });
+        });
+
+        function checkPasswordLength() {
+        const passwordInput = document.getElementById('password');
+        const hint = document.getElementById('password-hint');
+
+        if (passwordInput.value.length < 8) {
+            hint.classList.remove('hidden');
+        } else {
+            hint.classList.add('hidden');
+        }
+    }
+    </script>
 </div>
 @endsection

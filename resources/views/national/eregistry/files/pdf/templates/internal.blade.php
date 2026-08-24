@@ -7,25 +7,21 @@
 
     <style>
         @page {
-            margin: 40px 50px;
+            margin: 35px 45px;
         }
 
         body {
-            font-family: DejaVu Sans, sans-serif;
-            font-size: 12px;
-            line-height: 1.7;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
             color: #000;
+            
         }
 
         .header {
             text-align: center;
-            padding-bottom: 10px;
-        }
-
-        .flag {
-            width: 55px;
-            height: auto;
-            margin-bottom: 8px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 8px;
+            margin-bottom: 20px;
         }
 
         .gov-title {
@@ -34,20 +30,27 @@
             text-transform: uppercase;
         }
 
-        .ministry-title {
-            font-size: 14px;
+        .memo-title {
+            font-size: 18px;
             font-weight: bold;
             text-transform: uppercase;
-            margin-top: 5px;
+            margin-top: 4px;
+        }
+
+        .ministry-title {
+            font-size: 13px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 6px;
         }
 
         .contact {
             font-size: 10px;
-            margin-top: 8px;
+            margin-top: 4px;
         }
 
         
-        .meta-table {
+       .meta-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
@@ -82,46 +85,32 @@
         .meta-table .muted {
             color: #6b7280;
         }
-
+    
         .label {
             font-weight: bold;
-            width: 90px;
-        }
-
-        .date {
-            text-align: right;
-        }
-
-        .to-section {
-            margin-bottom: 20px;
+            width: 70px;
         }
 
         .subject {
-            margin-top: 10px;
-            margin-bottom: 10px;
             font-weight: bold;
+            margin-top: 16px;
+            margin-bottom: 18px;
+            font-size: 14px;
         }
-
-        .greeting {
-            margin-top: 15px;
-            margin-bottom: 20px;
-            font-size: 16px;
-        }
-
-        
 
         .content p {
             margin: 0 0 0 0;
             line-height: 1.3;
         }
 
-       
-        .signature-section {
-            margin-top: 60px;
+         .signature-section {
+            margin-top: 30px;
         }
 
         .signature-image {
             height: 70px;
+            width: auto;
+            display: block;
             margin-bottom: 5px;
         }
 
@@ -136,8 +125,8 @@
     {{-- Header --}}
     <div class="header">
         <img
-            src="{{ auth()->user()->ministry?->logo_path
-                ? public_path('storage/' . auth()->user()->ministry->logo_path)
+            src="{{ Auth::user()->ministry?->logo_path
+                ? public_path('storage/' . Auth::user()->ministry->logo_path)
                 : public_path('images/flag1.png') }}"
             alt="Ministry Logo"
             style="
@@ -150,7 +139,6 @@
         <div class="gov-title">
             Internal Memorandum
         </div>
-       
     </div>
 
     {{-- Meta --}}
@@ -207,19 +195,20 @@
 
     {{-- Signature --}}
     <div class="signature-section">
-
-        <div style="margin-bottom: 15px;">
-            Sincerely,
-        </div>
-
-        @if($file->approver?->signature_path)
+        @if($file->signature_path)
             <img
-                src="{{ public_path('storage/' . $file->approver->signature_path) }}"
+                src="{{ public_path('storage/' . $file->signature_path) }}"
+                alt="File Signature"
                 class="signature-image"
             >
+            <div>
+                {{ $file->signedBy?->name ?? '' }}
+            </div>
+            <div>
+                {{ $file->signedBy?->designation ?? '' }}
+            </div>
         @endif
-
     </div>
-
+    
 </body>
 </html>

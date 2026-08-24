@@ -15,11 +15,12 @@ use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use OwenIt\Auditing\Contracts\Auditable;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 
 class User extends Authenticatable implements Auditable
 {
-    use HasRoles, HasApiTokens, SoftDeletes;
+    use HasRoles, HasApiTokens, SoftDeletes, HasUuids;
 
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory;
@@ -43,7 +44,11 @@ class User extends Authenticatable implements Auditable
         'password',
         'signature_path',
         'created_by',
-        'created_at'
+        'created_at',
+        'keycloak_id',
+        'is_active'
+        // 'access_token',
+        // 'refresh_token',
     ];
 
     /**
@@ -92,7 +97,7 @@ class User extends Authenticatable implements Auditable
         return $this->belongsTo(Division::class, 'division_id');
     }
 
-   public function getNameAttribute()
+    public function getNameAttribute()
     {
         return trim($this->first_name . ' ' . $this->last_name);
     }
@@ -107,4 +112,15 @@ class User extends Authenticatable implements Auditable
         return $this->belongsToMany(FileCirculation::class, 'file_circulation_officer', 'officer_id', 'file_circulation_id');
     }
 
+
+    public function uniqueIds(): array
+    {
+        return ['uuid'];
+    }
+
+    
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
 }

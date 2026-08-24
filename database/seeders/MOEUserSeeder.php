@@ -52,8 +52,8 @@ class MOEUserSeeder extends Seeder
         // Users data (roles now are admin, registry, or user)
         
 
-         $user1 = User::withTrashed()->updateOrCreate(
-            ['email' => 'secretary@moe.gov.ki'],
+        $user1 = User::withTrashed()->updateOrCreate(
+            ['email' => 'ngaaia.toabwa@gmail.com'],
             [
                 'first_name' => 'Jane',
                 'last_name' => 'Doe',
@@ -64,12 +64,12 @@ class MOEUserSeeder extends Seeder
                 'deleted_at' => null
             ]
         );
-        $user1->assignRole('ministry-admin');
+        $user1->assignRole('user');
         // $ministry->review_officer_id = $user1->id;
         // $ministry->save();
 
         $user2 = User::withTrashed()->updateOrCreate(
-            ['email' => 'ds@moe.gov.ki'],
+            ['email' => 'tematang@moe.gov.ki'],
             [
                 'first_name' => 'Tematang',
                 'last_name' => 'Iaoniman',
@@ -80,7 +80,7 @@ class MOEUserSeeder extends Seeder
                 'deleted_at' => null
             ]
         );
-        $user2->assignRole('ministry-admin');
+        $user2->assignRole('user');
 
         $user3 = User::withTrashed()->updateOrCreate(
             ['email' => 'cdrc.director@moe.gov.ki'],
@@ -111,7 +111,7 @@ class MOEUserSeeder extends Seeder
         $user4->assignRole('user');
 
         $user5 = User::withTrashed()->updateOrCreate(
-            ['email' => 'om@moe.gov.ki'],
+            ['email' => 'ntoabwa@gmail.com'],
             [
                 'first_name' => 'NeiOm',
                 'last_name' => 'Tennaewa',

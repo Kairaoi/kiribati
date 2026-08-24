@@ -9,7 +9,7 @@
 
             <p><strong>File Name:</strong> {{ $file->name }}</p>
             <p><strong>Send Date:</strong> {{ now()->format('Y-m-d H:i') }}</p>
-            <p><strong>Circulated By:</strong> {{ auth()->user()->name }}</p>
+            <p><strong>Circulated By:</strong> {{ Auth::user()->name }}</p>
 
             <label for="to_review_file">Send To Officer:</label>
             <select name="to_review_file" required>

@@ -51,7 +51,7 @@ class MICTUserSeeder extends Seeder
         $adminUser->save();
 
         $user1 = User::withTrashed()->updateOrCreate(
-            ['email' => 'secretary@mict.gov.ki'],
+            ['email' => 'mitateti@mict.gov.ki'],
             [
                 'first_name' => 'Mitateti',
                 'last_name' => 'Mote',
@@ -68,7 +68,7 @@ class MICTUserSeeder extends Seeder
         $ministry->save();
 
         $user2 = User::withTrashed()->updateOrCreate(
-            ['email' => 'ds@mict.gov.ki'],
+            ['email' => 'aoniba@mict.gov.ki'],
             [
                 'first_name' => 'Aoniba',
                 'last_name' => 'Riare',
@@ -79,10 +79,10 @@ class MICTUserSeeder extends Seeder
                 'deleted_at' => null
             ]
         );
-        $user2->assignRole('ministry-admin');
+        $user2->assignRole('user');
 
         $user3 = User::withTrashed()->updateOrCreate(
-            ['email' => 'sas@mict.gov.ki'],
+            ['email' => 'betty@mict.gov.ki'],
             [
                 'first_name' => 'Betty',
                 'last_name' => 'Mapuola',
@@ -93,10 +93,10 @@ class MICTUserSeeder extends Seeder
                 'deleted_at' => null
             ]
         );
-        $user3->assignRole('ministry-admin');
+        $user3->assignRole('user');
 
         $user4 = User::withTrashed()->updateOrCreate(
-            ['email' => 'om@mict.gov.ki'],
+            ['email' => 'omtest@mict.gov.ki'],
             [
                 'first_name' => 'Ngaaia',
                 'last_name' => 'Toabwa',
@@ -140,7 +140,7 @@ class MICTUserSeeder extends Seeder
 
 
         $user7 = User::withTrashed()->updateOrCreate(
-            ['email' => 'kairaoi@mict.gov.ki'],
+            ['email' => 'ngaaia.toabwa@mict.gov.ki'],
             [
                 'first_name' => 'Kairaoi',
                 'last_name' => 'Ientumoa',

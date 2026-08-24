@@ -55,7 +55,6 @@
         <table id="divisionsTable" class="bg-gray-50 text-gray-800 text-sm divide-y divide-gray-200 stripe">
             <thead>
                 <tr>
-                    <th>Ministry</th>
                     <th>Name</th>
                     <th>Head of Division</th>
                     <th>Created At</th>
@@ -286,9 +285,8 @@ $(document).ready(function() {
             }
         },
         columns: [
-            { data: 'ministry_code' },
-            { data: 'division_name' },
-            { data: 'hod_name'},
+            { data: 'division_name', name: 'divisions.name' },
+            { data: 'hod_name', name: 'users.name', defaultContent: 'not assigned' },
             { data: 'created_at', 
                 render(data) {
                     return new Date(data).toLocaleDateString('en-US', {
@@ -316,13 +314,9 @@ $(document).ready(function() {
                 render(data, type, row) {
 
                     let actions = `
-                        <a href="/registry/divisions/${row.id}" 
-                            class="text-cyan-600 hover:text-cyan-800 transition">
-                            View
-                        </a>
 
                         <a href="/registry/divisions/${row.id}/edit" 
-                            class="text-amber-600 hover:text-amber-800 transition ms-3">
+                            class="text-blue-600 hover:text-blue-800 transition ms-3">
                             Edit
                         </a>
 

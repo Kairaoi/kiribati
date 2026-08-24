@@ -78,6 +78,7 @@ class FileTypeRepository extends BaseRepository
             ->select(['file_types.id as id', 
                       'file_types.name as file_type_name', 
                       'file_types.is_global as is_global', 
+                      'file_types.is_active as is_active', 
                       'file_types.code as code', 
                       'file_types.created_at as created_at', 
                       'file_types.updated_at as updated_at'])
@@ -135,7 +136,8 @@ class FileTypeRepository extends BaseRepository
         return $this->model->query()
             ->where(function ($query) use ($ministryId) {
                 $query->where('is_global', 1)
-                    ->orWhere('ministry_id', $ministryId);
+                    ->orWhere('ministry_id', $ministryId)
+                    ->where('is_active', '1');
             })
             ->orderBy('name')
             ->get(['id', 'name', 'is_global']);

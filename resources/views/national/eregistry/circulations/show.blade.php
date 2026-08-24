@@ -199,7 +199,7 @@
                 <form method="POST" action="{{ route('registry.file-circulations.store') }}">
                     @csrf
                     <input type="hidden" name="file_id" value="{{ $file->id }}">
-                    <input type="hidden" name="organisation_id" value="{{ auth()->user()->organisation_id }}"> 
+                    <input type="hidden" name="organisation_id" value="{{ Auth::user()->organisation_id }}"> 
 
                     <button type="submit"
                             class="w-full bg-cyan-600 hover:bg-cyan-700 text-white px-10 py-2 rounded-md font-semibold">
@@ -313,7 +313,7 @@
                         <option value="">-- Choose officer in your division --</option>
                         @foreach($usersWithDivision as $officer) 
                             {{-- select only officers that are not assigned yet to this file & also officer that is in the same division  --}}
-                            @if ($officer->division_id === auth()->user()->division_id && 
+                            @if ($officer->division_id === Auth::user()->division_id && 
                                 !$fileCirculation->activeAssignments->contains('officer_id', $officer->id) && 
                                 $fileCirculation->to_review_file !== $officer->id) 
                                 <option value="{{ $officer->id }}">{{ $officer->first_name }} {{ $officer->last_name }} - {{ $officer->division_name }}</option>

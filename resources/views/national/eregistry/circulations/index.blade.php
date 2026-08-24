@@ -249,7 +249,7 @@
         <script>
             $(document).ready(function() {
                 let activeDropdown = null;
-                let userRole = "{{ auth()->user()->role }}"; // Get user role 
+                let userRole = "{{ Auth::user()->role }}"; // Get user role 
                 let columns = [
                     { data: 'reference_no' },
                     { 

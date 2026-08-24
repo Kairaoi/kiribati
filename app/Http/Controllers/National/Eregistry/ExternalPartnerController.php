@@ -42,7 +42,7 @@ class ExternalPartnerController extends Controller
      */
     public function getDataTables(Request $request)
     {
-        $ministryId = auth()->user()->ministry_id;
+        $ministryId = Auth::user()->ministry_id;
         $search = $request->get('search');
         if (is_array($search)) {
             $search = $search['value'];
@@ -67,9 +67,10 @@ class ExternalPartnerController extends Controller
      */
     public function create()
     {
+
         $identityOrganisations = $this->identityOrganisations->list();
         $organisationTypes = $this->organisation_types->list();
-        $ministry = auth()->user()->ministry;
+        $ministry = Auth::user()->ministry;
         return view('national.eregistry.external_partners.create', compact('identityOrganisations', 
                                                                            'organisationTypes',
                                                                            'ministry'));
@@ -88,7 +89,7 @@ class ExternalPartnerController extends Controller
                 function ($attribute, $value, $fail) {
 
                     $name = trim(strtolower($value));
-                    $ministryId = auth()->user()->ministry_id;
+                    $ministryId = Auth::user()->ministry_id;
 
                     // Check External Partners (scoped to ministry)
                     $existsInPartners = DB::table('external_partners')
@@ -106,11 +107,15 @@ class ExternalPartnerController extends Controller
                     }
                 },
             ],
-            'description' => 'nullable|string',
-            'identity_organisation_id' => 'nullable|exists:identity_organisations,id',
-            'organisation_type_id' => [
+            'phone' => [
                 'nullable',
-                'required_without:identity_organisation_id',
+                'string',
+                'max:20',
+                'regex:/^\+?[0-9\s\-()]+$/',
+            ],
+            'email' => 'nullable|email|max:255',
+            'organisation_type_id' => [
+                'required',
                 'exists:organisation_types,id'
             ],
             
@@ -118,21 +123,22 @@ class ExternalPartnerController extends Controller
 
         ExternalPartner::create([
             'name' => $validated['name'],
-            'description' => $validated['description'] ?? null,
+            'email' => $validated['email'] ?? null,
+            'phone' => $validated['phone'] ?? null,
             'identity_organisation_id' => $validated['identity_organisation_id'] ?? null,
             'organisation_type_id' => $validated['organisation_type_id'] ?? null,
-            'ministry_id' => auth()->user()->ministry_id,
+            'ministry_id' => Auth::user()->ministry_id,
             'created_by' => Auth::id(),
             'updated_by' => Auth::id(),
         ]);
 
-        return redirect()->route('registry.external-partners.index')->with('message', 'External Partner created successfully.');
+        return redirect()->route('registry.external-partners.index')->with('success', 'External Partner created successfully.');
     }
 
     public function suggestions(Request $request)
     {
         $query = $request->q;
-        $orgId = auth()->user()->ministry_id;
+        $orgId = Auth::user()->ministry_id;
 
         return ExternalPartner::where('name', 'LIKE', "%{$query}%")
             ->where(function ($q) use ($orgId) {
@@ -143,35 +149,109 @@ class ExternalPartnerController extends Controller
             ->pluck('name');
       
     }
+
+
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(ExternalPartner $externalPartner)
     {
-        //
+        $totalFiles = $externalPartner->files()
+                                ->where('ministry_id', Auth::user()->ministry_id)
+                                ->count();
+
+        $activeFiles = $externalPartner->files()
+            ->where('ministry_id', Auth::user()->ministry_id)
+            ->where('is_active', true)
+            ->count();
+
+        return view('national.eregistry.external_partners.show', compact('externalPartner',
+                                                                         'activeFiles',
+                                                                         'totalFiles'
+                                                                ));
     }
+
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(ExternalPartner $externalPartner)
     {
-        //
+        // dd($externalPartner);
+        $ministryPartners = $this->externalPartners->list(Auth::user()->ministry_id);
+        $identityOrganisations = $this->identityOrganisations->list();
+        $organisationTypes = $this->organisation_types->list();
+    
+        return view('national.eregistry.external_partners.edit', compact('externalPartner', 
+                                                                        'ministryPartners',
+                                                                        'organisationTypes',
+                                                                        'identityOrganisations'));
     }
+
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, ExternalPartner $externalPartner)
     {
-        //
+
+        $validated = $request->validate([
+            'name' => [
+                'required',
+                'string',
+            ],
+            'phone' => [
+                'nullable',
+                'string',
+                'max:20',
+                'regex:/^\+?[0-9\s\-()]+$/',
+            ],
+            'email' => 'nullable|email|max:255',
+            'organisation_type_id' => [
+                'required',
+                'exists:organisation_types,id'
+            ],
+        ]);
+
+        $externalPartner->update([
+            'name' => $validated['name'],
+            'email' => $validated['email'] ?? null,
+            'phone' => $validated['phone'] ?? null,
+            'organisation_type_id' => $validated['organisation_type_id'] ?? null,
+            'updated_by' => Auth::id(),
+            'updated_at' => now(),
+        ]);
+
+        return redirect()->route('registry.external-partners.index')->with('message', 'External Partner updated successfully.');
+        
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+
+    public function activate(ExternalPartner $partner)
     {
-        //
+        $partner->update([
+            'is_active' => true,
+            'updated_by' => auth()->id(),
+        ]);
+
+        return response()->json([
+            'message' => 'External Partner activated successfully.'
+        ]);
     }
+
+
+    public function deactivate(ExternalPartner $partner)
+    {
+        $partner->update([
+            'is_active' => false,
+            'updated_by' => auth()->id(),
+        ]);
+
+        return response()->json([
+            'message' => 'External Partner deactivated successfully.'
+        ]);
+    }
+    
+
+
 }

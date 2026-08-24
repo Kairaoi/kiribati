@@ -61,7 +61,7 @@
             </div>
 
             <!-- Code -->
-            <div class="mb-5 relative">
+            <div class="mb-5">
                 <label for="code" class="block text-sm font-medium text-gray-700">
                     Code <span class="text-red-500">*</span>
                 </label>

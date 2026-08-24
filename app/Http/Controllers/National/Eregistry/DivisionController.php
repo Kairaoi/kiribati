@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Repositories\National\Eregistry\DivisionRepository;
 use App\Repositories\National\Eregistry\MinistryRepository;
 use App\Repositories\National\Eregistry\UserRepository;
+use App\Repositories\National\Eregistry\UnitRepository;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,14 +19,17 @@ class DivisionController extends Controller
     private $divisions;
     private $ministries;
     private $users;
+    private $units;
 
     public function __construct(DivisionRepository $divisions, 
                                 MinistryRepository $ministries,
-                                UserRepository $users)
+                                UserRepository $users,
+                                UnitRepository $units)
     {
         $this->divisions = $divisions;
         $this->ministries = $ministries;
         $this->users = $users;
+        $this->units = $units;
     }
 
     /**
@@ -36,6 +40,8 @@ class DivisionController extends Controller
      */
     public function getDataTables(Request $request)
     {
+        $this->authorize('viewAny', Division::class);
+
         $search = $request->get('search', '');
         if (is_array($search)) {
             $search = $search['value'];
@@ -47,10 +53,10 @@ class DivisionController extends Controller
     
         return DataTables::of($query)
                     ->addColumn('can_delete', function ($row) {
-                        return auth()->user()->hasRole('system-admin');
+                        return Auth::user()->hasRole('system-admin');
                     })
                     ->addColumn('can_edit', function ($row) {
-                        return auth()->user()->hasRole('system-admin');
+                        return Auth::user()->hasRole('system-admin');
                     })
                     ->make(true);
     }
@@ -62,6 +68,8 @@ class DivisionController extends Controller
      */
     public function index()
     {
+        $this->authorize('viewAny', Division::class);
+
         return view('national.eregistry.divisions.index');
     }
 
@@ -72,13 +80,14 @@ class DivisionController extends Controller
      */
     public function create()
     {
-        // if (!Auth::user()->can('Division.create')) {
-        //     abort(403, 'Unauthorized action.');
-        // }
-
+        $this->authorize('create', Division::class);
+        
         $ministries = $this->ministries->pluck();
 
-        return view('national.eregistry.divisions.create')->with('ministries', $ministries);
+        $ministryId = Auth::user()->ministry_id;
+        $ministryName = $this->ministries->getById($ministryId)->name ?? 'Unknown Ministry';
+
+        return view('national.eregistry.divisions.create', compact('ministries', 'ministryName', 'ministryId'));
     }
 
     /**
@@ -89,25 +98,26 @@ class DivisionController extends Controller
      */
     public function store(Request $request)
     {
-        // if (!Auth::user()->can('division.store')) {
-        //     abort(403, 'Unauthorized action.');
-        // }
+        $this->authorize('create', Division::class);
 
-        $input = $request->all();
-
-        // Validation
+        $ministryId = Auth::user()->ministry_id;
         $request->validate([
-            'ministry_id' => 'required|exists:ministries,id',
             'name' => 'required|string',
-            'code' => 'required|string|unique:divisions',
             'description' => 'nullable|string',
-            'is_active' => 'boolean',
+            'location' => 'nullable|string',
+            'email' => 'nullable|email',
+            'phone' => 'nullable|string',
         ]);
 
-        // Create the division
-        $this->divisions->create($input);
-
-        return redirect()->route('division.index')->with('message', 'Division created successfully.');
+        Division::create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'location' => $request->location,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'ministry_id' => $ministryId,
+        ]);
+        return redirect()->route('registry.divisions.index')->with('message', 'Division created successfully.');
     }
 
     /**
@@ -118,12 +128,13 @@ class DivisionController extends Controller
      */
     public function show($id)
     {
-        // if (!Auth::user()->can('division.show')) {
-        //     abort(403, 'Unauthorized action.');
-        // }
-
+        
         $division = $this->divisions->getById($id);
+
+        $this->authorize('view', $division);
+
         $users = $this->users->getDivisionUsers($id);
+        // $units = $this->units->listWithDivision($division->id);
 
         return view('national.eregistry.divisions.show', compact('division', 'users'));
     }
@@ -136,12 +147,12 @@ class DivisionController extends Controller
      */
     public function edit($id)
     {
-        // if (!Auth::user()->can('division.edit')) {
-        //     abort(403, 'Unauthorized action.');
-        // }
 
         $division = $this->divisions->getById($id);
-        $users = $this->users->getDivisionUsers(auth()->user()->division_id);
+
+        $this->authorize('update', $division);
+
+        $users = $this->users->getDivisionUsers(Auth::user()->division_id);
         $ministries = $this->ministries->pluck();
 
         return view('national.eregistry.divisions.edit', [
@@ -160,9 +171,7 @@ class DivisionController extends Controller
      */
     public function update(Request $request, Division $division)
     {
-        // if (!Auth::user()->can('division.update')) {
-        //     abort(403, 'Unauthorized action.');
-        // }
+        $this->authorize('update', Division::class);
         
         $validated = $request->validate([
             'name' => ['required', 'string'],

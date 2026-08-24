@@ -52,6 +52,10 @@ class MinistryController extends Controller
      */
     public function index()
     {
+        $user = Auth::user();
+
+        abort_unless($user->hasRole('system-admin'),403);
+
         return view('national.eregistry.ministries.index');
     }
 
@@ -67,6 +71,9 @@ class MinistryController extends Controller
         //     abort(403, 'Unauthorized action.');
         // }
 
+        $user = Auth::user();
+
+        abort_unless($user->hasRole('system-admin'),403);
 
         return view('national.eregistry.ministries.create');
     }
@@ -80,6 +87,14 @@ class MinistryController extends Controller
      */
     public function update(Request $request, Ministry $ministry)
     {
+
+        $user = Auth::user();
+
+        abort_unless($user->hasRole('registry') &&
+            (string) $ministry->id === (string) $user->ministry_id,
+            403
+        );
+
         $validated = $request->validate([
             'address'     => ['required', 'string', 'max:255'],
             'po_box'      => ['nullable', 'string', 'max:100'],
@@ -110,7 +125,7 @@ class MinistryController extends Controller
             'website'     => $validated['website'],
             'logo_path'   => $validated['logo'],
             'updated_at'  => now(),
-            'updated_by'  => auth()->user()->id
+            'updated_by'  => Auth::user()->id
         ]);
 
         return redirect()
@@ -126,14 +141,14 @@ class MinistryController extends Controller
      */
     public function show(Ministry $ministry)
     {
-        // if (!Auth::user()->can('organisation.show')) {
-        //     abort(403, 'Unauthorized action.');
-        // }
+        
+        $user = Auth::user();
 
-        // $ministry = $this->ministries->getById($id);
+        abort_unless($user->hasRole('system-admin'),403);
 
         return view('national.eregistry.ministries.show', compact('ministry'));
     }
+
 
     /**
      * Show the form for editing the specified resource.
@@ -143,16 +158,16 @@ class MinistryController extends Controller
      */
     public function edit(Ministry $ministry)
     {
-        // if (!Auth::user()->can('organisation.edit')) {
-        //     abort(403, 'Unauthorized action.');
-        // }
 
-        abort_if($ministry->id !== auth()->user()->ministry_id, 403);
+        $user = Auth::user();
+
+        abort_unless($user->hasRole('registry') &&
+            (string) $ministry->id === (string) $user->ministry_id,
+            403
+        );
 
         return view('national.eregistry.ministries.edit', compact('ministry'));
     }
-
-
 
 
     /**

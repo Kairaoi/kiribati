@@ -7,7 +7,7 @@
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold text-gray-700">E-Registry Dashboard</h1>
-        {{-- <div class="text-sm text-gray-500">Welcome back, {{ auth()->user()->name ?? 'User' }}</div> --}}
+        {{-- <div class="text-sm text-gray-500">Welcome back, {{ Auth::user()->name ?? 'User' }}</div> --}}
     </div>
 
     <!-- Cards -->

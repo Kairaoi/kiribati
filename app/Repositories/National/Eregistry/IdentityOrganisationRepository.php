@@ -134,12 +134,31 @@ class IdentityOrganisationRepository extends BaseRepository
             ->get(['id', 'name', 'code', 'organisation_type_id']);
     }
 
-    public function listAll($column = 'name', $key = 'id')
+    public function listAll($column = 'name')
     {
         return $this->model()::query()
-            ->orderBy('id')
+            ->with('type')
             ->orderBy($column)
-            ->get(['id', 'name', 'code', 'organisation_type_id']);
+            ->get([
+                'id',
+                'name',
+                'code',
+                'organisation_type_id',
+            ]);
+    }
+
+    public function listNotMinistries($column = 'name')
+    {
+        return $this->model()::query()
+            ->with('type')
+            ->where('organisation_type_id', '!=', 1)
+            ->orderBy($column)
+            ->get([
+                'id',
+                'name',
+                'code',
+                'organisation_type_id',
+            ]);
     }
 
 

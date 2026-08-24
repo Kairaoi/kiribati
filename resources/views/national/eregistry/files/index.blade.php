@@ -54,7 +54,7 @@
                     Active Files
                 </a>
 
-                @if(auth()->user()->hasRole(['registry', 'admin', 'sro']))
+                @if(Auth::user()->hasRole(['registry', 'admin', 'sro']))
                     <!-- Closed -->
                     <a href="{{ route('registry.files.index', ['type' => 'closed']) }}"
                         class="pb-3 text-sm font-semibold border-b-2 transition
@@ -63,29 +63,18 @@
                             : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
                         Closed Files
                     </a>
-
-                    <!-- Archived -->
-                    <a href="{{ route('registry.files.index', ['type' => 'archived']) }}"
-                        class="pb-3 text-sm font-semibold border-b-2 transition
-                        {{ request('type') === 'archived'
-                            ? 'border-cyan-600 text-cyan-700'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
-                        Archived Files
-                    </a>
                 @endif
             </nav>
         </div>
 
-        @if(auth()->user()->hasRole(['registry', 'admin', 'sro']))
+        @if(Auth::user()->hasRole(['registry']))
             @if(request('type') === 'closed')
-                <div class="bg-gray-50 p-3 rounded-md">
+                <div class="bg-gray-50 p-3 mb-6 mt-4 border-gray-200 rounded-md">
                     <div class="grid grid-cols-2 md:grid-cols-6 gap-2 text-sm">
-
-                        <!-- Year -->
                         <div>
-                            <label class="block text-gray-500 mb-1 font-semibold">Type</label>
+                            <label class="block text-blue-700 mb-1 font-semibold">Type</label>
                             <select id="initialtypeFilter"
-                                class="w-full rounded-md border-gray-200 text-sm focus:ring-cyan-500 focus:border-cyan-500">
+                                            class="w-full text-md border-gray-300 focus:ring-cyan-500 focus:border-cyan-500">
                                 <option value="all">All</option>
                                 <option value="dispatch">Dispatched</option>
                                 <option value="received">Received</option>
@@ -94,10 +83,22 @@
                         </div>
 
                         <div>
-                            <label class="block text-gray-500 mb-1 font-semibold">Organisation</label>
+                            <label class="block text-blue-700 mb-1 font-semibold">Ministries </label>
+                            <select id="ministryFilter"
+                                            name="ministry"
+                                            class="w-full text-md border-gray-300 focus:ring-cyan-500 focus:border-cyan-500">
+                                        <option value="">All</option>
+                                        @foreach ($ministries as $min)
+                                            <option value="{{ $min->id }}">{{ $min->name }}</option>
+                                        @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-blue-700 mb-1 font-semibold">Registered Organisation</label>
                             <select id="organisationFilter"
                                             name="organisation"
-                                            class="w-full rounded-md border-gray-200 text-sm focus:ring-cyan-500 focus:border-cyan-500">
+                                            class="w-full text-md border-gray-300 focus:ring-cyan-500 focus:border-cyan-500">
                                         <option value="">All</option>
                                         @foreach ($organisations as $org)
                                             <option value="{{ $org->id }}">{{ $org->name }}</option>
@@ -106,10 +107,22 @@
                         </div>
 
                         <div>
-                            <label class="block text-gray-500 mb-1 font-semibold">File Type</label>
+                            <label class="block text-blue-700 mb-1 font-semibold">External Partners</label>
+                            <select id="partnerFilter"
+                                            name="partner"
+                                            class="w-full text-md border-gray-300 focus:ring-cyan-500 focus:border-cyan-500">
+                                        <option value="">All</option>
+                                        @foreach ($externalPartners as $par)
+                                            <option value="{{ $par->id }}">{{ $par->name }}</option>
+                                        @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-blue-700 mb-1 font-semibold">File Type</label>
                             <select id="fileType"
                                             name="organisation"
-                                            class="w-full rounded-md border-gray-200 text-sm focus:ring-cyan-500 focus:border-cyan-500">
+                                            class="w-full text-md border-gray-300 focus:ring-cyan-500 focus:border-cyan-500">
                                         <option value="">All</option>
                                         @foreach ($file_types as $fileType)
                                             <option value="{{ $fileType->id }}">{{ $fileType->name }}</option>
@@ -118,10 +131,10 @@
                         </div>
 
                         <div>
-                            <label class="block text-gray-500 mb-1 font-semibold">Category</label>
+                            <label class="block text-blue-700 mb-1 font-semibold">Category</label>
                             <select id="category"
                                             name="organisation"
-                                            class="w-full rounded-md border-gray-200 text-sm focus:ring-cyan-500 focus:border-cyan-500">
+                                            class="w-full text-md border-gray-300 focus:ring-cyan-500 focus:border-cyan-500">
                                         <option value="">All</option>
                                         @foreach ($categories as $cat)
                                             <option value="{{ $cat->id }}">{{ $cat->name }}</option>
@@ -130,22 +143,22 @@
                         </div>
 
                         <div>
-                            <label class="block text-gray-500 mb-1 font-semibold">From Date</label>
+                            <label class="block text-blue-700 mb-1 font-semibold">From Date</label>
                             <input type="date" id="dateFrom"
-                                class="w-full rounded-md border-gray-200 text-sm focus:ring-cyan-500 focus:border-cyan-500">
+                                   class="w-full text-md border-gray-300 focus:ring-cyan-500 focus:border-cyan-500">
                         </div>
 
                         <div>
-                            <label class="block text-gray-500 mb-1 font-semibold">To Date</label>
+                            <label class="block text-blue-700 mb-1 font-semibold">To Date</label>
                             <input type="date" id="dateTo"
-                                class="w-full rounded-md border-gray-200 text-sm focus:ring-cyan-500 focus:border-cyan-500">
+                                    class="w-full text-md border-gray-300 focus:ring-cyan-500 focus:border-cyan-500">
                         </div>
 
                         <!-- Reset -->
                         <div class="flex items-end">
                             <button id="reset-filters"
-                                class="w-full text-xs font-semibold px-2 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-md">
-                                Reset
+                                class="w-full text-md font-semibold text-white px-2 py-2.5 bg-blue-500 hover:bg-blue-300">
+                                Reset Filters
                             </button>
                         </div>
 
@@ -159,11 +172,12 @@
                 <thead>
                     <tr>
                         <th>ID</th>
+                        <th>UUID</th>
                         <th>Circulation ID</th>
                         <th class="uppercase">Reference No</th>
                         <th class="uppercase">Name/Subject</th>
+                        <th class="uppercase">Template</th>
                         <th class="uppercase">File Type</th>
-                        <th class="uppercase">Due Date</th>
                         <th class="uppercase">Dispatch Date</th>
                         <th class="uppercase">Received Date</th>
                         <th class="uppercase">Status</th>
@@ -361,9 +375,9 @@
         <script>
             $(document).ready(function() {
                 let activeDropdown = null;
-                const isReviewOfficer = @json(auth()->user()->hasRole('review-officer'));
-                const isAdmin = @json(auth()->user()->hasRole('admin'));
-                const isRegistry = @json(auth()->user()->hasRole('registry'));
+                const isReviewOfficer = @json(Auth::user()->hasRole('review-officer'));
+                const isUser = @json(Auth::user()->hasRole('user'));
+                const isRegistry = @json(Auth::user()->hasRole('registry'));
 
                 // Close dropdown when clicking outside
                 $(document).on('click', function(e) {
@@ -394,59 +408,48 @@
                             d.type = "{{ request('type', 'active') }}";
 
                             d.selected_type = $('#initialtypeFilter').val() || '';
+                            d.ministry_id = $('#ministryFilter').val() || '';
+                            d.partner = $('#partnerFilter').val() || '';
                             d.organisation_id = $('#organisationFilter').val() || '';
                             d.file_type = $('#fileType').val() || '';
                             d.category = $('#category').val() || '';
                             d.date_from = $('#dateFrom').val() || '';
                             d.date_to = $('#dateTo').val() || '';
-
-                            console.log('DataTable sending:', {
-                                type: d.type,
-                                selected_type: d.selected_type,
-                                organisation_ids: d.organisation_id,
-                                date_from: d.date_from,
-                                date_to: d.date_to,
-                            });
                         }
                     },
                     columns: [
                         { data: 'id', name: 'files.id', visible: false},
+                        { data: 'uuid', visible: false},
                         { data: 'circulation_id', name: 'fc.id', visible: false},
-                        { data: 'reference_no' },
-                        { data: 'file_subject' },
-                        { data: 'file_type'},
-                        {  data: 'due_date',
+                        { data: 'reference_no', name: 'files.reference_no' },
+                        { data: 'file_subject', name: 'files.subject' },
+                        { data: 'correspondence_type', name: 'files.correspondence_type',},
+                        { data: 'file_type', name: 'file_types.name' },
+                        {
+                            data: 'dispatch_date',name: 'dispatches.dispatch_date',
                             render: function (data) {
                                 if (!data) return '-';
                                 const date = new Date(data);
-                                return date.toLocaleDateString('en-US', {
+                                return date.toLocaleString('en-US', {
                                     year: 'numeric',
                                     month: 'short',
-                                    day: 'numeric'
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: true
                                 });
                             }
                         },
                         {
-                            data: 'dispatch_date',
-                            render: function (data) {
-                                if (!data) return '-';
-                                const date = new Date(data);
-                                return date.toLocaleString('en-US', {
-                                    year: 'numeric',
-                                    month: 'short',
-                                    day: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    hour12: true
-                                });
-                            }
-                        },
-                       {
                             data: 'received_at',
-                            render: function (data) {
+                            name: 'fc.received_at',
+
+                            render: function (data, type, row) {
                                 if (!data) return '-';
+
                                 const date = new Date(data);
-                                return date.toLocaleString('en-US', {
+
+                                const formattedDate = date.toLocaleString('en-US', {
                                     year: 'numeric',
                                     month: 'short',
                                     day: 'numeric',
@@ -454,6 +457,15 @@
                                     minute: '2-digit',
                                     hour12: true
                                 });
+                                
+                                return `
+                                    <div>
+                                        <div>${formattedDate}</div>
+                                        <div class="mt-1 text-xs text-gray-500">
+                                            Received by: ${row.received_by ?? '-'}
+                                        </div>
+                                    </div>
+                                `;
                             }
                         },
                         { 
@@ -463,6 +475,8 @@
 
                                 if (data === 'Pending Action') {
                                     badgeClass = 'bg-red-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
+                                } else if (data === 'Pending Signature') {
+                                    badgeClass = 'bg-red-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
                                 } else if (data === 'Dispatched') {
                                     badgeClass = 'bg-cyan-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
                                 } else if (data === 'Pending Review') {
@@ -470,7 +484,7 @@
                                 } else if (data === 'Pending SRO Approval') {
                                     badgeClass = 'bg-yellow-200 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
                                 } else if (data === 'Reviewed') {
-                                    badgeClass = 'bg-blue-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
+                                    badgeClass = 'bg-green-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
                                 } else if (data === 'Received') {
                                     badgeClass = 'bg-blue-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
                                 } else if (data === 'Approved') {
@@ -495,51 +509,21 @@
                                 let buttons = '';
 
                                 // Pending action → View + Edit + Delete
-                                if (row.file_status === 'Pending Action' && isRegistry) {
+                                if (isRegistry || isUser) {
                                     buttons = `
-                                        <a href="/registry/files/${row.id}" 
-                                            class="inline-flex items-center justify-center hover:text-gray-600 transition"
-                                            title="View">
-                                            <i class="fa fa-eye text-sm"></i>
+                                        <a href="/registry/files/${row.uuid}"
+                                            class="inline-flex items-center border justify-center gap-2 rounded-md px-4 py-2 text-xs font-medium shadow-sm transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+                                        >
+                                            View
                                         </a>
-
-                                        <a href="/registry/files/${row.id}/edit" 
-                                            class="inline-flex items-center justify-center hover:text-gray-600 transition ms-3"
-                                            title="Edit">
-                                            <i class="fa fa-pen text-sm"></i>
-                                        </a>
-
-                                        <button class="inline-flex items-center justify-center hover:text-red-600 transition ms-3 delete-action" 
-                                                data-id="${row.id}" 
-                                                title="Delete">
-                                            <i class="fa fa-trash text-sm"></i>
-                                        </button>
                                     `;
 
-                                // Other statuses → View only
-                                } else if ((row.circulation_status === 'Reviewed' || row.circulation_status === 'Approved' || row.circulation_status === 'Rejected') && isReviewOfficer) {
-                                    buttons = `
-                                        <a href="/registry/file-circulations/${row.circulation_id}/overlays/edit" 
-                                            class="inline-flex items-center justify-center hover:text-gray-600 transition"
-                                            title="Edit Overlays">
-                                            Edit Overlays
-                                        </a>
-                                    `;
                                 } else if (isReviewOfficer){
                                     buttons = `
-                                        <a href="/registry/files/${row.id}" 
-                                            class="inline-flex items-center justify-center hover:text-gray-600 transition"
-                                            title="View">
-                                            Review
-                                        </a>
-                                    `;
-                                
-                                } else {
-                                    buttons = `
-                                        <a href="/registry/files/${row.id}" 
-                                            class="inline-flex items-center justify-center hover:text-gray-600 transition"
-                                            title="View">
-                                            <i class="fa fa-eye text-sm"></i>
+                                        <a href="/registry/files/${row.uuid}"
+                                            class="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-xs font-medium shadow-sm transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+                                        >
+                                            View
                                         </a>
                                     `;
                                 }
@@ -550,6 +534,7 @@
                     pageLength: 10,
                     pagingType: "simple_numbers",
                     responsive: true,
+                    searching: true,
                     order: [[0, 'desc']],
                     dom:   "<'row mb-3'<'col-md-6 d-flex align-items-center'B><'col-12 col-md-6 text-md-end text-start'f>>" +
                         "<'row'<'col-sm-12'tr>>" +
@@ -586,6 +571,14 @@
                 $('#initialtypeFilter').on('change', function() {
                     table.ajax.reload();
                 }); 
+
+                $('#ministryFilter').on('change', function() {
+                    table.ajax.reload();
+                });
+
+                $('#partnerFilter').on('change', function() {
+                    table.ajax.reload();
+                });
 
                 // Reload table when organisation changes
                 $('#organisationFilter').on('change', function() {
@@ -634,10 +627,10 @@
 
                 function route(name, id) {
                     return {
-                        'registry.files.show': "{{ route('registry.files.show', ':id') }}".replace(':id', id),
-                        'registry.files.edit': "{{ route('registry.files.edit', ':id') }}".replace(':id', id),
+                        'registry.files.show': "{{ route('registry.files.show', ':uuid') }}".replace(':uuid', id),
+                        'registry.files.edit': "{{ route('registry.files.edit', ':uuid') }}".replace(':uuid', id),
                         'registry.file-circulations.edit': "{{ route('registry.file-circulations.edit', ':circulation_id') }}".replace(':circulation_id', circulation_id),
-                        'registry.files.destroy': "{{ route('registry.files.destroy', ':id') }}".replace(':id', id),
+                        'registry.files.destroy': "{{ route('registry.files.destroy', ':uuid') }}".replace(':uuid', id),
                     }[name];
                 }
 

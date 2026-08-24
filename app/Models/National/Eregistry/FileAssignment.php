@@ -19,8 +19,12 @@ class FileAssignment extends Model implements Auditable
         'assigned_date',
         'is_active',
         'reassigned_from',
+        'task',
+        'assigned_officer_comment',
+        'accepted_at',
         'status',
         'received_at',
+        'completed_at',
 
     ];
 

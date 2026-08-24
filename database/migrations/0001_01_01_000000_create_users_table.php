@@ -13,8 +13,11 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+            $table->uuid('uuid')->unique();
+            $table->string('keycloak_id')->nullable()->unique();
             $table->unsignedBigInteger('ministry_id')->nullable();
             $table->unsignedBigInteger('division_id')->nullable(); 
+            $table->unsignedBigInteger('unit_id')->nullable(); 
             $table->string('designation')->nullable(); 
             $table->string('first_name');
             $table->string('last_name');

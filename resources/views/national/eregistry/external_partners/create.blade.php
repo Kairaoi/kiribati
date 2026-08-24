@@ -25,7 +25,7 @@
             </h2>
 
             <!-- File Type Name -->
-            <div class="mb-5 relative">
+            <div class="mb-3 relative">
                 <label class="block text-sm font-medium text-gray-700">
                     External Partner Name <span class="text-red-500">*</span>
                 </label>
@@ -45,21 +45,31 @@
             </div>
 
             <!-- Description -->
-            <div class="mb-5">
+            <div class="mb-3 relative">
                 <label for="description" class="block text-sm font-medium text-gray-700">
-                    Description <span class="text-gray-400">(optional)</span>
+                    Email 
                 </label>
-                <input type="text" name="description" id="description"
-                    value="{{ old('description') }}"
+                <input type="email" name="email" id="email"
+                    value="{{ old('email') }}"
                     class="mt-1 w-full rounded-lg border-gray-300 shadow-sm 
                         focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 
-                        text-sm px-3 py-2"
-                    placeholder="Short description of this external partner">
+                        text-sm px-3 py-2">
+            </div>
+
+            <div class="mb-3 relative">
+                <label for="description" class="block text-sm font-medium text-gray-700">
+                    Phone 
+                </label>
+                <input type="tel" name="phone" id="phone"
+                    value="{{ old('phone') }}"
+                    class="mt-1 w-full rounded-lg border-gray-300 shadow-sm 
+                        focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 
+                        text-sm px-3 py-2">
             </div>
             
 
         {{-- Optional link to Identity Organisation --}}
-            <div class="mb-5">
+            {{-- <div class="mb-5">
                 <label class="block text-sm font-medium text-gray-700">
                     Link to Identity Organisation <span class="text-gray-400">(required if no category is selected)</span>
                 </label>
@@ -78,11 +88,11 @@
                         </option>
                     @endforeach
                 </select>
-            </div>
+            </div> --}}
 
-            <div class="mb-5">
+            <div class="mb-3">
                 <label class="block text-sm font-medium text-gray-700">
-                    Category <span class="text-gray-400">(required if no identity selected)</span>
+                    Category <span class="text-red-600">*</span>
                 </label>
 
                 <select name="organisation_type_id" id="organisation_type_id"

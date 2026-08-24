@@ -1,10 +1,63 @@
 @extends('layouts.app')
 
 @section('content')
-{{-- <div class="container mx-auto font-montserrat px-4 py-8 max-w-6xl mt-3 rounded-md min-h-screen"> --}}
+
+<style>
+    /* Tables */
+    .ck-content table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    .ck-content table,
+    .ck-content th,
+    .ck-content td {
+        border: 1px solid #000;
+    }
+
+    .ck-content th,
+    .ck-content td {
+        padding: 8px;
+    }
+
+    /* Bullet lists */
+    .ck-content ul {
+        list-style-type: disc;
+        padding-left: 2rem;
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Numbered lists */
+    .ck-content ol {
+        list-style-type: decimal;
+        padding-left: 2rem;
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .ck-content li {
+        display: list-item;
+        margin-bottom: 0.25rem;
+    }
+
+    /* Nested lists */
+    .ck-content ul ul {
+        list-style-type: circle;
+    }
+
+    .ck-content ul ul ul {
+        list-style-type: square;
+    }
+
+    .ck-content ol ol {
+        list-style-type: lower-alpha;
+    }
+</style>
+
 
 {{-- <div class="container mx-auto font-poppins px-8 max-w-5xl mt-1"> {{ Breadcrumbs::render('files.create.withType', $createType) }} </div> --}}
-<div class="container font-poppins bg-white mx-auto px-6 py-10 max-w-4xl mt-4 mb-4 text-gray-700 font-medium rounded-md min-h-screen border border-gray-600">
+<div class="container bg-white mx-auto px-6 py-10 max-w-4xl mt-4 mb-4 text-gray-700 font-medium rounded-md min-h-screen border border-gray-600">
      <h2 class="text-lg font-semibold text-gray-800 mb-6">
         Create File
      </h2>
@@ -22,34 +75,31 @@
     <form action="{{ route('registry.files.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
             <div class="text-gray-700 text-sm grid grid-cols-1">
-                @if(auth()->user()->hasRole('registry'))
+                @if(Auth::user()->hasRole('registry'))
                     <div>
                         <label for="source_type">Source Type <span class="text-red-600">*</span></label>
                         <select name="source_type" id="source_type" 
                             class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm">
-                            <option value="">Select Source Type</option>
-                            <option value="identity_organisation">Registered Organisation</option>
-                            <option value="external_partner">External Partner</option>
+                            <option value="own_ministry">My Ministry{{ Auth::user()->ministry?->name ? ' (' . Auth::user()->ministry->name . ')' : '' }}</option>                            
+                            <option value="identity_organisation">Other Registered Organisations</option>
+                            <option value="external_partner">External Partners</option>
                         </select>
                     </div>
+
                     <div id="org-select-container">
                         <div class="mt-3 flex items-center justify-between mb-1">
                             <label for="organisation" class="mt-1 block text-sm text-gray-700">
                                 Organisation Name <span class="text-red-600">*</span>
                             </label>
                         </div>
-                        <select 
-                            id="organisation" 
-                            name="source_id" 
-                            class="mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-700 shadow-sm transition duration-200 hover:border-cyan-400 focus:border-cyan-500 focus:outline-none focus:ring-4 focus:ring-cyan-100"
-                        >
+                        <select id="organisation" name="source_id" class="mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-700 shadow-sm transition duration-200 hover:border-cyan-400 focus:border-cyan-500 focus:outline-none focus:ring-4 focus:ring-cyan-100">
                             <option value="">Select Organisation</option>
                             @foreach($identityOrganisations->groupBy(fn($org) => optional($org->type)->name ?? 'Other') as $type => $organisations)
                                 <optgroup label="{{ $type }}">
                                     @foreach($organisations as $organisation)
-                                        <option value="{{ $organisation->id }}">
-                                            {{ $organisation->name }} {{ $organisation->code ?? '' }}
-                                        </option>
+                                            <option value="{{ $organisation->id }}">
+                                                {{ $organisation->name }} {{ $organisation->code }}
+                                            </option>
                                     @endforeach
                                 </optgroup>
                             @endforeach
@@ -60,6 +110,7 @@
                                 Organisation not listed? + Add External Partner
                         </a>
                     </div>
+                    
                     <div id="partner-select-container" class="mt-3" style="display:none;">
                         <label for="partner">External Partner <span class="text-red-600">*</span></label>
                         <select id="partner" 
@@ -75,22 +126,15 @@
                                 Organisation not listed? + Add External Partner
                         </a>
                     </div>
-                @elseif(auth()->user()->hasRole(['user', 'sro', 'hod']))
-                    <input type="hidden" name="source_type" value="identity_organisation">
-
-                    <input type="hidden" name="source_id" value="{{ auth()->user()->ministry_id }}">
-                    
-                    <label for="userOrganisation" class="block">
-                        Source Organisation <span class="text-red-600">*</span>
-                    </label>
-
-                    <input
-                        type="text"
-                        id="userOrganisation"
-                        value="{{ auth()->user()->ministry?->name }}"
-                        class="mt-1 mb-3 text-sm block w-full border-gray-300 rounded-md bg-gray-50 text-gray-700 shadow-sm"
-                        readonly
-                    >
+                @else
+                    <div>
+                        <label for="source_type">Source Type <span class="text-red-600">*</span></label>
+                        <select name="source_type" id="source_type" 
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm">
+                            {{-- <option value="">Select Source Type</option> --}}
+                            <option value="own_ministry">My Ministry{{ Auth::user()->ministry?->name ? ' (' . Auth::user()->ministry->name . ')' : '' }}</option>                            
+                        </select>
+                    </div>
                 @endif
                 
                 <div class="mt-3">
@@ -130,11 +174,11 @@
                         </div>
                     </div>
                 </div>
+                
                 <!-- File Category -->
                 <div>
                     <label for="category_id" class="block">
                         Category
-                        <span class="text-gray-400">(Optional)</span>
                     </label>
                     <select name="category_id" 
                             id="category_id" 
@@ -150,12 +194,12 @@
                 </div>
                 <!-- Due Date -->
                 <div>
-                    <label for="due_date" class="block">Due Date <span class="text-gray-400">(Optional)</span></label>
+                    <label for="due_date" class="block">Due Date 
                     <input type="date" name="due_date" min="{{ date('Y-m-d') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm" value="{{ old('due_date') }}">
                 </div>
             </div>
 
-            @if(auth()->user()->hasRole('registry'))
+            @if(Auth::user()->hasRole('registry'))
                 <div class="pt-6 border-t border-gray-300 mt-6 text-gray-700 space-y-6">
                     <label class="block text-sm font-medium text-gray-700 mb-3">
                         Document Type <span class="text-red-600">*</span>
@@ -212,8 +256,8 @@
                         Choose Template <span class="text-red-600">*</span>
                     </label>
 
+                    {{-- Memorandum --}}
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {{-- Memorandum --}}
                         <label class="template-option border border-gray-300 rounded-xl p-4 cursor-pointer hover:bg-gray-50 transition">
                             <input type="radio" name="correspondence_type" value="memo" class="template-radio hidden">
 
@@ -245,28 +289,38 @@
                     </div>
 
                     <div id="ministries-container" class="hidden mt-6">
-                        <div class="border border-gray-200 p-3 space-y-5">
+                        <div class="border border-gray-200 p-3 bg-gray-50 space-y-5">
                             <h3 class="text-sm font-semibold text-gray-800 uppercase tracking-wide">
-                                Metatable Fields
+                                Memorandum Metatable Fields
                             </h3>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">
                                     Select Recipient Ministries
                                 </label>
 
-                                <div class="max-h-64 overflow-y-auto border border-gray-300 rounded-md p-3 space-y-2">
+                                <div class="max-h-64 overflow-y-auto border border-gray-300 bg-white rounded-md p-3 space-y-2">
+                                    <label class="flex items-start gap-2 cursor-pointer border-b border-gray-200 pb-2 mb-2">
+                                        <input type="checkbox"
+                                            id="select-all-ministries"
+                                            class="mt-1 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500">
+
+                                        <span class="text-sm font-semibold text-gray-700">
+                                            All Ministries
+                                        </span>
+                                    </label>
                                     @foreach($ministries as $ministry)
-                                        @if($ministry->id != auth()->user()->ministry_id)
+                                        @if($ministry->id != Auth::user()->ministry_id)
                                             <label class="flex items-start gap-2 cursor-pointer">
                                                 <input type="checkbox"
                                                     name="memo_recipients[]"
                                                     value="{{ $ministry->id }}"
-                                                    class="mt-1 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500"
+                                                    class="ministry-checkbox mt-1 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500"
                                                     @checked(in_array($ministry->id, old('memo_recipients', [])))
                                                 >
 
                                                 <span class="text-sm text-gray-700">
                                                     {{ $ministry->reviewer_title }}
+
                                                     <span class="text-gray-500">
                                                         - {{ $ministry->name }}
                                                     </span>
@@ -279,7 +333,7 @@
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div>
                                     <label for="memo_from_field" class="block text-sm font-medium text-gray-700 mb-2">
                                         From
@@ -287,7 +341,9 @@
                                     <input type="text"
                                         name="memo_from_field"
                                         id="memo_from_field"
-                                        class="mt-1 block w-full border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500">
+                                        placeholder="e.g Secretary"
+                                        class="mt-1 block w-full text-sm border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                                        >
                                 </div>
                                 <div>
                                     <label for="memo_attention_to" class="block text-sm font-medium text-gray-700 mb-2">
@@ -296,16 +352,18 @@
                                     <input type="text"
                                         name="memo_attention_to"
                                         id="memo_attention_to"
-                                        class="mt-1 block w-full border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500">
+                                        class="mt-1 block w-full text-sm border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                                        >
                                 </div>
                                 <div>
                                     <label for="memo_cc_field" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Cc'd officer
+                                        CC officer
                                     </label>
                                     <input type="text"
                                         name="memo_cc_field"
                                         id="memo_cc_field"
-                                        class="mt-1 block w-full border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500">
+                                        class="mt-1 block w-full text-sm border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                                        >
                                 </div>
                             </div>
                         </div>
@@ -338,6 +396,11 @@
                                         </label>
                                     @endforeach
                                 </div>
+                                <a href="{{ route('registry.external-partners.create') }}"
+                                    target="_blank"
+                                    class="text-xs mt-3 text-cyan-600 hover:text-cyan-800 hover:text-cyan-800 hover:underline">
+                                        Organisation not listed? + Add External Partner
+                                </a>
 
                                 @error('registered_organisations')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -365,6 +428,7 @@
                                     </div>
                                 </div>
                             @endif
+
                         </div>
                     </div>
 
@@ -372,7 +436,7 @@
                     <div id="internal-container" class="hidden mt-6">
                         <div class="bg-gray-50 border border-gray-200 p-3 space-y-5">
                             <h3 class="text-sm font-semibold text-gray-800 uppercase tracking-wide">
-                                Metatable Fields
+                                Internal Memo Metatable Fields
                             </h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div>
@@ -407,7 +471,7 @@
                                         <option value="">Select UFS Officer</option>
 
                                         @foreach($usersWithDivision as $officer)
-                                            @if($officer->id !== auth()->user()->id)
+                                            @if($officer->id !== Auth::user()->id)
                                                 <option value="{{ $officer->id }}"
                                                     @selected(old('ufs_id') == $officer->id)>
                                                     {{ $officer->first_name }} {{ $officer->last_name }}
@@ -502,18 +566,28 @@
                                 </label>
 
                                 <div class="max-h-64 overflow-y-auto border border-gray-300 rounded-md p-3 space-y-2">
+                                     <label class="flex items-start gap-2 cursor-pointer border-b border-gray-200 pb-2 mb-2">
+                                        <input type="checkbox"
+                                            id="select-all-ministries"
+                                            class="mt-1 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500">
+
+                                        <span class="text-sm font-semibold text-gray-700">
+                                            All Ministries
+                                        </span>
+                                    </label>
                                     @foreach($ministries as $ministry)
-                                        @if($ministry->id != auth()->user()->ministry_id)
+                                        @if($ministry->id != Auth::user()->ministry_id)
                                             <label class="flex items-start gap-2 cursor-pointer">
                                                 <input type="checkbox"
                                                     name="memo_recipients[]"
                                                     value="{{ $ministry->id }}"
-                                                    class="mt-1 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500"
+                                                    class="ministry-checkbox mt-1 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500"
                                                     @checked(in_array($ministry->id, old('memo_recipients', [])))
                                                 >
 
                                                 <span class="text-sm text-gray-700">
                                                     {{ $ministry->reviewer_title }}
+
                                                     <span class="text-gray-500">
                                                         - {{ $ministry->name }}
                                                     </span>
@@ -654,19 +728,18 @@
                                         <option value="">Select UFS Officer</option>
 
                                         @foreach($usersWithDivision as $officer)
-                                            @if($officer->id !== auth()->user()->id)
-                                                <option value="{{ $officer->id }}"
-                                                    @selected(old('ufs_id') == $officer->id)>
-                                                    {{ $officer->first_name }} {{ $officer->last_name }}
-                                                    @if($officer->designation)
-                                                        - {{ $officer->designation }}
+                                            <option value="{{ $officer['id'] }}"
+                                                    @selected(old('internal_ufs_id') == $officer['id'])>
+                                                    {{ $officer['name'] }}
+                                                    @if($officer['designation'])
+                                                        - {{ $officer['designation'] }}
                                                     @endif
                                                 </option>
-                                            @endif
+                                            @endifs
                                         @endforeach
                                     </select>
 
-                                    @error('ufs_id')
+                                    @error('internal_ufs_id')
                                         <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
                                     @enderror
                                 </div>
@@ -735,8 +808,6 @@
         ClassicEditor
             .create(document.querySelector('#editor'), {
                 toolbar: [
-                    'heading',
-                    '|',
                     'bold',
                     'italic',
                     'underline',
@@ -744,10 +815,6 @@
                     'bulletedList',
                     'numberedList',
                     '|',
-                    'outdent',
-                    'indent',
-                    '|',
-                    'link',
                     'insertTable',
                     '|',
                     'undo',
@@ -995,29 +1062,7 @@
             toggleDocumentSource();
         });
         </script>
-        {{-- <script>
-            const ufsSelect = document.getElementById('ufs_officer_id');
-            const ccSelect = document.getElementById('cc_field');
-
-            function updateCcOptions() {
-                const selectedUfs = ufsSelect.value;
-
-                Array.from(ccSelect.options).forEach(option => {
-                    option.disabled = false;
-
-                    if (selectedUfs && option.value === selectedUfs) {
-                        option.disabled = true;
-
-                        if (ccSelect.value === selectedUfs) {
-                            ccSelect.value = '';
-                        }
-                    }
-                });
-            }
-
-            ufsSelect.addEventListener('change', updateCcOptions);
-            updateCcOptions();
-        </script> --}}
+      
         <script>
             document.addEventListener('DOMContentLoaded', function () {
                 const sourceTypeSelect = document.getElementById('source_type');
@@ -1029,7 +1074,7 @@
                 const templateSection = document.getElementById('template-section');
 
                 // logged-in ministry id from backend
-                const loggedInMinistryId = @json(auth()->user()->ministry_id);
+                const loggedInMinistryId = @json(Auth::user()->ministry_id);
                 function toggleOnlineSection() {
                     const sourceType = sourceTypeSelect.value;
                     const sourceId = organisationSelect.value;
@@ -1081,4 +1126,33 @@
                 toggleOnlineSection();
             });
         </script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const selectAll = document.getElementById('select-all-ministries');
+                const ministryCheckboxes = document.querySelectorAll('.ministry-checkbox');
+
+                // Select / deselect all
+                selectAll.addEventListener('change', function () {
+                    ministryCheckboxes.forEach(function (checkbox) {
+                        checkbox.checked = selectAll.checked;
+                    });
+                });
+
+                // Keep "All Ministries" in sync
+                ministryCheckboxes.forEach(function (checkbox) {
+                    checkbox.addEventListener('change', function () {
+                        selectAll.checked =
+                            ministryCheckboxes.length > 0 &&
+                            [...ministryCheckboxes].every(cb => cb.checked);
+                    });
+                });
+
+                // Useful when old() returns all ministries after validation failure
+                selectAll.checked =
+                    ministryCheckboxes.length > 0 &&
+                    [...ministryCheckboxes].every(cb => cb.checked);
+            });
+        </script>
+
+
 @endsection

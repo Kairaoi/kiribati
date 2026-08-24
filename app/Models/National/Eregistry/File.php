@@ -19,10 +19,11 @@ use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Models\Audit;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class File extends Model implements Auditable
 {
-    use SoftDeletes, HasFactory, LogsActivity, \OwenIt\Auditing\Auditable;
+    use HasUuids, SoftDeletes, HasFactory, LogsActivity, \OwenIt\Auditing\Auditable;
 
     protected $table = 'files';
 
@@ -55,6 +56,12 @@ class File extends Model implements Auditable
         'internal_cc_field',
         'internal_to_field',
         'internal_ufs_id',
+        'final_pdf_path',
+        'final_pdf_hash',
+        'final_pdf_rendered_at',
+        'signed_by',
+        'signature_path',
+        'signed_at',
     ];
 
     protected $auditInclude = [
@@ -74,6 +81,22 @@ class File extends Model implements Auditable
         'memo_recipients' => 'array',
         'letter_recipients' => 'array',
     ];
+
+    
+    public function uniqueIds(): array
+    {
+        return ['uuid'];
+    }
+
+    public function signedBy()
+    {
+        return $this->belongsTo(User::class, 'signed_by');
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
 
     public function overlays()
     {
@@ -143,7 +166,7 @@ class File extends Model implements Auditable
     public function isArchivedByCurrentMinistry()
     {
         return $this->archivedRecords()
-            ->where('ministry_id', auth()->user()->ministry_id)
+            ->where('ministry_id', Auth::user()->ministry_id)
             ->exists();
     }
 
@@ -156,7 +179,7 @@ class File extends Model implements Auditable
     public function isClosedByCurrentMinistry()
     {
         return $this->closedRecords()
-            ->where('ministry_id', auth()->user()->ministry_id)
+            ->where('ministry_id', Auth::user()->ministry_id)
             ->exists();
     }
 
@@ -226,6 +249,7 @@ class File extends Model implements Auditable
             if ($selectedType === 'dispatch') {
                 return $query
                     ->where('files.ministry_id', $userMinistryId)
+                    ->where('files.correspondence_type', '!=', 'internal')
                     ->whereExists(function ($q) use ($userMinistryId) {
                         $q->selectRaw(1)
                             ->from('ministry_closed_files as mcf')
@@ -243,8 +267,10 @@ class File extends Model implements Auditable
                             ->where('mcf.ministry_id', $userMinistryId);
                     });
 
-            } elseif ($selectedType === 'all') {
+            } elseif ($selectedType === 'internal') {
                 return $query
+                    ->where('files.ministry_id', $userMinistryId)
+                    ->where('files.correspondence_type', 'internal')
                     ->whereExists(function ($q) use ($userMinistryId) {
                         $q->selectRaw(1)
                             ->from('ministry_closed_files as mcf')
@@ -252,6 +278,14 @@ class File extends Model implements Auditable
                             ->where('mcf.ministry_id', $userMinistryId);
                     });
             }
+
+            return $query
+                    ->whereExists(function ($q) use ($userMinistryId) {
+                        $q->selectRaw(1)
+                            ->from('ministry_closed_files as mcf')
+                            ->whereColumn('mcf.file_id', 'files.id')
+                            ->where('mcf.ministry_id', $userMinistryId);
+                    });
           
     }
 
@@ -272,6 +306,88 @@ class File extends Model implements Auditable
             });
     }
 
+
+    public function scopeForMinistry($query, $ministry, int $userMinistryId)
+    {
+        if (empty($ministry)) {
+            return $query;
+        }
+
+        return $query
+            ->where(function ($q) use ($ministry ) {
+                $q->where('files.ministry_id', $ministry)
+                    ->orWhereJsonContains('files.memo_recipients', (string) $ministry);
+            })
+            ->where(function ($q) use ($userMinistryId) {
+                $q->where('files.ministry_id', $userMinistryId)
+                ->orWhereJsonContains('files.memo_recipients', (string) $userMinistryId);
+            })
+            ->whereExists(function ($q) use ($userMinistryId) {
+                $q->selectRaw(1)
+                    ->from('ministry_closed_files as mcf')
+                    ->whereColumn('mcf.file_id', 'files.id')
+                    ->where('mcf.ministry_id', $userMinistryId);
+            });
+    }
+
+    public function scopeForOrganisation($query, $organisation, int $userMinistryId)
+    {
+        if (empty($organisation)) {
+            return $query;
+        }
+
+        return $query
+            ->where(function ($q) use ($userMinistryId) {
+                $q->where('files.ministry_id', $userMinistryId);
+            })
+            ->where(function ($q) use ($organisation) {
+                $q->where(function ($q) use ($organisation) {
+                    $q->where('files.source_id', $organisation)
+                    ->where('files.source_type', IdentityOrganisation::class);
+                })
+                ->orWhereJsonContains(
+                    'files.letter_recipients->registered_organisations',
+                    (string) $organisation
+                );
+            })
+            ->whereExists(function ($q) use ($userMinistryId) {
+                $q->selectRaw(1)
+                    ->from('ministry_closed_files as mcf')
+                    ->whereColumn('mcf.file_id', 'files.id')
+                    ->where('mcf.ministry_id', $userMinistryId);
+            });
+    }
+
+
+    public function scopeForPartner($query, $partner, int $userMinistryId)
+    {
+        if (empty($partner)) {
+            return $query;
+        }
+
+        return $query
+            ->where(function ($q) use ($userMinistryId) {
+                $q->where('files.ministry_id', $userMinistryId);
+            })
+            ->where(function ($q) use ($partner) {
+                $q->where(function ($q) use ($partner) {
+                    $q->where('files.source_id', $partner)
+                    ->where('files.source_type', ExternalPartner::class);
+                })
+                ->orWhereJsonContains(
+                    'files.letter_recipients->external_partners',
+                    (string) $partner
+                );
+            })
+            ->whereExists(function ($q) use ($userMinistryId) {
+                $q->selectRaw(1)
+                    ->from('ministry_closed_files as mcf')
+                    ->whereColumn('mcf.file_id', 'files.id')
+                    ->where('mcf.ministry_id', $userMinistryId);
+            });
+    }
+
+
     public function scopeForCategory($query, $category, int $userMinistryId)
     {
         if (empty($category)) {
@@ -288,27 +404,26 @@ class File extends Model implements Auditable
     }
 
 
-    public function scopeForOrganisation(Builder $query, array $filterOrgIds = [])
+    public function scopeForDateRange($query, $fromDate = null, $toDate = null, int $userMinistryId)
     {
-        if (!empty($filterOrgIds)) {
-            return $query
-                ->whereIn('organisation_id', $filterOrgIds)
-                ->orWhereHas('recipientMinistries', function ($q) use ($filterOrgIds) {
-                    $q->whereIn('organisations.id', $filterOrgIds);
-                });
-        }
-        return $query;
-    }
+        if ($fromDate || $toDate) {
+            $query->where('files.ministry_id', $userMinistryId);
 
-    public function scopeForDateRange(Builder $query, $fromDate = null, $toDate = null)
-    {
-        if ($fromDate) {
-            $query->whereDate('letter_date', '>=', $fromDate);
+            if ($fromDate) {
+                $query->whereDate('files.letter_date', '>=', $fromDate);
+            }
+
+            if ($toDate) {
+                $query->whereDate('files.letter_date', '<=', $toDate);
+            }
         }
-        if ($toDate) {
-            $query->whereDate('letter_date', '<=', $toDate);
-        }
-        return $query;
+
+        return $query->whereExists(function ($q) use ($userMinistryId) {
+                $q->selectRaw(1)
+                    ->from('ministry_closed_files as mcf')
+                    ->whereColumn('mcf.file_id', 'files.id')
+                    ->where('mcf.ministry_id', $userMinistryId);
+            });
     }
 }
 

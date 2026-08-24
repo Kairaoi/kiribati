@@ -44,7 +44,7 @@
             <div class="col-span-2 sm:grid sm:grid-cols-3 sm:gap-4 py-2 border-b">
                 <dt class="font-semibold text-gray-700">Circulation Status:</dt>
                 <dd class="sm:col-span-2 text-gray-900">
-                    @php $loggedInOrganisationId = auth()->user()->organisation_id; @endphp
+                    @php $loggedInOrganisationId = Auth::user()->organisation_id; @endphp
 
                     @foreach ($file->recipientMinistries as $organisation)
                         @if ($organisation->id == $loggedInOrganisationId)
@@ -114,11 +114,11 @@
             @csrf 
 
             <input type="hidden" name="file_id" value="{{ $file->id }}">
-            <input type="hidden" name="to_organisation_id" value="{{ auth()->user()->organisation_id }}">
+            <input type="hidden" name="to_organisation_id" value="{{ Auth::user()->organisation_id }}">
 
             @php
             $isCirculated = $file->recipientMinistries
-                ->where('id', auth()->user()->organisation_id)
+                ->where('id', Auth::user()->organisation_id)
                 ->pluck('pivot.status')
                 ->contains('Circulated');
             @endphp

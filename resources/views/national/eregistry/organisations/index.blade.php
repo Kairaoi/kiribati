@@ -7,7 +7,7 @@
             <h1 class="text-3xl font-bold text-gray-800">Organisations</h1>
             <p class="text-gray-500 text-sm mt-2 mb-2">View all organsiations registered in the E-Registry System</p>
 
-            <select id="typeFilter" class="filter-input w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-700 shadow-sm transition duration-200 focus:border-cyan-500 focus:outline-none focus:ring-4 focus:ring-cyan-100 hover:border-cyan-400">                
+            <select id="typeFilter" class="filter-input w-full border border-gray-600 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-sm transition duration-200 focus:border-cyan-500 focus:outline-none focus:ring-4 focus:ring-cyan-100 hover:border-cyan-400">                
                 <option value="">All Organisation</option>
                 <option value="ministry">Ministry</option>
                 <option value="soe">State Owned Enterprise(SOE)</option>
@@ -18,11 +18,11 @@
         </div>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">        
+    <div class="bg-white shadow-sm border border-gray-100 p-4">        
         <table id="organisationsTable" class="w-full text-sm text-left">
             <thead class="bg-gray-50 text-gray-600 text-sm uppercase tracking-wide">
                 <tr>
-                    <th>ID</th>
+                    <th>#</th>
                     <th>Name</th>
                     <th>Code</th>
                     <th>Category/Type</th>
@@ -57,22 +57,29 @@
     /* Cells */
     #organisationsTable th,
     #organisationsTable td {
-        padding: 14px 16px;
+        padding: 8px 10px;
+         border: 1px solid #dbdbe2;
     }
 
     /* Row divider */
     #organisationsTable tbody tr {
         border-bottom: 1px solid #e5e7eb;
+        padding: 8px 10px;
+         border: 1px solid #dbdbe2;
     }
 
     /* Hover effect */
     #organisationsTable tbody tr:hover {
         background-color: #f9fafb;
+         padding: 8px 10px;
+        border: 1px solid #9a9aa0;
     }
 
     /* Fix long text */
     #organisationsTable td {
         white-space: normal !important;
+         border: 1px solid #dbdbe2;
+        
         /* word-break: break-word; */
     }
     .dataTables_filter input {

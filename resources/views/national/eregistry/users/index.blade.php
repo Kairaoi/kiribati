@@ -49,9 +49,10 @@
         <table id="usersTable" class="bg-gray-50 text-gray-800 text-sm divide-y divide-gray-200 stripe">
             <thead>
                 <tr>
-                    <th>Ministry</th>
+                    <th>UUID</th>
                     <th>First Name</th>
                     <th>Last Name</th>
+                    <th>Email</th>
                     <th>Division</th>
                     <th>Designation</th>
                     <th>Role</th>
@@ -282,15 +283,15 @@ $(document).ready(function() {
             }
         },
         columns: [
-            { data: 'ministry_code' },
+            { data: 'uuid', visible: false },
             { data: 'first_name' },
             { data: 'last_name' },
+            { data: 'email' },
             { data: 'division_name' }, 
             { data: 'designation' },
-            { data: 'role_names' },  
-
+            { data: 'role_names', name: 'roles.name'},
             {
-                data: 'status',
+                data: 'status', name: 'users.is_active',
                 render: function (data) {
                     return Number(data) === 1
                         ? '<span class="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">Active</span>'
@@ -304,24 +305,22 @@ $(document).ready(function() {
                 searchable: false,
                 render(data, type, row) {
                     return `
-                                        <a href="/registry/users/${row.id}" 
-                                            class="inline-flex items-center justify-center hover:text-gray-600 transition"
-                                            title="View">
-                                            <i class="fa fa-eye text-sm"></i>
-                                        </a>
-
-                                        <a href="/registry/users/${row.id}/edit" 
-                                            class="inline-flex items-center justify-center hover:text-gray-600 transition ms-3"
-                                            title="Edit">
-                                            <i class="fa fa-pen text-sm"></i>
-                                        </a>
-
-                                        <button class="inline-flex items-center justify-center hover:text-red-600 transition ms-3 delete-action" 
-                                                data-id="${row.id}" 
-                                                title="Delete">
-                                            <i class="fa fa-trash text-sm"></i>
-                                        </button>
-                                    `;
+                        <a href="/registry/users/${row.uuid}" 
+                            class="inline-flex items-center justify-center hover:text-gray-600 transition"
+                                title="View">
+                                <i class="fa fa-eye text-sm"></i>
+                        </a>
+                        <a href="/registry/users/${row.uuid}/edit" 
+                            class="inline-flex items-center justify-center hover:text-gray-600 transition ms-3"
+                                title="Edit">
+                                <i class="fa fa-pen text-sm"></i>
+                        </a>
+                        <button class="inline-flex items-center justify-center hover:text-red-600 transition ms-3 deactivate-action" 
+                            data-id="${row.uuid}" 
+                            title="Deactivate">
+                            <i class="fa fa-user-slash text-sm"></i>
+                        </button>
+                    `;
                 }
             }
         ],
@@ -362,35 +361,37 @@ $(document).ready(function() {
     });
 
 
-    // Handle delete action
-    $(document).on('click', '.delete-action', function(e) {
+    // Handle deactivate action
+    $(document).on('click', '.deactivate-action', function(e) {
         e.preventDefault();
+
         const id = $(this).data('id');
-        
-        if (confirm('Are you sure you want to delete this user?')) {
+
+        if (confirm('Are you sure you want to deactivate this user?')) {
             $.ajax({
-                url: route('registry.users.destroy', id),
-                type: 'DELETE',
+                url: route('registry.users.deactivate', id),
+                type: 'PATCH',
                 headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') 
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
                 success(response) {
                     $('#usersTable').DataTable().ajax.reload();
-                    alert('User deleted successfully');
+                    alert('User deactivated successfully.');
                 },
                 error(xhr) {
-                    alert('Error deleting file');
+                    alert('Unable to deactivate user.');
                 }
             });
         }
-        closeAllDropdowns(); 
+
+        closeAllDropdowns();
     });
 
     function route(name, id) {
         return {
-            'registry.users.show': "{{ route('registry.users.show', ':id') }}".replace(':id', id),
-            'registry.users.edit': "{{ route('registry.users.edit', ':id') }}".replace(':id', id),
-            'registry.users.destroy': "{{ route('registry.users.destroy', ':id') }}".replace(':id', id)
+            'registry.users.show': "{{ route('registry.users.show', ':uuid') }}".replace(':uuid', id),
+            'registry.users.edit': "{{ route('registry.users.edit', ':uuid') }}".replace(':uuid', id),
+            'registry.users.deactivate': "{{ route('registry.users.deactivate', ':uuid') }}".replace(':uuid', id)
         }[name];
     }
 

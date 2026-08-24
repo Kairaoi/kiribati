@@ -15,13 +15,13 @@
         </div>
     @endif
 
-    <form action="{{ route('registry.file-types.store') }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ route('registry.file-types.update', $fileType->id) }}" method="POST" enctype="multipart/form-data">
         @csrf
- 
+        @method('PUT')
         <div class="bg-white shadow-sm font-poppins rounded-2xl p-6 max-w-2xl mx-auto mt-4 mb-4">
 
             <h2 class="text-m font-semibold text-gray-800 mb-6">
-                <span class="text-cyan-600">Create your Ministry File Type</span>
+                <span class="text-cyan-600">Edit Ministry File Type</span>
             </h2>
 
             <!-- File Type Name -->
@@ -31,7 +31,7 @@
                 </label>
 
                 <input type="text" name="name" id="file_type_name"
-                    value="{{ old('name') }}"
+                    value="{{ old('name', $fileType->name) }}"
                     class="mt-1 w-full rounded-lg border-gray-300 shadow-sm 
                         focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 
                         text-sm px-3 py-2"
@@ -53,7 +53,7 @@
                     Description <span class="text-gray-400">(optional)</span>
                 </label>
                 <input type="text" name="description" id="description"
-                    value="{{ old('description') }}"
+                    value="{{ old('description', $fileType->description) }}"
                     class="mt-1 w-full rounded-lg border-gray-300 shadow-sm 
                         focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 
                         text-sm px-3 py-2"
@@ -73,7 +73,7 @@
                 </p>
 
                 <input type="text" name="code" id="code"
-                    value="{{ old('code') }}"
+                    value="{{ old('code', $fileType->code) }}"
                     maxlength="3"
                     class="mt-2 w-full rounded-lg border-gray-300 shadow-sm 
                         focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 
@@ -97,7 +97,7 @@
                     class="px-5 py-2 text-sm font-medium rounded-lg 
                         bg-cyan-600 text-white hover:bg-cyan-700 
                         focus:ring-2 focus:ring-cyan-300">
-                    Create File Type
+                    Submit
                 </button>
             </div>
         </div>

@@ -41,7 +41,7 @@
         </div>
     @endif
 
-    <form action="{{ route('registry.ministries.update', auth()->user()->ministry_id) }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ route('registry.ministries.update', Auth::user()->ministry_id) }}" method="POST" enctype="multipart/form-data">
         @csrf
         @method('PUT')
  

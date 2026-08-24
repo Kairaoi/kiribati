@@ -7,14 +7,11 @@
         <h1 class="text-center text-xl font-bold text-gray-600 text-centre">View User</h1>
     </div> --}}
     
-    <div class="bg-white rounded-lg text-md shadow-md p-6 mb-6">
-        <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-base">
-
+    <div class="bg-white rounded-lg text-sm shadow-md p-6 mb-6">
+        <dl class="grid grid-cols-1 text-sm md:grid-cols-2 gap-x-4 gap-y-1 text-base">
             <div class="col-span-2 sm:grid sm:grid-cols-3 sm:gap-4 py-2 border-b">
-                <dt class="font-semibold text-gray-700">User ID:</dt>
-                <dd class="sm:col-span-2 text-gray-900">{{ $user->id }}</dd>
+                <dt class="font-bold text-cyan-700">User Details</dt>
             </div>
-            
             <div class="col-span-2 sm:grid sm:grid-cols-3 sm:gap-4 py-2 border-b">
                 <dt class="font-semibold text-gray-700">First Name:</dt>
                 <dd class="sm:col-span-2 text-gray-900">{{ $user->first_name }}</dd>
@@ -63,20 +60,7 @@
                         <span class="text-gray-500">No roles assigned</span>
                     @endforelse
                 </dd>
-            </div>
-
-            <div class="col-span-2 sm:grid sm:grid-cols-3 sm:gap-4 py-2 border-b">
-                <dt class="font-semibold text-gray-700">Permissions:</dt>
-                <dd class="sm:col-span-2">
-                    @forelse($user->getAllPermissions() as $permission)
-                        <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-sm font-medium mr-1 mb-1">
-                            {{ $permission->name }}
-                        </span>
-                    @empty
-                        <span class="text-gray-500">No permissions assigned</span>
-                    @endforelse
-                </dd>
-            </div>      
+            </div>   
 
             <div class="col-span-2 sm:grid sm:grid-cols-3 sm:gap-4 py-2 border-b">
                 <dt class="font-semibold text-gray-700">Created At:</dt>

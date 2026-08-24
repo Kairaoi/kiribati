@@ -127,7 +127,10 @@ class MinistryRepository extends BaseRepository
             ->get(['id', 'name', 'code', 'reviewer_title']);
     }
 
-    
 
-
+    public function listAll($ministryId = null) {
+        return $this->model()::query()
+              ->where('id', '!=', $ministryId)
+              ->get(['id', 'name', 'reviewer_title']);
+    }
 }

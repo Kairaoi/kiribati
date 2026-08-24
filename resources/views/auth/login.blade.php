@@ -8,7 +8,7 @@
 
                 <div class="text-center leading-tight">
                     <h1 class="text-base font-semibold text-gray-900 tracking-wide">
-                        E-Registry Database
+                        Document Management System
                     </h1>
                     <p class="text-[10px] text-gray-600 uppercase tracking-widest">
                         Government of Kiribati

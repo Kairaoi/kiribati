@@ -83,18 +83,17 @@ class ExternalPartnerRepository extends BaseRepository
     {
         $query = $this->model()::query()->select(['external_partners.id as id',
                                                  'external_partners.name as name', 
-                                                 'identity_organisations.name as identity_organisation_name',
-                                                 DB::raw("COALESCE(identity_types.name, organisation_types.name) as organisation_type_name")])
-                                                
+                                                 'organisation_types.name as organisation_type_name',
+                                                 'external_partners.email as email',
+                                                 'external_partners.phone as phone',
+                                                 'external_partners.is_active as is_active',
+                                                ])              
                                                 ->join('ministries', function ($join) use ($ministryId) {
                                                            $join->on('ministries.id', '=', 'external_partners.ministry_id')
                                                                 ->where('external_partners.ministry_id', $ministryId);
                                                 })
                                                 ->leftJoin('identity_organisations', 'external_partners.identity_organisation_id', '=', 'identity_organisations.id')
-                                                ->leftJoin('organisation_types', 'external_partners.organisation_type_id', '=', 'organisation_types.id')
-                                                ->leftJoin('organisation_types as identity_types', 'identity_organisations.organisation_type_id', '=', 'identity_types.id');
-                                                
-                                         
+                                                ->leftJoin('organisation_types', 'external_partners.organisation_type_id', '=', 'organisation_types.id');                                                
 
         if (!empty($search)) {
             $search = '%' . strtolower($search) . '%';
@@ -134,6 +133,7 @@ class ExternalPartnerRepository extends BaseRepository
     {
         return $this->model()::query()
             ->where('ministry_id', $ministryId)
+            ->where('is_active', "1")
             ->orderBy('id')
             ->orderBy($column)
             ->get(['id', 'name']);

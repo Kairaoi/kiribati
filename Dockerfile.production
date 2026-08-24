@@ -26,8 +26,9 @@ COPY --chown=www-data:www-data . /var/www/html
 
 # Install Composer dependencies without dev packages
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-RUN composer install --no-dev --optimize-autoloader --no-interaction
 
+RUN composer install --no-dev --optimize-autoloader --no-interaction
+RUN npm install && npm run build
 # Configure PHP for production
 # COPY docker/php.ini /usr/local/etc/php/conf.d/custom.ini
 

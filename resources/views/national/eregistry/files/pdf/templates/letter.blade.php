@@ -68,31 +68,48 @@
             font-size: 14px;
         }
 
-        .subject {
-            margin-top: 15px;
-            margin-bottom: 20px;
+         .subject {
             font-weight: bold;
-            font-size: 13px;
+            margin-top: 16px;
+            margin-bottom: 18px;
+            font-size: 14px;
         }
-
 
         .content p {
             margin: 0 0 0 0;
             line-height: 1.3;
-            font-size: 13px;
         }
 
-        .signature-section {
-            text-align: left;                        
+         .signature-section {
+            margin-top: 30px;
         }
 
         .signature-image {
             height: 70px;
+            width: auto;
+            display: block;
             margin-bottom: 5px;
         }
 
         .signatory-name {
             font-weight: bold;
+        }
+
+        .document-content table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .document-content table,
+        .document-content th,
+        .document-content td {
+            border: 1px solid #000;
+        }
+
+        .document-content th,
+        .document-content td {
+            padding: 6px;
+            vertical-align: top;
         }
 
     </style>
@@ -162,24 +179,18 @@
     {{-- Signature --}}
     <div class="signature-section">
         
-       
         {{-- Live Signature Preview --}}
-        @if($fileCirculation?->signature_path)
+        @if($file->signature_path)
             <div class="signature-section">
                 <img
-                    src="{{ public_path('storage/' . $fileCirculation->signature_path) }}"
+                    src="{{ public_path('storage/' . $file->signature_path) }}"
                     alt="Signature"
                     class="signature-image">
 
                 <div class="signatory-name">
-                    {{ $fileCirculation->signedBy?->first_name }}
-                    {{ $fileCirculation->signedBy?->last_name }}
+                    {{ $file->signedBy?->first_name }}
+                    {{ $file->signedBy?->designation ?? '' }}
                 </div>
-
-                <div>
-                    {{ $fileCirculation->signedBy?->designation ?? '' }}
-                </div>
-
                 <div style="font-size: 12px; color: #668;">
                     Approved Electronically
                 </div>

@@ -15,6 +15,8 @@ use App\Repositories\National\Eregistry\UserRepository;
 use auth;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
 
 class UfsApprovalController extends Controller
 {
@@ -24,6 +26,7 @@ class UfsApprovalController extends Controller
     private $users;
     private $files;
 
+    
     public function __construct(DivisionRepository $divisions, 
                                 MinistryRepository $ministries, 
                                 UserRepository $users,
@@ -38,15 +41,9 @@ class UfsApprovalController extends Controller
     }
 
 
-
-
-
-
     public function approve(FileCirculation $fileCirculation)
     {
         abort_unless(auth()->id() === $fileCirculation->file->internal_ufs_id, 403);
-
-        // abort_unless($fileCirculation->initial_type === 'internal', 403);
 
         $fileCirculation->update([
             'status' => 'UFS Approved',
@@ -57,6 +54,7 @@ class UfsApprovalController extends Controller
 
         $file = File::where('id', $fileCirculation['file_id'])->first();
         $file->status = $fileCirculation->status;
+        $file->save();
 
         return redirect()->route('registry.files.index')->with('success', 'File successfully UFS approved');
     }
@@ -64,9 +62,7 @@ class UfsApprovalController extends Controller
 
     public function reject(FileCirculation $fileCirculation)
     {
-            abort_unless(auth()->id() === $fileCirculation->ufs_id, 403);
-
-            // abort_unless($fileCirculation->initial_type === 'internal', 403);
+            abort_unless(auth()->id() === $fileCirculation->file->internal_ufs_id, 403);
 
             $fileCirculation->update([
                 'status' => 'UFS Rejected',
@@ -74,6 +70,11 @@ class UfsApprovalController extends Controller
                 'ufs_rejected_by' => auth()->id(),
                 'ufs_rejected_at' => now(),
             ]);
+            
+            $file = File::where('id', $fileCirculation['file_id'])->first();
+            $file->status = $fileCirculation->status;
+            $file->save();
+
 
             return back()->with('success', 'File rejected.');
     }
