@@ -205,7 +205,17 @@ class FileController extends Controller
         $notMinistriesOrgs = $identityOrganisations->filter(function($org) {
             return $org->type->name !== 'Ministry';
         });
-        
+
+        $currentReviewOfficer = User::role('review-officer')
+            ->where('ministry_id', $ministryId)
+            ->first();
+
+        $sro = User::role('sro')
+            ->where('ministry_id', $ministryId)
+            ->first();
+
+        $officerInCharge = $currentReviewOfficer->id === $sro->id;
+    
         return view('national.eregistry.files.create', compact('identityOrganisations',
                                                                 'externalPartners',  
                                                                 'ministries',  
@@ -213,7 +223,8 @@ class FileController extends Controller
                                                                 'categories',
                                                                 'file_types',
                                                                 'notMinistriesOrgs',
-                                                                'usersWithDivision'
+                                                                'usersWithDivision',
+                                                                'officerInCharge'
         ));
     }
 
@@ -469,12 +480,10 @@ class FileController extends Controller
     {
         $this->authorize('view', $file);
 
-        $userId = Auth::user()->id;
         $ministryId = Auth::user()->ministry_id;
-        $fileId = $file->id;
         $closedRecord = DB::table('ministry_closed_files')
                 ->join('users', 'ministry_closed_files.closed_by', '=', 'users.id')
-                ->where('ministry_closed_files.file_id', $fileId)
+                ->where('ministry_closed_files.file_id', $file->id)
                 ->where('ministry_closed_files.ministry_id', $ministryId)
                 ->select(
                     'ministry_closed_files.created_at',
@@ -486,32 +495,43 @@ class FileController extends Controller
         $isClosed = !is_null($closedRecord);
         $closedBy = $closedRecord?->closed_by_name ?? 'Unknown';
         $closedDate = $closedRecord?->closed_at ?? null;
-
-        $ministrySource = $file->isOwnedByMinistry(Auth::user()->ministry_id);
     
+        //get dispatch ministries circulations, not internal circulation
         $fileCirculations = $this->fileCirculations
-                                ->ministryCirculations($fileId, $ministryId)
-                                ->with('activeAssignments')
-                                ->latest()
-                                ->get();
+                                    ->ministryCirculations($file->id, $ministryId)
+                                    ->with([
+                                        'toMinistry:id,name',
+                                        'dispatch:id,dispatch_date',
+                                    ])
+                                    ->latest()
+                                    ->get();
 
-        $circulation = $this->fileCirculations->thisCirculation($fileId, $ministryId);
+        //get internal circulation 
+        $circulation = $this->fileCirculations
+                            ->thisCirculation($file->id, $ministryId)
+                            ->with(['activeAssignments.officer:id,division_id,first_name,last_name',
+                                    'activeAssignments.officer.division:id,name',
+                                    'activeAssignments.assignedBy:id,first_name,last_name',
+                            ])
+                            ->first();
       
-        $fileAssignment = $circulation?->activeAssignments()->where('officer_id', Auth::id())->first(); // Get the file assignment for the logged-in user, if it exists
+        // Get the file assignment for the logged-in user, if it exists
+        $fileAssignment = $circulation?->activeAssignments->firstWhere('officer_id', Auth::id()); 
 
-        $dispatchedMinistries = $fileCirculations->pluck('to_ministry_id')->unique()->toArray();
+        
         $ministries = $this->ministries->list()
                                        ->where('id', '!=', $file->ministry_id)
                                        ->whereNotIn('id', $fileCirculations->pluck('to_ministry_id')->unique())
                                        ->values();
 
         $officers = $this->users->pluck();
+
         $reviewOfficer = User::role('review-officer')
                                 ->where('ministry_id', $ministryId)
                                 ->first();
 
         $usersWithDivision = $this->users->getUsersDivision();
-        // dd($usersWithDivision);
+
         $divisionUsers = $this->users->getDivisionUsers(Auth::user()->division_id);
 
         $assignedOfficerIds = $circulation?->activeAssignments
@@ -520,20 +540,15 @@ class FileController extends Controller
 
         $notAssignedOfficers = $usersWithDivision->whereNotIn('id', $assignedOfficerIds);
 
-        $memoRecipients = $file->memoRecipients();
-        // dd($memoRecipients);
+        $memoRecipients = $file->getMemoRecipients();
         $hod = Auth::user()->division?->hod;
-        return view('national.eregistry.files.show', compact('userId',
-                                                            'file', 
-                                                             'ministrySource', 
-                                                             'fileId', 
+        return view('national.eregistry.files.show', compact('file', 
                                                              'isClosed', 
                                                              'closedBy',
                                                              'closedDate', 
                                                              'ministryId', 
                                                              'ministries', 
-                                                             'officers', 
-                                                             'dispatchedMinistries', 
+                                                             'officers',  
                                                              'reviewOfficer', 
                                                              'usersWithDivision', 
                                                              'fileCirculations',
@@ -610,13 +625,18 @@ class FileController extends Controller
 
                 $isAllMinistries = $allMinistryIds->isNotEmpty()
                     && $recipientIds->sort()->values()->all()
-                        === $allMinistryIds->sort()->values()->all();
+                    === $allMinistryIds->sort()->values()->all();
+
+                $recipients = $file->getMemoRecipients();
+
+                $showRecipientListAtEnd = $recipients->count() > 6 && !$isAllMinistries;
 
                 $pdf = Pdf::loadView('national.eregistry.files.pdf.templates.memo', [
                     'file' => $file,
-                    'fileCirculation' => $circulation,
                     'ministries' => $ministries,
                     'isAllMinistries' => $isAllMinistries,
+                    'recipients' => $recipients,
+                    'showRecipientListAtEnd' => $showRecipientListAtEnd 
                 ])->setPaper('a4', 'portrait');
 
                  return $pdf->stream($file->reference_no . '.pdf');
@@ -709,23 +729,30 @@ class FileController extends Controller
         if ($file->correspondence_type === 'memo') {
             $ministries = $this->ministries->list();
                 
-                $recipientIds = collect($file->memo_recipients ?? [])
+            $recipientIds = collect($file->memo_recipients ?? [])
                     ->map(fn ($id) => (int) $id);
 
-                $allMinistryIds = $ministries
+            $allMinistryIds = $ministries
                     ->where('id', '!=', $file->ministry_id)
                     ->pluck('id')
                     ->map(fn ($id) => (int) $id);
 
-                $isAllMinistries = $allMinistryIds->isNotEmpty()
+            $isAllMinistries = $allMinistryIds->isNotEmpty()
                     && $recipientIds->sort()->values()->all()
-                        === $allMinistryIds->sort()->values()->all();
+                    === $allMinistryIds->sort()->values()->all();
 
-                $pdf = Pdf::loadView($templateView, [
-                    'file' => $file,
-                    'ministries' => $ministries,
-                    'isAllMinistries' => $isAllMinistries,
-                ])->setPaper('a4', 'portrait');
+            $recipients = $file->getMemoRecipients();
+
+            $showRecipientListAtEnd = $recipients->count() > 6 && !$isAllMinistries;
+
+            $pdf = Pdf::loadView($templateView, [
+                'file' => $file,
+                'ministries' => $ministries,
+                'isAllMinistries' => $isAllMinistries,
+                'showRecipientListAtEnd' => $showRecipientListAtEnd,
+                'recipients' => $recipients
+
+            ])->setPaper('a4', 'portrait');
 
             $pdfContent = $pdf->output();
 
@@ -819,8 +846,6 @@ class FileController extends Controller
         $notMinistriesOrgs = $identityOrganisations->filter(function($org) {
             return $org->type->name !== 'Ministry';
         });
-
-        // dd($file);
         
         return view('national.eregistry.files.edit', compact('file',
                                                              'identityOrganisations',
@@ -834,7 +859,6 @@ class FileController extends Controller
         ));
 
     }
-
 
 
     /**

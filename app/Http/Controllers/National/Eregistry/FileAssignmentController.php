@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\National\Eregistry;
 use App\Http\Controllers\Controller;
-
+use Illuminate\Support\Facades\Auth;
 use App\Models\National\Eregistry\FileAssignment;
 use App\Models\National\Eregistry\File;
 use App\Models\National\Eregistry\FileCirculation;
@@ -13,7 +13,6 @@ use App\Repositories\National\Eregistry\FileCirculationRepository;
 use App\Repositories\National\Eregistry\FileRepository;
 use App\Repositories\National\Eregistry\MinistryRepository;
 use App\Repositories\National\Eregistry\UserRepository;
-use auth;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
@@ -139,11 +138,11 @@ class FileAssignmentController extends Controller
         ]);
       
         $fileAssignment = FileAssignment::where('file_circulation_id', $fileCirculationId)
-                                            ->where('officer_id', Auth::user()->id)
+                                            ->where('officer_id', auth()->user()->id)
                                             ->where('is_active', true)
                                             ->firstOrFail();
 
-        if($validated['action'] === 'accepted' && $fileAssignment->officer_id == Auth::user()->id) {
+        if($validated['action'] === 'accepted' && $fileAssignment->officer_id == auth()->user()->id) {
             $fileAssignment->update([
                 'status' => 'in_progress',
                 'accepted_at' => now(),
@@ -188,11 +187,11 @@ class FileAssignmentController extends Controller
         ]);
       
         $fileAssignment = FileAssignment::where('file_circulation_id', $fileCirculationId)
-                                            ->where('officer_id', Auth::user()->id)
+                                            ->where('officer_id', auth()->user()->id)
                                             ->where('is_active', true)
                                             ->firstOrFail();
 
-        if($validated['action'] === 'accepted' && $fileAssignment->officer_id == Auth::user()->id) {
+        if($validated['action'] === 'accepted' && $fileAssignment->officer_id == auth()->user()->id) {
             $fileAssignment->update([
                 'status' => 'in_progress',
                 'accepted_at' => now(),

@@ -215,7 +215,6 @@
                                 <div class="text-xs text-gray-500">Upload an existing PDF file</div>
                             </div>
                         </label>
-
                         <label id="online-option"
                             class="flex items-center gap-3 border border-gray-300 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition">
                             
@@ -223,7 +222,6 @@
                                 name="document_source" 
                                 value="online"
                                 class="text-cyan-600 focus:ring-cyan-500">
-
                             <div>
                                 <div class="text-sm font-medium text-gray-800">Write Online</div>
                                 <div class="text-xs text-gray-500">
@@ -338,12 +336,24 @@
                                     <label for="memo_from_field" class="block text-sm font-medium text-gray-700 mb-2">
                                         From
                                     </label>
-                                    <input type="text"
-                                        name="memo_from_field"
-                                        id="memo_from_field"
-                                        placeholder="e.g Secretary"
-                                        class="mt-1 block w-full text-sm border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                        >
+                                    @if($officerInCharge)
+                                        <input type="text"
+                                            name="memo_from_field"
+                                            id="memo_from_field"
+                                            value="Officer In Charge"
+                                            readonly
+                                            class="mt-1 block w-full text-sm border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                                            >
+                                    @else
+                                        <input type="text"
+                                            name="memo_from_field"
+                                            id="memo_from_field"
+                                            value="Secretary"
+                                            readonly
+                                            class="mt-1 block w-full text-sm border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                                            >
+                                    @endif
+
                                 </div>
                                 <div>
                                     <label for="memo_attention_to" class="block text-sm font-medium text-gray-700 mb-2">
@@ -443,21 +453,35 @@
                                     <label for="internal_from_field" class="block text-sm font-medium text-gray-700 mb-2">
                                         From
                                     </label>
-                                    <input type="text"
-                                        name="internal_from_field"
-                                        id="internal_from_field"
-                                        class="mt-1 block w-full text-sm border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                                        <input type="text"
+                                            name="internal_from_field"
+                                            id="internal_from_field"
+                                            value="{{ auth()->user()->name }} - {{ auth()->user()->designation ?? '' }}"
+                                            readonly
+                                            class="mt-1 block w-full text-sm border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
                                         >
                                 </div>
                                 <div>
                                     <label for="internal_to_field" class="block text-sm font-medium text-gray-700 mb-2">
                                         To
                                     </label>
-                                    <input type="text"
-                                        name="internal_to_field"
-                                        id="internal_to_field"
-                                        class="mt-1 block w-full text-sm border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                        >
+                                    @if($officerInCharge)
+                                        <input type="text"
+                                            name="internal_to_field"
+                                            id="internal_to_field"
+                                            value="Officer in Charge"
+                                            readonly
+                                            class="mt-1 block w-full text-sm border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                                            >
+                                    @else 
+                                        <input type="text"
+                                            name="internal_to_field"
+                                            id="internal_to_field"
+                                            value="Secretary"
+                                            readonly
+                                            class="mt-1 block w-full text-sm border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                                            >
+                                    @endif
                                 </div>
                                 <div>
                                     <label for="internal_ufs_id" class="block text-sm font-medium text-gray-700 mb-1">
@@ -605,10 +629,23 @@
                                     <label for="memo_from_field" class="block text-sm font-medium text-gray-700 mb-2">
                                         From
                                     </label>
-                                    <input type="text"
-                                        name="memo_from_field"
-                                        id="memo_from_field"
-                                        class="mt-1 block w-full border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500">
+                                    @if($officerInCharge)
+                                        <input type="text"
+                                            name="internal_from_field"
+                                            id="internal_from_field"
+                                            value="Officer In Charge"
+                                            readonly
+                                            class="mt-1 block w-full text-sm border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                                        >
+                                    @else
+                                        <input type="text"
+                                            name="internal_from_field"
+                                            id="internal_from_field"
+                                            value="Secretary"
+                                            readonly
+                                            class="mt-1 block w-full text-sm border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                                        >
+                                    @endif
                                 </div>
                                 <div>
                                     <label for="memo_attention_to" class="block text-sm font-medium text-gray-700 mb-2">
@@ -700,21 +737,46 @@
                                     <label for="internal_from_field" class="block text-sm font-medium text-gray-700 mb-2">
                                         From
                                     </label>
-                                    <input type="text"
-                                        name="internal_from_field"
-                                        id="internal_from_field"
-                                        class="mt-1 block w-full text-sm border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                                    @if($officerInCharge)
+                                        <input type="text"
+                                            name="internal_from_field"
+                                            id="internal_from_field"
+                                            value="{{ auth()->user()->name }}"
+                                            readonly
+                                            class="mt-1 block w-full text-sm border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
                                         >
+                                    @else
+                                        <input type="text"
+                                            name="internal_from_field"
+                                            id="internal_from_field"
+                                            value="Secretary"
+                                            readonly
+                                            class="mt-1 block w-full text-sm border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                                        >
+                                    @endif
                                 </div>
                                 <div>
                                     <label for="internal_to_field" class="block text-sm font-medium text-gray-700 mb-2">
                                         To
                                     </label>
-                                    <input type="text"
-                                        name="internal_to_field"
-                                        id="internal_to_field"
-                                        class="mt-1 block w-full text-sm border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                        >
+                                    @if($officerInCharge)
+                                        <input type="text"
+                                            name="internal_to_field"
+                                            id="internal_to_field"
+                                            value="Officer in Charge"
+                                            readonly
+                                            class="mt-1 block w-full text-sm border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                                            >
+                                    @else 
+                                        <input type="text"
+                                            name="internal_to_field"
+                                            id="internal_to_field"
+                                            value="Secretary"
+                                            readonly
+                                            class="mt-1 block w-full text-sm border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                                            >
+                                    @endif
+                                    
                                 </div>
                                 <div>
                                     <label for="internal_ufs_id" class="block text-sm font-medium text-gray-700 mb-1">
@@ -731,9 +793,7 @@
                                             <option value="{{ $officer['id'] }}"
                                                     @selected(old('internal_ufs_id') == $officer['id'])>
                                                     {{ $officer['name'] }}
-                                                    @if($officer['designation'])
-                                                        - {{ $officer['designation'] }}
-                                                    @endif
+                                                  
                                                 </option>
                                             @endifs
                                         @endforeach

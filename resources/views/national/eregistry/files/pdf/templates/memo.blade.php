@@ -166,11 +166,6 @@
         </div>
     </div>
 
-    @php
-        $recipients = $file->memoRecipients();
-        $showRecipientListAtEnd = $recipients->count() > 6 && !$isAllMinistries;
-    @endphp
-
     <table class="meta-table mb-4">
         <tr>
             <td class="label">From</td>
@@ -185,10 +180,9 @@
                 @elseif($showRecipientListAtEnd)
                     See distribution list below.
                 @else
-                    @foreach($ministries->whereIn('id', $file->memo_recipients ?? []) as $ministry)
+                    @foreach ($recipients as $ministry)
                         {{ $ministry->reviewer_title }} - {{ $ministry->code }}
-
-                        @if(!$loop->last)
+                        @if (!$loop->last)
                             <br>
                         @endif
                     @endforeach
@@ -233,28 +227,22 @@
 
     @if($file->signature_path)
             <div class="signature-section">
-
                 <img
                     src="{{ public_path('storage/' . $file->signature_path) }}"
                     alt="Signature"
                     class="signature-image">
-
                 <div class="signatory-name">
                     {{ $file->signedBy?->name }}
                 </div>
-
                 <div>
                     {{ $file->signedBy?->designation ?? '' }}
                 </div>
-
                 <div style="font-size: 12px; color: #666;">
                     Signed Electronically
                 </div>
-
             </div>
     @endif
             
-
     {{-- Distribution List --}}
     @if($showRecipientListAtEnd)
         <div style="margin-top: 60px; page-break-inside: avoid;">

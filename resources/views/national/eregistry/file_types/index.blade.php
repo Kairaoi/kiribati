@@ -320,9 +320,7 @@ $(document).ready(function() {
                             View
                         </a>
                     `;
-
                     const isActive = Number(row.is_active);
-
                     if ((!row.is_global || row.can_edit) && isActive === 1) {
                         buttons += `
                             <button
@@ -342,7 +340,6 @@ $(document).ready(function() {
                             </button>
                         `;
                     }
-
                     return buttons;
                 }
             }

@@ -17,14 +17,15 @@
 
     <form action="{{ route('registry.ministries.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
+        @method('PUT')
  
         <div class="bg-white shadow-sm font-poppins rounded-2xl p-6 max-w-2xl mx-auto mt-4 mb-4">
 
             <h2 class="text-m font-semibold text-gray-800 mb-6">
-                <span class="text-cyan-600">Create Ministry</span>
+                <span class="text-cyan-600">Create Identity Organsation</span>
             </h2>
 
-            <div class="mb-5 relative">
+            <div class="mb-3 relative">
                 <label class="block text-sm font-medium text-gray-700">
                     Name <span class="text-red-500">*</span>
                 </label>
@@ -34,20 +35,18 @@
                     class="mt-1 w-full rounded-lg border-gray-300 shadow-sm 
                         focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 
                         text-sm px-3 py-2"
-                    placeholder="e.g. Workshop"
-                    autocomplete="off"
                     required>
 
-                <div id="name-suggestions" class="absolute z-10 w-full bg-white border rounded-md mt-1 hidden shadow">
+                {{-- <div id="name-suggestions" class="absolute z-10 w-full bg-white border rounded-md mt-1 hidden shadow">
                 </div>
                 <p id="name-warning" class="text-sm text-red-600 mt-1 hidden">
-                    This file type already exists.
-                </p>
+                    This already exists.
+                </p> --}}
             </div>
             
 
             <!-- Description -->
-            <div class="mb-5">
+            <div class="mb-3">
                 <label for="description" class="block text-sm font-medium text-gray-700">
                     Description <span class="text-gray-400">(optional)</span>
                 </label>
@@ -60,7 +59,7 @@
             </div>
 
             <!-- Code -->
-            <div class="mb-5 relative">
+            <div class="mb-3 relative">
                 <label for="code" class="block text-sm font-medium text-gray-700">
                     Code <span class="text-red-500">*</span>
                 </label>

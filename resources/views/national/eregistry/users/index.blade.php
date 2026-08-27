@@ -30,19 +30,36 @@
 @endif
 
 <div class="container mx-auto px-4 py-8 max-w-full mt-3 rounded-md min-h-screen ">
-    <div class="mb-4 flex items-start justify-between">
+    <div class="flex justify-between">
         <div>
-            <h1 class="text-3xl font-bold tracking-wide">Users</h1>
+            <h1 class="text-3xl font-bold tracking-wide">User Management</h1>
             <p class="text-base text-gray-500 mt-1">
                 View and manage all users from your organisation.
             </p>
         </div>
+    </div>
+    <div class="mb-4 flex items-start justify-between">
+        <div>
+            <a href="{{ route('registry.users.create') }}"
+                class="inline-flex items-center mt-3 gap-2 px-4 py-2 bg-cyan-600 font-semibold text-sm text-white hover:bg-cyan-700 transition">
+                Create New User
+            </a>
 
-        <a href="{{ route('registry.users.create') }}"
-            class="inline-flex items-center mt-5 gap-2 px-4 py-2 bg-cyan-600 text-white text-sm rounded-md hover:bg-cyan-700 transition">
-            <i class="fas fa-plus"></i>
-            Create New User
-        </a>
+            <a href="{{ route('registry.users.edit-review-officer') }}"
+                class="inline-flex items-center mt-3 gap-2 px-4 py-2 bg-cyan-600 font-semibold text-sm text-white hover:bg-cyan-700 transition">
+                Review Officer: {{ $reviewOfficer->name }}
+            </a>
+
+            <a href="{{ route('registry.users.edit-secretary') }}"
+                class="inline-flex items-center mt-3 gap-2 px-4 py-2 bg-cyan-600 font-semibold text-sm text-white hover:bg-cyan-700 transition">
+                {{ $ministry->reviewer_title ?? 'Reviewer title not set' }}: {{ $sro->name ?? 'SRO not set'}}
+            </a>
+
+            <a href="{{ route('registry.divisions.index') }}"
+                class="inline-flex items-center mt-3 gap-2 px-4 py-2 bg-cyan-600 font-semibold text-sm text-white hover:bg-cyan-700 transition">
+                Assign Division HOD
+            </a>
+        </div>
     </div>
 
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-2">
@@ -291,7 +308,7 @@ $(document).ready(function() {
             { data: 'designation' },
             { data: 'role_names', name: 'roles.name'},
             {
-                data: 'status', name: 'users.is_active',
+                data: 'is_active', name: 'users.is_active',
                 render: function (data) {
                     return Number(data) === 1
                         ? '<span class="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">Active</span>'
@@ -304,7 +321,7 @@ $(document).ready(function() {
                 orderable: false,
                 searchable: false,
                 render(data, type, row) {
-                    return `
+                    let buttons = `
                         <a href="/registry/users/${row.uuid}" 
                             class="inline-flex items-center justify-center hover:text-gray-600 transition"
                                 title="View">
@@ -315,12 +332,29 @@ $(document).ready(function() {
                                 title="Edit">
                                 <i class="fa fa-pen text-sm"></i>
                         </a>
-                        <button class="inline-flex items-center justify-center hover:text-red-600 transition ms-3 deactivate-action" 
-                            data-id="${row.uuid}" 
-                            title="Deactivate">
-                            <i class="fa fa-user-slash text-sm"></i>
-                        </button>
                     `;
+
+                    const isActive = Number(row.is_active);
+
+                    if (isActive === 1) {
+                        buttons += `
+                            <button class="inline-flex items-center justify-center hover:text-red-600 transition ms-3 deactivate-action" 
+                                data-id="${row.uuid}" 
+                                title="Deactivate">
+                                <i class="fa fa-user-slash text-sm"></i>
+                            </button>
+                        `;
+                    } else {
+                        buttons += `
+                            <button class="inline-flex items-center justify-center hover:text-red-600 transition ms-3 activate-action" 
+                                data-id="${row.uuid}" 
+                                title="Activate">
+                                <i class="fa fa-user text-sm"></i>
+                            </button>
+                        `;
+
+                    }
+                    return buttons;
                 }
             }
         ],
@@ -343,7 +377,7 @@ $(document).ready(function() {
                 extend: 'excelHtml5',
                 text: '<i class="fas fa-file-excel me-1"></i> Excel',
                 className: 'excel-export-btn',
-                title: 'E-Registry Users',
+                title: 'Document Management System Users',
                 exportOptions: {
                     columns: ':not(:last-child)'
                 }
@@ -352,7 +386,7 @@ $(document).ready(function() {
                 extend: 'pdfHtml5',
                 text: '<i class="fas fa-file-pdf me-1"></i> PDF',
                 className: 'pdf-export-btn',
-                title: 'E-Registry Users',
+                title: 'Document Management System Users',
                 exportOptions: {
                     columns: ':not(:last-child)'
                 }
@@ -376,10 +410,37 @@ $(document).ready(function() {
                 },
                 success(response) {
                     $('#usersTable').DataTable().ajax.reload();
-                    alert('User deactivated successfully.');
+                    alert('User deactivated.');
                 },
                 error(xhr) {
                     alert('Unable to deactivate user.');
+                }
+            });
+        }
+
+        closeAllDropdowns();
+    });
+
+
+    // Handle activate action
+    $(document).on('click', '.activate-action', function(e) {
+        e.preventDefault();
+
+        const id = $(this).data('id');
+
+        if (confirm('Are you sure you want to activate this user?')) {
+            $.ajax({
+                url: route('registry.users.activate', id),
+                type: 'PATCH',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success(response) {
+                    $('#usersTable').DataTable().ajax.reload();
+                    alert('User activated.');
+                },
+                error(xhr) {
+                    alert('Unable to activate user.');
                 }
             });
         }
@@ -391,7 +452,9 @@ $(document).ready(function() {
         return {
             'registry.users.show': "{{ route('registry.users.show', ':uuid') }}".replace(':uuid', id),
             'registry.users.edit': "{{ route('registry.users.edit', ':uuid') }}".replace(':uuid', id),
-            'registry.users.deactivate': "{{ route('registry.users.deactivate', ':uuid') }}".replace(':uuid', id)
+            'registry.users.deactivate': "{{ route('registry.users.deactivate', ':uuid') }}".replace(':uuid', id),
+            'registry.users.activate': "{{ route('registry.users.activate', ':uuid') }}".replace(':uuid', id)
+
         }[name];
     }
 

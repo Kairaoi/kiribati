@@ -64,7 +64,6 @@
 
     </div>
     <div class="bg-white rounded-lg shadow-md p-6 mt-6 mb-6">
-        
         <dl class="grid text-base">
             <div class="col-span-2 sm:grid sm:grid-cols-3 sm:gap-4 py-2 border-b">
                 <dt class="font-bold text-cyan-700">External Partner Details</dt>

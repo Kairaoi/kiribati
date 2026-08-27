@@ -4,6 +4,7 @@ namespace App\Http\Controllers\National\Eregistry;
 
 use App\Http\Controllers\Controller;
 use App\Repositories\National\Eregistry\IdentityOrganisationRepository;
+use App\Repositories\National\Eregistry\OrganisationTypeRepository;
 use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Http\Request;
@@ -12,13 +13,16 @@ class IdentityOrganisationController extends Controller
 {
 
     private $organisations;
+    private $organisation_types;
 
     public function __construct(IdentityOrganisationRepository $organisations,
+                                OrganisationTypeRepository $organisation_types,
                                
                                 )
     {
-    
         $this->organisations = $organisations;
+        $this->organisation_types = $organisation_types;
+
     }   
 
 
@@ -57,7 +61,8 @@ class IdentityOrganisationController extends Controller
      */
     public function create()
     {
-        //
+        
+        return view('national.eregistry.organisations.create');
     }
 
     /**

@@ -102,7 +102,7 @@
                           
         </div>
             <button type="submit" class="w-full bg-cyan-600 text-white py-2 px-4 rounded-md hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
-                Create User
+                Edit User
             </button>
     </form>
 

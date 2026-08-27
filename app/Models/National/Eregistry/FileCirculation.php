@@ -58,15 +58,15 @@ class FileCirculation extends Model implements Auditable
     
     public function dispatch()
     {
-        return $this->belongsTo(Dispatch::class);
+        return $this->belongsTo(Dispatch::class, 'dispatch_id');
     }
+
 
     public function colleague()
     {
         return $this->belongsTo(User::class, 'colleague_id');
     }
 
-  
 
     public function recipientMinistries()
     {

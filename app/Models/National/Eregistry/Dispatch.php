@@ -34,7 +34,14 @@ class Dispatch extends Model implements Auditable
         'dispatched_by',
         'status',
     ];
-  
+
+    protected function casts(): array
+    {
+        return [
+            'dispatch_date' => 'datetime',
+        ];
+    }
+    
     public function file()
     {
         return $this->belongsTo(File::class);

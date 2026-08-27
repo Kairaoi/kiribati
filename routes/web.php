@@ -173,10 +173,18 @@ Route::group([
 
     // User Routes
     Route::match(['get', 'post'], 'users/datatables', [UserController::class, 'getDataTables'])->name('users.datatables');
+   
     Route::get('users/edit/signature', [UserController::class, 'editSignature'])->name('users.signature.edit');
     Route::patch('users/update/signature', [UserController::class, 'updateSignature'])->name('users.signature.update');
+    
     Route::get('users/edit-review-officer', [UserController::class, 'editReviewOfficer'])->name('users.edit-review-officer');
     Route::patch('users/update-review-officer', [UserController::class, 'updateReviewOfficer'])->name('users.update-review-officer');
+    
+    Route::get('users/edit-secretary', [UserController::class, 'editSecretary'])->name('users.edit-secretary');
+    Route::patch('users/update-secretary', [UserController::class, 'updateSecretary'])->name('users.update-secretary');
+
+
+    Route::patch('/users/{user}/activate', [UserController::class, 'activate'])->name('users.activate');
     Route::patch('/users/{user}/deactivate', [UserController::class, 'deactivate'])->name('users.deactivate');
     Route::resource('users', UserController::class);
 

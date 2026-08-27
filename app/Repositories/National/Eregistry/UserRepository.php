@@ -65,7 +65,6 @@ class UserRepository extends BaseRepository
             'email'       => $data['email'],
             'division_id' => $data['division_id'],
             'designation' => $data['designation'],
-            'is_active'   => $data['is_active'] ?? false,
             'updated_by'  => auth()->id(),
         ]);
 
@@ -95,7 +94,7 @@ class UserRepository extends BaseRepository
             'users.profile_photo_path',
             'divisions.name as division_name',
             'ministries.code as ministry_code',
-            'users.is_active as status',
+            'users.is_active as is_active',
             DB::raw('GROUP_CONCAT(roles.name SEPARATOR ", ") as role_names')
         ])
         ->leftJoin('divisions', 'users.division_id', '=', 'divisions.id')

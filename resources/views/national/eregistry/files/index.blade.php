@@ -462,7 +462,7 @@
                                     <div>
                                         <div>${formattedDate}</div>
                                         <div class="mt-1 text-xs text-gray-500">
-                                            Received by: ${row.received_by ?? '-'}
+                                            By: ${row.received_by ?? '-'}
                                         </div>
                                     </div>
                                 `;

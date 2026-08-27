@@ -72,7 +72,17 @@ class UserController extends Controller
     {
         $this->authorize('viewAny', User::class);
 
-        return view('national.eregistry.users.index');
+        $reviewOfficer = User::role('review-officer')
+                                ->where('ministry_id', Auth::user()->ministry_id)
+                                ->first();
+
+        $sro = User::role('sro')
+                    ->where('ministry_id', Auth::user()->ministry_id)
+                    ->first();
+
+        $ministry = $this->ministries->getReviewerTitle(Auth::user()->ministry_id);
+        
+        return view('national.eregistry.users.index', compact('reviewOfficer', 'sro', 'ministry'));
     }
 
     /**
@@ -94,7 +104,8 @@ class UserController extends Controller
                         'ministry-admin',
                         'hod',
                         'admin',
-                        'review-officer'
+                        'review-officer',
+                        'sro'
                     ])
                     ->pluck('name', 'id');
         
@@ -167,10 +178,7 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-    
         $this->authorize('view', $user);
-
-        $organisationId = Auth::user()->organisation_id;
         $divisions = $this->divisions->listWithMinistry(Auth::user()->ministry_id); // Fetch divisions for the logged-in organisation
         $units = $this->units->listWithMinistry(Auth::user()->ministry_id); // Fetch units for the logged-in ministry
         $roles = Role::query()
@@ -179,7 +187,8 @@ class UserController extends Controller
                         'ministry-admin',
                         'hod',
                         'admin',
-                        'review-officer'
+                        'review-officer',
+                        'sro'
                     ])
                     ->pluck('name', 'id');
 
@@ -254,7 +263,6 @@ class UserController extends Controller
             ],
             'division_id' => 'required|integer|exists:divisions,id',
             'designation' => 'required|string|max:255',
-            'is_active' => 'sometimes|boolean',
         ]);
 
         $this->users->update($user, $validated);
@@ -280,8 +288,52 @@ class UserController extends Controller
                                 ->where('ministry_id', $ministryId)
                                 ->first();
 
-        return view('national.eregistry.users.editReviewOfficer', compact('usersWithDivision', 'reviewOfficer'));
+        return view('national.eregistry.users.editReviewOfficer', compact('usersWithDivision', 
+                                                                        'reviewOfficer',));
     }
+
+
+    //edit page for Secretary or Chairperson or Auditor General, etc in other organisations
+    public function editSecretary()
+    {
+        $usersWithDivision = $this->users->getUsersDivision();
+        $sro= User::role('sro')
+                    ->where('ministry_id', Auth::user()->ministry_id)
+                    ->first();
+
+        $ministry = $this->ministries->getReviewerTitle(Auth::user()->ministry_id);
+
+        return view('national.eregistry.users.editSecretary', compact('usersWithDivision', 'sro', 'ministry'));
+    }
+
+
+    //update Secretary or Chairperson or Auditor General, etc in other organisations
+    public function updateSecretary(Request $request)
+    {
+        $ministryId = Auth::user()->ministry_id;
+        $validated = $request->validate([
+            'secretary_id' => [
+                'required',
+                Rule::exists('users', 'id')->where(function ($query) use ($ministryId) {
+                    $query->where('ministry_id', $ministryId);
+                }),
+            ],
+        ]);
+
+        $currentReviewOfficer = User::role('sro')
+            ->where('ministry_id', $ministryId)
+            ->first();
+
+        if ($currentReviewOfficer) {
+            $currentReviewOfficer->removeRole('sro');
+        }
+
+        $newReviewOfficer = User::find($validated['secretary_id']);
+        $newReviewOfficer->assignRole('sro');
+
+        return back()->with('success', 'Review officer updated successfully.');
+    }
+
 
 
     /**
@@ -319,7 +371,7 @@ class UserController extends Controller
 
 
     /**
-     * Remove the specified resource from storage.
+     * Deactivate the user.
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
@@ -331,9 +383,20 @@ class UserController extends Controller
             'updated_by' => auth()->id(),
         ]);
 
-        // dd('ikai');
         return response()->json([
-            'message' => 'User deactivated raoi successfully.'
+            'message' => 'User deactivated.'
+        ]);
+    }
+
+    public function activate(User $user)
+    {
+        $user->update([
+            'is_active' => true,
+            'updated_by' => auth()->id(),
+        ]);
+
+        return response()->json([
+            'message' => 'User activated.'
         ]);
     }
 }

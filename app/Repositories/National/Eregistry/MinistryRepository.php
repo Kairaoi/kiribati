@@ -123,7 +123,6 @@ class MinistryRepository extends BaseRepository
     {
         return $this->model()::query()
             ->orderBy('id')
-            ->orderBy($column)
             ->get(['id', 'name', 'code', 'reviewer_title']);
     }
 
@@ -133,4 +132,12 @@ class MinistryRepository extends BaseRepository
               ->where('id', '!=', $ministryId)
               ->get(['id', 'name', 'reviewer_title']);
     }
+
+    public function getReviewerTitle($ministryId = null) {
+        return $this->model()::query()
+              ->where('id', $ministryId)
+              ->first(['reviewer_title']);
+    }
+
+    
 }

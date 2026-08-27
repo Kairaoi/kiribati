@@ -357,8 +357,7 @@ class FileCirculationRepository extends BaseRepository
         return $this->model()::query()
             ->where('file_id', $fileId)
             ->where('to_ministry_id', $ministryId)
-            ->latest()
-            ->first();
+            ->latest();
     }
     
 

@@ -188,7 +188,7 @@
                                 <div>
                                     <p class="text-sm text-gray-500">Status</p>
                                     <p class="text-sm font-medium text-gray-800 mt-1">
-                                        {{ optional($circulation)->status ?? '-' }}
+                                        {{ $circulation->status ?? '-' }}
                                     </p>
                                 </div>
                                 <div>
@@ -222,12 +222,8 @@
                                     <p class="text-sm text-gray-500">Assigned Officers</p>
 
                                     @if($circulation && $circulation->activeAssignments->isNotEmpty())
-                                        @php
-                                            $assignments = $circulation->activeAssignments;
-                                        @endphp
-
                                         <div class="list-disc list-inside text-gray-900 text-sm font-semibold space-y-2">
-                                            @foreach($assignments as $index => $assignment)
+                                            @foreach($circulation->activeAssignments as $index => $assignment)
                                                 @if(!$assignment->reassigned_from)
                                                     <div class="mt-1 flex justify-between items-start rounded-lg border border-gray-200 bg-white p-3 hover:shadow-sm transition">
                                                         <div>
@@ -293,10 +289,6 @@
                     <h3 class="font-bold text-cyan-600 uppercase mb-2">Assigned Officers </h3>
                   
                     @if($circulation && $circulation->activeAssignments->isNotEmpty())
-                            @php
-                                $assignments = $circulation->activeAssignments;
-                            @endphp
-
                             <div class="overflow-x-auto border border-gray-200">
                                 <table class="min-w-full divide-y divide-gray-200 text-sm">
                                     <thead class="bg-gray-50">
@@ -320,7 +312,7 @@
                                     </thead>
 
                                     <tbody class="divide-y divide-gray-100 bg-white">
-                                        @foreach($assignments as $assignment)
+                                        @forelse ($circulation?->activeAssignments ?? collect() as $assignment)
                                             @if($assignment->reassigned_from)
                                                 <tr class="hover:bg-gray-50">
                                                     <td class="px-4 py-3 font-medium text-gray-900">
@@ -357,15 +349,13 @@
                                                             </span>
                                                         @endif
                                                     </td>
-
                                                     <td class="px-4 py-3 text-gray-600">
                                                         {{ $assignment->assigned_officer_comment ?? '-' }}
                                                     </td>
-
-                                                   
                                                 </tr>
                                             @endif
-                                        @endforeach
+                                        @empty
+                                        @endforelse
                                     </tbody>
                                 </table>
                             </div>
@@ -389,34 +379,18 @@
                             <div class="flex items-center justify-between border border-gray-100 bg-white p-3">
                                 <div>
                                     <p class="text-sm font-semibold text-gray-800">
-                                        {{ optional($circulation?->toMinistry)->name ?? 'Unknown Ministry' }}
+                                        {{ $circulation->toMinistry?->name ?? 'Unknown Ministry' }}
                                     </p>
                                     <p class="mt-1 text-xs text-gray-500">
                                         Dispatched:
-                                        {{ optional($circulation?->dispatch)->dispatch_date
+                                        {{ $circulation->dispatch?->dispatch_date
                                             ? \Carbon\Carbon::parse($circulation->dispatch->dispatch_date)->format('d M Y g:i A')
                                             : '-' 
                                         }}
                                     </p>
-                                    {{-- @if($circulation?->activeAssignments?->isNotEmpty())
-                                        <div class="mt-2 space-y-1">
-                                            @foreach($circulation->activeAssignments as $assignment)
-                                                <div class="text-xs text-gray-600">
-                                                    <span class="font-medium text-gray-700">
-                                                        Assigned:
-                                                    </span>
-                                                    {{ $assignment->officer?->name ?? 'Unknown Officer' }}
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    @else
-                                        <p class="mt-2 text-xs text-gray-400 italic">
-                                            No active assignments
-                                        </p>
-                                    @endif --}}
                                 </div>
                                 <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold {{ $statusClass2 }}">
-                                    {{ $circulation?->status ?? 'N/A' }}
+                                    {{ $circulation->status ?? 'N/A' }}
                                 </span>
                             </div>
                         @empty
@@ -424,7 +398,6 @@
                     </div>
                 </div>
             @endif
-
 
             @php
                 $fileUrl = route('registry.files.preview', $file);
@@ -485,13 +458,13 @@
             {{-- download main file --}}
             <div class="mb-2 max-w-5xl mx-auto flex">
                 <a href="{{ $downloadUrl }}"
-                            class="inline-flex items-center justify-center gap-2 border border-gray-300 bg-white px-3 py-3 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 hover:border-gray-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 16V4m0 12l-4-4m4 4l4-4M4 20h16" />
-                            </svg>
-                            Download Main File
+                    class="inline-flex items-center justify-center gap-2 border border-gray-300 bg-white px-3 py-3 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 hover:border-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 16V4m0 12l-4-4m4 4l4-4M4 20h16" />
+                        </svg>
+                    Download Main File
                 </a>
             </div>
 
@@ -540,7 +513,6 @@
             {{-- Actions --}}
             <div class="mb-6 max-w-5xl mx-auto flex justify-center">
                 <div class="w-full space-y-6">
-                    
                     @if($isClosed)
                         <div class="mx-auto max-w-full py-6 px-6 rounded-2xl bg-gray-100 border border-gray-300 text-center shadow-sm">
                             <p class="text-3xl font-extrabold text-gray-800 tracking-wide">
@@ -1139,7 +1111,6 @@
                                                 <h3 class="text-sm text-gray-900">
                                                     Dispatch to Ministries
                                                 </h3>
-                                    
                                             </div>
                                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                 @foreach($memoRecipients as $id => $ministry)
@@ -1294,7 +1265,7 @@
                             <div id="circulatePanel" class="action-panel hidden">
                                 <form method="POST" action="{{ route('registry.file-circulations.store') }}">
                                         @csrf
-                                        <input type="hidden" name="file_id" value="{{ $fileId }}">
+                                        <input type="hidden" name="file_id" value="{{ $file->id }}">
                                         @if(!$reviewOfficer)
                                             <div class="mb-6 border border-red-200 bg-red-50 px-6 py-4">
                                                 <a href="{{ route('registry.users.edit-review-officer') }}"
@@ -1504,9 +1475,7 @@
                             </div>
                         @endcan
                     @endif
-
-                </div>
-                 
+                </div> 
             </div>
         </div>
     <script>

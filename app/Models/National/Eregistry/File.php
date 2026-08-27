@@ -123,10 +123,20 @@ class File extends Model implements Auditable
         return $this->morphTo();
     }
 
-    public function memoRecipients()
+
+    public function getMemoRecipients()
     {
-        return Ministry::whereIn('id', $this->memo_recipients ?? [])->get();
+        $recipientIds = $this->memo_recipients ?? [];
+
+        if (empty($recipientIds)) {
+            return collect();
+        }
+
+        return Ministry::query()
+            ->whereIn('id', $recipientIds)
+            ->get(['id', 'name', 'code', 'reviewer_title']);
     }
+
 
     public function getLetterRecipientCopiesAttribute()
     {
