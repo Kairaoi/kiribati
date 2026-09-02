@@ -48,7 +48,7 @@ class CreateEregistryFilingSystemTables extends Migration
             $table->id();
             $table->string('name');
             $table->string('code');
-            $table->text('location')->nullable();
+            $table->text('address')->nullable();
             $table->text('description')->nullable();
             $table->boolean('is_active')->default(true);
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
@@ -63,9 +63,7 @@ class CreateEregistryFilingSystemTables extends Migration
         //Users of the system.
         Schema::create('ministries', function (Blueprint $table) {
             $table->id();
-            $table->uuid('uuid')->nullable()->unique();
-            $table->string('name');
-            $table->string('code');
+            $table->uuid('uuid')->unique();
             $table->string('email')->nullable();
             $table->string('phone')->nullable();
             $table->string('website')->nullable();
@@ -73,7 +71,6 @@ class CreateEregistryFilingSystemTables extends Migration
             $table->boolean('is_active')->default(true);
             $table->foreignId('organisation_type_id')->constrained('organisation_types');
             $table->foreignId('identity_organisation_id')->constrained('identity_organisations');
-            $table->string('address')->nullable();
             $table->string('po_box')->nullable();
             $table->string('logo_path')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
@@ -111,6 +108,8 @@ class CreateEregistryFilingSystemTables extends Migration
             $table->boolean('is_active')->default(true);
             $table->foreignId('ministry_id')->constrained('ministries');
             $table->foreignId('hod_id')->nullable()->constrained('users');
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('users');
             $table->timestamps();
         });
 

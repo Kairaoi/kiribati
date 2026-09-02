@@ -29,10 +29,11 @@ class DivisionRepository extends BaseRepository
         $data = [
             'ministry_id' => $input['ministry_id'],
             'name' => $input['name'],
+            'description' => $input['description'] ?? null,
+            'location' => $input['location'] ?? null,
             'is_active' => $input['is_active'] ?? true,
             'created_at' => now(),
             'updated_at' => now(),
-            'location' => $input['location'] ?? null,
             'email' => $input['email'] ?? null,
             'phone' => $input['phone'] ?? null,
             'created_by' => Auth::id(),
@@ -58,9 +59,11 @@ class DivisionRepository extends BaseRepository
         $data = [
             'ministry_id' => $input['ministry_id'],
             'name' => $input['name'],
-            'code' => $input['code'],
-            'description' => $input['description'] ?? $model->description,
-            'is_active' => $input['is_active'] ?? $model->is_active,
+            'description' => $input['description'] ?? null,
+            'location' => $input['location'] ?? null,
+            'email' => $input['email'] ?? null,
+            'phone' => $input['phone'] ?? null,
+            'is_active' => $input['is_active'] ?? true,
             'updated_by' => Auth::id(),
         ];
 
@@ -83,13 +86,14 @@ class DivisionRepository extends BaseRepository
                       'divisions.name as division_name', 
                       'divisions.location as location', 
                       'divisions.is_active as is_active',
+                      'identity_organisations.name as name',
                       'divisions.created_at as created_at',
                       DB::raw("CONCAT(users.first_name, ' ', users.last_name) as hod_name"),
                       'divisions.updated_at as updated_at'])
 
-                      
             ->join('ministries', 'divisions.ministry_id', '=', 'ministries.id')
-            ->leftJoin('users', 'divisions.hod_id', '=', 'users.id');
+            ->leftJoin('users', 'divisions.hod_id', '=', 'users.id')
+            ->join('identity_organisations', 'ministries.identity_organisation_id', '=', 'identity_organisations.id');
 
             if($user && $user->hasRole('system-admin')) {
                 // System Admin can see all divisions, no additional filtering needed
@@ -142,17 +146,28 @@ class DivisionRepository extends BaseRepository
     {
         return $this->model()::query()
             ->orderBy($column)
-            ->get();
+            ->get(['id', 'name']);
     }
 
 
     //Get the list of divisions for a specific ministry
     //used in create function in file controller
-    public function listWithMinistry($ministryId)
+    public function listWithMinistry(?int $ministryId = null)
     {
-        return $this->model->query()
-            ->select('id', 'name')
-            ->where('ministry_id', $ministryId)
+        return $this->model()::query()
+            ->select([
+                'id',
+                'ministry_id',
+                'name',
+            ])
+            ->when(
+                $ministryId !== null,
+                fn ($query) => $query->where(
+                    'ministry_id',
+                    $ministryId
+                )
+            )
+            ->where('is_active', true)
             ->orderBy('name')
             ->get();
     }

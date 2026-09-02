@@ -27,27 +27,29 @@ class UserRepository extends BaseRepository
      * @param array $input
      * @return User
      */
-    public function create(array $input)
+    public function create(array $validated): User
     {
-        $data = [
-            'first_name' => $input['first_name'],
-            'last_name' => $input['last_name'],
-            'division_id' => $input['division_id'] ?? null,
-            'organisation_id' => $input['organisation_id'] ?? null,
-            'role' => $input['role'] ?? null,
-            'email' => $input['email'],
-            'password'=> Hash::make($input['password']),// Only here
-            'current_team_id' => $input['current_team_id'] ?? null,
-            'profile_photo_path' => $input['profile_photo_path'] ?? null,
-            'created_by' => Auth::id(),
-            'updated_by' => Auth::id(),
-        ];
+        return DB::transaction(function () use ($validated) {
+            $user = $this->model()::create([
+                'ministry_id' => $validated['ministry_id'],
+                'division_id' => $validated['division_id'],
+                'first_name'  => $validated['first_name'],
+                'last_name'   => $validated['last_name'],
+                'email'       => $validated['email'],
+                'designation' => $validated['designation'] ?? null,
+                'password'    => isset($validated['password'])
+                    ? Hash::make($validated['password'])
+                    : null,
+                'is_active'   => true,
+                'updated_by'  => auth()->id(),
+            ]);
 
-        $user = $this->model();
-        $user = new $user($data);
-        $user->save();
+            $role = Role::findOrFail($validated['role']);
 
-        return $user;
+            $user->assignRole($role);
+
+            return $user;
+        });
     }
 
     /**
@@ -60,11 +62,13 @@ class UserRepository extends BaseRepository
     public function update(User $user, array $data): User
     {
         $user->update([
+            'ministry_id' => $data['ministry_id'],
+            'division_id' => $data['division_id'],
             'first_name'  => $data['first_name'],
             'last_name'   => $data['last_name'],
             'email'       => $data['email'],
-            'division_id' => $data['division_id'],
             'designation' => $data['designation'],
+            'is_active'   => true,
             'updated_by'  => auth()->id(),
         ]);
 
@@ -93,7 +97,6 @@ class UserRepository extends BaseRepository
             'users.updated_at',
             'users.profile_photo_path',
             'divisions.name as division_name',
-            'ministries.code as ministry_code',
             'users.is_active as is_active',
             DB::raw('GROUP_CONCAT(roles.name SEPARATOR ", ") as role_names')
         ])
@@ -104,9 +107,9 @@ class UserRepository extends BaseRepository
                  ->where('model_has_roles.model_type', '=', User::class);
         })
         ->leftJoin('roles', 'model_has_roles.role_id', '=', 'roles.id')
+      
         ->groupBy(
             'users.id',
-        
         );
 
         if ($user->hasRole('system-admin')) {
@@ -133,7 +136,6 @@ class UserRepository extends BaseRepository
                 ->orWhereRaw('LOWER(users.email) LIKE ?', [$search])
                 ->orWhereRaw('LOWER(users.designation) LIKE ?', [$search])
                 ->orWhereRaw('LOWER(divisions.name) LIKE ?', [$search])
-                ->orWhereRaw('LOWER(ministries.code) LIKE ?', [$search])
                 ->orWhereRaw('LOWER(roles.name) LIKE ?', [$search]);
         });
     }
@@ -169,7 +171,7 @@ class UserRepository extends BaseRepository
     public function list($column = 'name', $key = 'id')
     {
         return $this->model()::query()
-            ->orderBy('id')
+            ->orderBy('name')
             ->orderBy($column)
             ->get(['id', 'first_name', 'last_name']);
     }
@@ -242,5 +244,9 @@ class UserRepository extends BaseRepository
 
         $user->assignRole($role);
     }
+
+
+
+
 
 }

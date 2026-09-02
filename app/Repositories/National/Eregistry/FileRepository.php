@@ -7,6 +7,7 @@ use App\Repositories\BaseRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Role;
 
 class FileRepository extends BaseRepository
 {
@@ -21,39 +22,43 @@ class FileRepository extends BaseRepository
     /**
      * Create a new file record
      */
-    public function create(array $input)
-    {
-        $data = [
-            // 'folder_id' => $input['folder_id'],
-            'organisation_id' => $input['organisation_id'],
-            'file_reference' => $input['file_reference'] ?? 'FILE-' . time() . '-' . Auth::id(),
-            'subject' => $input['subject'],
-            'main_file_path' => $input['main_file_path'],
-            'additional_file1_path' => $input['additional_file1_path'] ?? null,
-            'additional_file2_path' => $input['additional_file2_path'] ?? null,
-            'additional_file3_path' => $input['additional_file3_path'] ?? null,
-            'letter_date' => $input['letter_date'],
-            'comments' => $input['comments'] ?? '',
-            'status' => isset($input['status']) ? $input['status'] : 'draft',
-            'is_active' => $input['is_active'] ?? true,
-            'file_type_id' => $input['file_type_id'],
-            'category_id' => $input['category_id'] ?? null,
-            'letter_ref_no' => $input['letter_ref_no'] ?? '',
-            'division_id' => $input['division_id'] ?? null,
-            'recipient_organisations' => $input['recipient_organisations'] ?? [],
-            'created_by' => Auth::id(),
-            'updated_by' => Auth::id(),
-        ];
+    public function createFile(array $validated, 
+                           ?string $mainFilePath,
+                           array $additionalFilePaths,
+                           string $referenceNo,
+                           array $letterRecipients = [],
+                           array $memoRecipients = [],
+                           int $userId,
+                           int $ministryId
+    ): File {
 
-        $file = new File($data);
-        $file->save();
+    $correspondenceType = $validated['correspondence_type'] ?? null;
 
-        // Update file_index after ID is available
-        // $file->update(['file_index' => "{$file->organisation_id}/{$file->id}"]);
+    $fileData = array_merge($validated, [
+        'main_file_path'        => $mainFilePath,
+        'additional_file_paths' => $additionalFilePaths,
+        'reference_no'          => $referenceNo,
+        'is_active'             => true,
+        'created_by'            => $userId,
+        'updated_by'            => $userId,
+        'letter_date'           => now()->toDateString(),
+        'ministry_id'           => $ministryId,
 
-        return $file;
-    }
+        'status' => $validated['document_source'] === 'online'
+            ? 'Pending Signature'
+            : 'Pending Action',
 
+        'letter_recipients' => $correspondenceType === 'letter'
+            ? $letterRecipients
+            : [],
+
+        'memo_recipients' => $correspondenceType === 'memo'
+            ? $memoRecipients
+            : [],
+    ]);
+
+    return $this->model()::create($fileData);
+}
     /**
      * Update a file record
      */
@@ -130,7 +135,6 @@ class FileRepository extends BaseRepository
             ]);
     } 
 
-
     public function getForDataTable($search, int $userMinistryId, string $type = 'active', $selectedType = null, $fileType = null, $category = null, $ministry = null,? int $organisationId = null, $partner = null, $fromDate = null, $toDate = null)
     {
         $user = Auth::user();
@@ -168,24 +172,16 @@ class FileRepository extends BaseRepository
                                     ->where('fa.officer_id', $user->id)
                                     ->where('fa.is_active', true);
                             })
-
                             ->leftJoin('dispatches', function ($join) {
                                 $join->on('dispatches.file_id', '=', 'files.id');
-                                    // ->on('dispatches.id', '=', 'fc.dispatch_id');
                             });
+        
+        if ($this->userHasRole($user, ['system-admin', 'ministry-admin']) && 
+            !$this->userHasRole($user, ['registry', 'user', 'review-officer', 'ufs'])) {
+                $query->whereRaw('1 = 0');
 
-
-        if (!$this->userHasRole($user, 'system-admin')) {
-            $query->where(function ($query) use ($userMinistryId, $user) {
-                $query->where('files.ministry_id', $userMinistryId)
-                    ->orWhere('fc.to_ministry_id', $userMinistryId)
-                    ->orWhere(function ($ufs) use ($user) {
-                        $ufs->where('files.internal_ufs_id', $user->id)
-                            ->where('files.status', 'Pending UFS');
-                    });
-            });
+                return $query;
         }
-
         
         if ($this->userHasRole($user, 'sro')) {
             $query->where(function ($q) use ($user) {

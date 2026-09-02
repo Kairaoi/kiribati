@@ -4,10 +4,11 @@ namespace App\Notifications;
 
 use App\Models\National\Eregistry\FileAssignment;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class OfficerAssignedNotification extends Notification
+class OfficerAssignedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 

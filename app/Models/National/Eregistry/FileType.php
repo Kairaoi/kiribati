@@ -30,7 +30,7 @@ class FileType extends Model implements Auditable
     
     public function files()
     {
-        return $this->hasMany(File::class);
+        return $this->hasMany(File::class, 'file_type_id');
     }
 
     public function ministry()

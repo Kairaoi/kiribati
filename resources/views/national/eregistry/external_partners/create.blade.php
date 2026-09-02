@@ -18,7 +18,7 @@
     <form action="{{ route('registry.external-partners.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
  
-        <div class="bg-white shadow-sm font-poppins rounded-2xl p-6 max-w-2xl mx-auto mt-4 mb-4">
+        <div class="bg-white shadow font-poppins rounded-2xl p-6 max-w-2xl mx-auto mt-4 mb-4">
 
             <h2 class="text-m font-semibold text-gray-800 mb-6">
                 <span class="text-cyan-600">Create your Ministry External Partner</span>

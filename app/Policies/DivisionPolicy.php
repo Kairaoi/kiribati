@@ -15,7 +15,7 @@ class DivisionPolicy
      */
     public function viewAny(User $user): bool
     {
-        if ($user->hasRole(['registry', 'ministry-admin'])) {
+        if ($user->hasRole(['registry', 'ministry-admin', 'system-admin'])) {
             return true;
         }
         return false;
@@ -26,7 +26,7 @@ class DivisionPolicy
      */
     public function view(User $user, Division $division): bool
     {
-        if ($user->hasRole(['registry', 'ministry-admin']) && $user->ministry_id === $division->ministry_id) {
+        if ($user->hasRole(['registry', 'ministry-admin', 'system-admin']) && $user->ministry_id === $division->ministry_id) {
             return true;
         }
         return false;

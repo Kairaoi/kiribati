@@ -57,7 +57,7 @@
 
 
 {{-- <div class="container mx-auto font-poppins px-8 max-w-5xl mt-1"> {{ Breadcrumbs::render('files.create.withType', $createType) }} </div> --}}
-<div class="container bg-white mx-auto px-6 py-10 max-w-4xl mt-4 mb-4 text-gray-700 font-medium rounded-md min-h-screen border border-gray-600">
+<div class="container bg-white shadow mx-auto px-6 py-10 max-w-4xl mt-4 mb-4 text-gray-700 font-medium rounded-md min-h-screen border border-gray-600">
      <h2 class="text-lg font-semibold text-gray-800 mb-6">
         Edit File
      </h2>

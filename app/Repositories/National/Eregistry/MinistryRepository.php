@@ -80,8 +80,12 @@ class MinistryRepository extends BaseRepository
      */
     public function getForDataTable($search = '', $order_by = 'id', $sort = 'asc', $trashed = false)
     {
-        $query = $this->model()::query()->select(['id', 'name', 'code', 'description', 'is_active']);
-
+        $query = $this->model()::query()->select(['id', 
+                                                'identity_organisations.code as code',
+                                                'description', 
+                                                'is_active'])
+                                        ->join('identity_organisations', 'ministries.identity_organisation_id', '=', 'identity_organisations.id');
+                                        
         if (!empty($search)) {
             $search = '%' . strtolower($search) . '%';
             $query->where(function ($q) use ($search) {
@@ -112,6 +116,7 @@ class MinistryRepository extends BaseRepository
             ->pluck($column, $key, 'code');
     }
 
+
     /**
      * Get a full list of ministries for dropdowns
      * 
@@ -119,19 +124,65 @@ class MinistryRepository extends BaseRepository
      * @param string $key
      * @return \Illuminate\Support\Collection
      */
-    public function list($column = 'name', $key = 'id') //return all organisations with only their id, name, code, location and organisation_type_id
+    public function list($column = 'name', $key = 'id')
+    {
+        $orderColumns = [
+            'id'       => 'ministries.id',
+            'name'     => 'identity_organisations.name',
+            'code'     => 'identity_organisations.code',
+            'location' => 'identity_organisations.address',
+        ];
+
+        $orderBy = $orderColumns[$column] ?? 'identity_organisations.name';
+
+        return $this->model()::query()
+            ->join(
+                'identity_organisations',
+                'identity_organisations.id',
+                '=',
+                'ministries.identity_organisation_id'
+            )
+            ->orderBy($orderBy)
+            ->get([
+                'ministries.id',
+                'ministries.uuid',
+                'ministries.reviewer_title',
+                'identity_organisations.name as name',
+                'identity_organisations.code as code',
+                'identity_organisations.address as address',
+                'identity_organisations.organisation_type_id',
+            ]);
+    }
+
+    public function listAll($ministryId = null)
     {
         return $this->model()::query()
-            ->orderBy('id')
-            ->get(['id', 'name', 'code', 'reviewer_title']);
+            ->join(
+                'identity_organisations',
+                'identity_organisations.id',
+                '=',
+                'ministries.identity_organisation_id'
+            )
+            ->when(
+                $ministryId !== null,
+                fn ($query) => $query->where(
+                    'ministries.id',
+                    '!=',
+                    $ministryId
+                )
+            )
+            ->orderBy('identity_organisations.name')
+            ->get([
+                'ministries.id',
+                'ministries.uuid',
+                'ministries.reviewer_title',
+                'identity_organisations.name as name',
+                'identity_organisations.code as code',
+                'identity_organisations.location as location',
+                'identity_organisations.organisation_type_id',
+            ]);
     }
 
-
-    public function listAll($ministryId = null) {
-        return $this->model()::query()
-              ->where('id', '!=', $ministryId)
-              ->get(['id', 'name', 'reviewer_title']);
-    }
 
     public function getReviewerTitle($ministryId = null) {
         return $this->model()::query()

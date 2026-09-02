@@ -146,6 +146,22 @@ class FilePolicy
 
 
     /**
+     * Determine whether the user can delete the model.
+     */
+    public function delete(User $user, File $file): bool
+    {
+
+        if ($file->created_by === $user->id &&
+           ($file->status === "Pending Signature" || $file->status === "Pending Action")) {
+            return true;
+        }
+
+        return false;
+    
+    }
+
+
+    /**
     * Determine whether the user can circulate the model for UFS
     */
     public function ufsCirculate(User $user, File $file): bool
@@ -262,14 +278,6 @@ class FilePolicy
     
     }
 
-    
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user, File $file): bool
-    {
-        return false;
-    }
 
     /**
      * Determine whether the user can restore the model.

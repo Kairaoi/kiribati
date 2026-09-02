@@ -24,9 +24,8 @@ class MOEUserSeeder extends Seeder
             Role::firstOrCreate(['name' => $roleName]);
         }
 
-
         //GET THE MFED MINISTRY
-        $ministry = Ministry::where('code', 'MOE')->first();
+        $ministry = Ministry::where('id', 15)->first();
         $headquartersDivision = Division::where('name', 'Headquarters')
             ->where('ministry_id', $ministry->id)->first();
         $primaryDivision = Division::where('name', 'Primary Division')

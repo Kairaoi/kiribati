@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\National\Eregistry;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\National\Eregistry\UserStoreRequest;
+use App\Http\Requests\National\Eregistry\UserUpdateRequest;
 use App\Models\User;
 use App\Repositories\National\Eregistry\DivisionRepository;
 use App\Repositories\National\Eregistry\MinistryRepository;
@@ -80,9 +82,20 @@ class UserController extends Controller
                     ->where('ministry_id', Auth::user()->ministry_id)
                     ->first();
 
+        $user = Auth::user();
+
+        $isSystemAdmin = auth()->user()->hasRole('system-admin');
+        $isRegistry = auth()->user()->hasRole('registry');
+        $isMinistryAdmin = auth()->user()->hasRole('ministry-admin');
         $ministry = $this->ministries->getReviewerTitle(Auth::user()->ministry_id);
         
-        return view('national.eregistry.users.index', compact('reviewOfficer', 'sro', 'ministry'));
+        return view('national.eregistry.users.index', compact('reviewOfficer', 
+                                                              'sro', 
+                                                              'user',
+                                                              'ministry',
+                                                              'isSystemAdmin',
+                                                              'isRegistry',
+                                                              'isMinistryAdmin'));
     }
 
     /**
@@ -94,22 +107,34 @@ class UserController extends Controller
     {
         $this->authorize('create', User::class);
 
-        $ministryId = Auth::user()->ministry_id;
-        $divisions = $this->divisions->listWithMinistry($ministryId); // Fetch divisions for the logged-in ministry
-        $units = $this->units->listWithMinistry($ministryId); // Fetch units for the logged-in ministry
-        $ministries = $this->ministries->listAll();
-        $roles = Role::query()
-                    ->whereNotIn('name', [
-                        'system-admin',
-                        'ministry-admin',
-                        'hod',
-                        'admin',
-                        'review-officer',
-                        'sro'
-                    ])
+        $isSystemAdmin = auth()->user()->hasRole('system-admin');
+
+        $user = Auth::user();
+
+        $divisions = $this->divisions->listWithMinistry(
+            $isSystemAdmin ? null : $user->ministry_id
+        );
+
+        $ministries = $isSystemAdmin ? $this->ministries->list() : collect();
+
+        $roles = Role::query()->when(
+                        !$isSystemAdmin,
+                        fn ($query) => $query->whereNotIn('name', [
+                            'system-admin',
+                            'ministry-admin',
+                            'hod',
+                            'admin',
+                            'review-officer',
+                            'sro'
+                        ])
+                    )
                     ->pluck('name', 'id');
         
-        return view('national.eregistry.users.create', compact('divisions', 'units', 'roles', 'ministries'));
+        return view('national.eregistry.users.create', compact('divisions', 
+                                                                'user',
+                                                                'roles', 
+                                                                'ministries',
+                                                                'isSystemAdmin'));
     }
 
 
@@ -119,38 +144,16 @@ class UserController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(UserStoreRequest $request)
     {
         
-        $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:8',
-            'division_id' => 'required|integer|exists:divisions,id',
-            'designation' => 'required|string|max:255',
-            'is_active' => 'sometimes|boolean',
-            'role'    => [
-                'required',
-                Rule::exists('roles', 'id'),
-            ],
+        $validated = $request->validated();
 
-        ]);
-
-       $user = User::create([
-            'first_name'  => $request->first_name,
-            'last_name'   => $request->last_name,
-            'email'       => $request->email,
-            'password'    => Hash::make($request->password),
-            'division_id' => $request->division_id,
-            'ministry_id' => Auth::user()->ministry_id,
-            'designation' => $request->designation,
-            'is_active'   => $request->is_active ?? true
-        ]);
-    
-        $role = Role::findOrFail($request->role);
-        $user->assignRole($role);
-
+        //validate again the role to ensure that the user is not creating other minsitries user.
+        if (auth()->user()->hasRole('ministry-admin')) {
+            $validated['ministry_id'] = auth()->user()->ministry_id;
+        }
+        $this->users->create($validated);
         return redirect()->route('registry.users.index')->with('success', 'New user created!');
     }
     
@@ -164,9 +167,7 @@ class UserController extends Controller
     public function show(User $user)
     {
         $this->authorize('view', $user);
-
         $user = $this->users->getById($user->id);
-        
         return view('national.eregistry.users.show', compact('user'));
     }
 
@@ -178,9 +179,12 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        $this->authorize('view', $user);
-        $divisions = $this->divisions->listWithMinistry(Auth::user()->ministry_id); // Fetch divisions for the logged-in organisation
-        $units = $this->units->listWithMinistry(Auth::user()->ministry_id); // Fetch units for the logged-in ministry
+        $this->authorize('update', $user);
+        $isSystemAdmin = auth()->user()->hasRole('system-admin');
+        $ministries = $isSystemAdmin ? $this->ministries->list() : collect();
+        $divisions = $this->divisions->listWithMinistry(
+                    $isSystemAdmin ? null : $user->ministry_id
+                );        
         $roles = Role::query()
                     ->whereNotIn('name', [
                         'system-admin',
@@ -196,10 +200,11 @@ class UserController extends Controller
                                    ->first();
         
         return view('national.eregistry.users.edit', compact('user', 
+                                                             'isSystemAdmin',
                                                              'currentRole',
                                                              'divisions', 
-                                                             'units', 
-                                                             'roles'));
+                                                             'roles',
+                                                             'ministries'));
     }
 
 
@@ -246,25 +251,10 @@ class UserController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, User $user)
+    public function update(UserUpdateRequest $request, User $user)
     {
-        // dd($request->all());
-        $validated = $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => [
-                'required',
-                'email',
-                Rule::unique('users', 'email')->ignore($user->id),
-            ],
-            'role' => [
-                'required',
-                Rule::exists('roles', 'id'),
-            ],
-            'division_id' => 'required|integer|exists:divisions,id',
-            'designation' => 'required|string|max:255',
-        ]);
-
+    
+        $validated = $request->validated();
         $this->users->update($user, $validated);
 
         // Handle the editable/main role separately

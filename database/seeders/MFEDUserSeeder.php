@@ -18,10 +18,8 @@ class MFEDUserSeeder extends Seeder
         // Reset cached roles and permissions
         app()['cache']->forget('spatie.permission.cache');
 
-       
-
         //GET THE MFED MINISTRY
-        $ministry = Ministry::where('code', 'MFED')->first();
+        $ministry = Ministry::where('id', 17)->first();
         $headquartersDivision = Division::where('name', 'Headquarters')
             ->where('ministry_id', $ministry->id)->first();
         $accountDivision = Division::where('name', 'Accounts Section')

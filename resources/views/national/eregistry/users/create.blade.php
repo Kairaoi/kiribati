@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mx-auto font-montserrat px-4 py-6 max-w-5xl">
+<div class="container mx-auto font-montserrat shadow px-4 py-6 max-w-5xl">
     <h1 class="flex mt-4 text-xl font-bold mb-6">Create New User</h1>
 
     @if ($errors->any())
@@ -20,41 +20,80 @@
 
               <!-- Ministry -->
             <div>
-                <label for="ministry_id" class="block text-sm font-medium text-gray-700">Ministry/Public Body: <span class="text-red-600">*</span></label>
-                @role('registry')
-                    <input type="text"
+                @if ($isSystemAdmin)
+                    <div>
+                        <label
+                            for="ministry_id"
+                            class="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                            Ministry
+                        </label>
+
+                        <select
                             name="ministry_id"
                             id="ministry_id"
-                            value="{{ Auth::user()->ministry?->name ?? 'N/A' }}"
-                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-700 sm:text-sm"
-                            readonly>
-                @endrole
-                @hasrole('system-admin')
-                        <select name="ministry_id" id="ministry_id"
-                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
-                            required>
-                            <option value="">-- Select Ministry --</option>
+                            required
+                            class="mt-1 text-sm block w-full rounded-md border-gray-300
+                                shadow-sm focus:border-cyan-500
+                                focus:ring-cyan-500"
+                        >
+                            <option value="">Select ministry</option>
 
-                            @foreach($ministries as $ministry)
-                                <option value="{{ $ministry->id }}" {{ old('ministry_id') == $ministry->id ? 'selected' : '' }}>
+                            @foreach ($ministries as $ministry)
+                                <option
+                                    value="{{ $ministry->id }}"
+                                    @selected(
+                                        old('ministry_id') == $ministry->id
+                                    )
+                                >
                                     {{ $ministry->name }}
                                 </option>
                             @endforeach
                         </select>
-                @endhasrole
+
+                        @error('ministry_id')
+                            <p class="mt-1 text-sm text-red-600">
+                                {{ $message }}
+                            </p>
+                        @enderror
+                    </div>
+                @else
+                    <div>
+                        <label
+                            class="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                            Ministry
+                        </label>
+
+                        <input
+                            type="text"
+                            value="{{ $user->ministry->identityOrganisation->name }}"
+                            readonly
+                            class="mt-1 block text-sm w-full rounded-md border-gray-300
+                                bg-gray-100 text-gray-600 shadow-sm"
+                        >
+
+                        <input
+                            type="hidden"
+                            id="ministry_id"
+                            name="ministry_id"
+                            value="{{ $user->ministry_id }}"
+                        >
+                    </div>
+                @endif
             </div>
 
             <!-- Division -->
             <div>
-                    <label for="division" class="block text-sm font-medium text-gray-700"> Select division: <span class="text-red-600">*</span></label>
-                    <select name="division_id" id="division_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm" required>
+                <label for="division" class="block text-sm font-medium text-gray-700"> Select division: <span class="text-red-600">*</span></label>
+                <select name="division_id" id="division_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm" required>
                         <option value="">Select a division </option>
                         @foreach($divisions as $division)
                             @if($division->organisation_id == Auth::user()->organisation_id)
                                 <option value="{{ $division->id }}">{{ $division->name }}</option>
                             @endif
                         @endforeach
-                    </select>
+                </select>
             </div> 
 
             <!-- First Name -->
@@ -90,7 +129,7 @@
                     <input type="password" name="password" id="password"
                         class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
                         required oninput="checkPasswordLength()">
-                    <p id="password-hint" class="mt-2 text-sm text-red-600 hidden">Password must be at least 8 characters.</p>
+                    {{-- <p id="password-hint" class="mt-2 text-sm text-red-600 hidden">Password must be at least 8 characters.</p> --}}
                 </div>
             </div>
 
@@ -98,7 +137,7 @@
             <div>
                 <label for="role" class="block text-sm font-medium text-gray-700">Select Role: <span class="text-red-600">*</span></label>
                 <select name="role" id="role" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm">
-                    <option value=""> Select a role</option>
+                    <option value=""> Roles</option>
                     @foreach ($roles as $id => $name)
                         <option value="{{ $id }}">
                             {{ $name }}
@@ -156,7 +195,6 @@
             });
         });
 
-
         document.getElementById('select_all_organisations').addEventListener('change', function() {
             const checkboxes = document.querySelectorAll('input[name="organisations[]"]');
             checkboxes.forEach(checkbox => {
@@ -181,15 +219,56 @@
         });
 
         function checkPasswordLength() {
-        const passwordInput = document.getElementById('password');
-        const hint = document.getElementById('password-hint');
+            const passwordInput = document.getElementById('password');
+            const hint = document.getElementById('password-hint');
 
-        if (passwordInput.value.length < 8) {
-            hint.classList.remove('hidden');
-        } else {
-            hint.classList.add('hidden');
+            if (passwordInput.value.length < 4) {
+                hint.classList.remove('hidden');
+            } else {
+                hint.classList.add('hidden');
+            }
         }
-    }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const ministrySelect = document.getElementById('ministry_id');
+            const divisionSelect = document.getElementById('division_id');
+
+            const divisions = @json($divisions);
+            const oldDivisionId = @json(old('division_id'));
+
+            function loadDivisions(ministryId) {
+                divisionSelect.innerHTML =
+                    '<option value="">Select division</option>';
+
+                if (!ministryId) {
+                    return;
+                }
+
+                divisions
+                    .filter((division) =>
+                        String(division.ministry_id) === String(ministryId)
+                    )
+                    .forEach((division) => {
+                        const option = document.createElement('option');
+
+                        option.value = division.id;
+                        option.textContent = division.name;
+                        option.selected =
+                            String(division.id) === String(oldDivisionId);
+
+                        divisionSelect.appendChild(option);
+                    });
+            }
+
+            ministrySelect?.addEventListener('change', function () {
+                loadDivisions(this.value);
+            });
+
+            if (ministrySelect?.value) {
+                loadDivisions(ministrySelect.value);
+            }
+        });
     </script>
 </div>
 @endsection

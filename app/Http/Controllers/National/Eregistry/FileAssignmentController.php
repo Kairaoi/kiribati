@@ -65,7 +65,7 @@ class FileAssignmentController extends Controller
                 $file_assignment = FileAssignment::create([
                     'file_circulation_id' => $fileCirculationId,
                     'officer_id'          => $officerId,
-                    'assigned_by'         => auth()->id(),
+                    'assigned_by'         => Auth::user()->id,
                     'assigned_date'       => now(),
                     'is_active'           => true,
                 ]);
@@ -94,10 +94,10 @@ class FileAssignmentController extends Controller
             'status' => $validated['status'],
             'review_comment' => $validated['comment'] ?? null,
             'reviewed_at' => now(),
-            'updated_by' => auth()->id(),
+            'updated_by' => Auth::user()->id,
             'approved_at' => $validated['status'] === 'Approved' ? now() : null,
-            'approved_by' => $validated['status'] === 'Approved' ? auth()->id() : null,
-            'reviewed_by' => auth()->id(),
+            'approved_by' => $validated['status'] === 'Approved' ? Auth::user()->id : null,
+            'reviewed_by' => Auth::user()->id,
             'date_reviewed' => now(),
         ]);
 
@@ -138,11 +138,11 @@ class FileAssignmentController extends Controller
         ]);
       
         $fileAssignment = FileAssignment::where('file_circulation_id', $fileCirculationId)
-                                            ->where('officer_id', auth()->user()->id)
+                                            ->where('officer_id', Auth::user()->id)
                                             ->where('is_active', true)
                                             ->firstOrFail();
 
-        if($validated['action'] === 'accepted' && $fileAssignment->officer_id == auth()->user()->id) {
+        if($validated['action'] === 'accepted' && $fileAssignment->officer_id == Auth::user()->id) {
             $fileAssignment->update([
                 'status' => 'in_progress',
                 'accepted_at' => now(),
@@ -162,7 +162,7 @@ class FileAssignmentController extends Controller
                     FileAssignment::create([
                         'file_circulation_id' => $fileCirculationId,
                         'officer_id'          => $task['officer_id'],
-                        'assigned_by'         => auth()->id(),
+                        'assigned_by'         => Auth::user()->id,
                         'assigned_date'       => now(),
                         'is_active'           => true,
                         'reassigned_from'     => $old_officer_id,
@@ -187,11 +187,11 @@ class FileAssignmentController extends Controller
         ]);
       
         $fileAssignment = FileAssignment::where('file_circulation_id', $fileCirculationId)
-                                            ->where('officer_id', auth()->user()->id)
+                                            ->where('officer_id', Auth::user()->id)
                                             ->where('is_active', true)
                                             ->firstOrFail();
 
-        if($validated['action'] === 'accepted' && $fileAssignment->officer_id == auth()->user()->id) {
+        if($validated['action'] === 'accepted' && $fileAssignment->officer_id == Auth::user()->id) {
             $fileAssignment->update([
                 'status' => 'in_progress',
                 'accepted_at' => now(),

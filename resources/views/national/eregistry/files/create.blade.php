@@ -57,7 +57,7 @@
 
 
 {{-- <div class="container mx-auto font-poppins px-8 max-w-5xl mt-1"> {{ Breadcrumbs::render('files.create.withType', $createType) }} </div> --}}
-<div class="container bg-white mx-auto px-6 py-10 max-w-4xl mt-4 mb-4 text-gray-700 font-medium rounded-md min-h-screen border border-gray-600">
+<div class="container bg-white shadow mx-auto px-6 py-10 max-w-4xl mt-4 mb-4 text-gray-700 font-medium rounded-md min-h-screen border border-gray-600">
      <h2 class="text-lg font-semibold text-gray-800 mb-6">
         Create File
      </h2>
@@ -80,12 +80,11 @@
                         <label for="source_type">Source Type <span class="text-red-600">*</span></label>
                         <select name="source_type" id="source_type" 
                             class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm">
-                            <option value="own_ministry">My Ministry{{ Auth::user()->ministry?->name ? ' (' . Auth::user()->ministry->name . ')' : '' }}</option>                            
+                            <option value="own_ministry">My Ministry{{ Auth::user()->ministry->identityOrganisation->name ? ' (' . Auth::user()->ministry->identityOrganisation->name . ')' : '' }}</option>                            
                             <option value="identity_organisation">Other Registered Organisations</option>
                             <option value="external_partner">External Partners</option>
                         </select>
                     </div>
-
                     <div id="org-select-container">
                         <div class="mt-3 flex items-center justify-between mb-1">
                             <label for="organisation" class="mt-1 block text-sm text-gray-700">
@@ -132,7 +131,7 @@
                         <select name="source_type" id="source_type" 
                             class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm">
                             {{-- <option value="">Select Source Type</option> --}}
-                            <option value="own_ministry">My Ministry{{ Auth::user()->ministry?->name ? ' (' . Auth::user()->ministry->name . ')' : '' }}</option>                            
+                            <option value="own_ministry">My Ministry{{ Auth::user()->ministry->identityOrganisation->name ? ' (' . Auth::user()->ministry->identityOrganisation->name . ')' : '' }}</option>                            
                         </select>
                     </div>
                 @endif

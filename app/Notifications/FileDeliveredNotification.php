@@ -8,7 +8,7 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Models\National\Eregistry\FileCirculation;
 
-class FileDeliveredNotification extends Notification
+class FileDeliveredNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 

@@ -589,6 +589,8 @@
                             </button>
                         @endcan
 
+                       
+
                         @can('circulateToReviewOfficer', $file)
                             <button type="button"
                                     onclick="toggleActionPanel('circulatePanel', this)"
@@ -686,6 +688,29 @@
                                 </svg>
                                 Submit to HOD
                             </button>
+                        @endcan
+
+                         @can('delete', $file)
+                            <form action="{{ route('registry.files.destroy', $file) }}" method="POST">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit"
+                                        class="action-button inline-flex items-center justify-center gap-2
+                                                border border-red-600 bg-red-600 p-4 py-3
+                                                text-sm font-medium text-white shadow-sm transition
+                                                hover:bg-red-700">      
+                                        <svg xmlns="http://www.w3.org/2000/svg" 
+                                            class="h-4 w-4" 
+                                            fill="none" 
+                                            viewBox="0 0 24 24" 
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" 
+                                                stroke-linejoin="round" 
+                                                stroke-width="2" 
+                                                d="M6 18L18 6M6 6l12 12" />
+                                        </svg>                              
+                                        Delete File
+                                </button>
                         @endcan
                          
                         @if($circulation)

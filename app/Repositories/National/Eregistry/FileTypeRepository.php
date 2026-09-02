@@ -25,14 +25,18 @@ class FileTypeRepository extends BaseRepository
      * @param array $input
      * @return FileType
      */
-    public function create(array $input)
+    public function createFileType(array $input, $user = null)
     {
+        $isSystemAdmin = $user->hasRole('system-admin');
+
         $data = [
             'name' => $input['name'],
             'description' => $input['description'] ?? null,
             'code' => $input['code'],
-            'created_at' => now(),
-            'updated_at' => now(),
+            'ministry_id' => $isSystemAdmin ? null : $user->ministry_id,
+            'is_global'   => $isSystemAdmin ? 1 : 0,
+            'created_by' => $user ? $user->id : null,
+            'updated_by' => $user ? $user->id : null,
         ];
 
         $fileType = $this->model();
@@ -49,15 +53,17 @@ class FileTypeRepository extends BaseRepository
      * @param array $input
      * @return bool
      */
-    public function update(FileType $model, array $input)
+    public function update(FileType $model, array $input, $user = null)
     {
-
+        
         $data = [
             'name' => $input['name'],
             'description' => $input['description'] ?? $model->description,
             'code' => $input['code'],
-            'created_at' => now(),
+            'ministry_id' => $input['ministry_id'] ?? $model->ministry_id,
+            'is_global' => $input['is_global'] ?? $model->is_global,
             'updated_at' => now(),
+            'updated_by' => $user->id,
         ];
 
         return $model->update($data);
@@ -71,17 +77,18 @@ class FileTypeRepository extends BaseRepository
      * @param string $sort
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function getForDataTable($selectedType, int $ministryId, $user, $search = '', $order_by = 'id', $sort = 'desc')
+    public function getForDataTable($selectedType, int $ministryId, $user, $search = '', $order_by = 'id', $sort = 'asc')
     {
         
         $query = $this->model->query()
             ->select(['file_types.id as id', 
                       'file_types.name as file_type_name', 
-                      'file_types.is_global as is_global', 
+                      'file_types.is_global as is_global',
                       'file_types.is_active as is_active', 
                       'file_types.code as code', 
                       'file_types.created_at as created_at', 
                       'file_types.updated_at as updated_at'])
+            ->withCount('files')
             ->leftJoin('ministries', 'file_types.ministry_id', '=', 'ministries.id')
             ->groupBy('file_types.id');
 

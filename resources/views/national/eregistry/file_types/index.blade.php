@@ -14,13 +14,10 @@
                 <option value="global">Global</option>
             </select>
         </div>
-        <div>
-            
-        </div>
         <a href="{{ route('registry.file-types.create') }}"
                 class="inline-flex items-center mt-5 gap-2 px-4 py-2 bg-cyan-600 text-white text-sm rounded-md hover:bg-cyan-700 transition">
                 <i class="fas fa-plus"></i>
-                Add ministry file type
+                Add file type
         </a>
     </div>
 
@@ -32,6 +29,8 @@
                     <th>FILE TYPE NAME</th>
                     <th>CODE</th>
                     <th>SCOPE</th>
+                    <th>CREATED AT</th>
+                    <th>UPDATED AT</th>
                     <th>STATUS</th>
                     <th class="w-28">Actions</th>
                 </tr>
@@ -288,7 +287,24 @@ $(document).ready(function() {
                         `;
                 }
             },
-
+            { data: 'created_at', 
+                render(data) {
+                    return new Date(data).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                }
+            },
+            { data: 'updated_at', 
+                render(data) {
+                    return new Date(data).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                }
+            },
             {
                 data: 'is_active',
                 render: function (data, type, row) {
@@ -315,58 +331,62 @@ $(document).ready(function() {
                 render: function (data, type, row) {
                     let buttons = `
                         <a href="/registry/file-types/${row.id}"
-                            class="inline-flex items-center border justify-center gap-2 rounded-md px-4 py-2 text-xs font-medium shadow-sm transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
-                            title="Show">
-                            View
+                            class="inline-flex items-center justify-center rounded-md p-2 text-purple-600 transition hover:bg-purple-50 hover:text-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                            title="View"
+                            aria-label="View file type">
+                            <i class="fa fa-eye text-sm"></i>
                         </a>
                     `;
+
                     const isActive = Number(row.is_active);
-                    if ((!row.is_global || row.can_edit) && isActive === 1) {
+                    const canManage = !Number(row.is_global) || Boolean(row.can_edit);
+
+                    if (canManage && isActive === 1) {
                         buttons += `
                             <button
+                                type="button"
                                 data-id="${row.id}"
-                                class="inline-flex items-center mt-1 border justify-center gap-2 rounded-md px-4 py-2 text-xs font-medium shadow-sm transition hover:bg-gray-100 deactivate-action"
-                                title="Deactivate">
-                                Deactivate
+                                class="deactivate-action inline-flex items-center justify-center rounded-md p-2 text-orange-600 transition hover:bg-orange-50 hover:text-orange-800 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                                title="Deactivate"
+                                aria-label="Deactivate file type">
+                                <i class="fa fa-ban text-sm"></i>
                             </button>
                         `;
-                    } else if ((!row.is_global || row.can_edit) && isActive === 0) {
+                    } else if (canManage && isActive === 0) {
                         buttons += `
                             <button
+                                type="button"
                                 data-id="${row.id}"
-                                class="inline-flex items-center mt-1 border justify-center gap-2 rounded-md px-4 py-2 text-xs font-medium shadow-sm transition hover:bg-gray-100 activate-action"
-                                title="Activate">
-                                Activate
+                                class="activate-action inline-flex items-center justify-center rounded-md p-2 text-green-600 transition hover:bg-green-50 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                                title="Activate"
+                                aria-label="Activate file type">
+                                <i class="fa fa-check-circle text-sm"></i>
                             </button>
                         `;
                     }
-                    return buttons;
+
+                    if (Number(row.files_count) === 0 && canManage) {
+                        buttons += `
+                            <button
+                                type="button"
+                                data-id="${row.id}"
+                                class="delete-action inline-flex items-center justify-center rounded-md p-2 text-red-600 transition hover:bg-red-50 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                                title="Delete"
+                                aria-label="Delete file type">
+                                <i class="fa fa-trash text-sm"></i>
+                            </button>
+                        `;
+                    }
+
+                    return `
+                        <div class="flex items-center gap-1">
+                            ${buttons}
+                        </div>
+                    `;
                 }
             }
        ],
-
-        columnDefs: [
-            
-            {
-                targets: 2, // Code
-                width: 'auto'
-            },
-            {
-                targets: 3, // Scope
-                width: 'auto'
-            },
-             {
-                targets: 4, // Scope
-                width: 'auto'
-            },
-            {
-                targets: 5, // Actions
-                width: 'auto',
-                orderable: false,
-                searchable: false
-            }
-        ],
-         dom:   "<'row mb-3'<'col-md-6 d-flex align-items-center'B><'col-12 col-md-6 text-md-end text-start'f>>" +
+        dom:   "<'row mb-3'<'col-md-6 d-flex align-items-center'B><'col-12 col-md-6 text-md-end text-start'f>>" +
                         "<'row'<'col-sm-12'tr>>" +
                         "<'row mt-3'<'col-sm-5'i><'col-sm-7'p>>",
 

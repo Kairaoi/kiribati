@@ -43,18 +43,13 @@
             <i class="fas fa-plus"></i>
             Create New Division
         </a>
-{{-- 
-        <a href="{{ route('registry.divisions.create') }}"
-            class="inline-flex items-center mt-5 gap-2 px-4 py-2 bg-cyan-600 text-white text-sm rounded-md hover:bg-cyan-700 transition">
-            <i class="fas fa-plus-officer"></i>
-            Assign HOD
-        </a> --}}
     </div>
 
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-2">
-        <table id="divisionsTable" class="bg-gray-50 text-gray-800 text-sm divide-y divide-gray-200 stripe">
+        <table id="divisionsTable" class="bg-gray-50 text-gray-800 divide-y text-sm divide-gray-200 stripe">
             <thead>
                 <tr>
+                    <th>Ministry</th>
                     <th>Name</th>
                     <th>Head of Division</th>
                     <th>Created At</th>
@@ -285,6 +280,7 @@ $(document).ready(function() {
             }
         },
         columns: [
+            { data: 'name', name: 'identity_organisations.name' },
             { data: 'division_name', name: 'divisions.name' },
             { data: 'hod_name', name: 'users.name', defaultContent: 'not assigned' },
             { data: 'created_at', 
@@ -305,7 +301,6 @@ $(document).ready(function() {
                     });
                 }
             },
-
             {
                 data: null,
                 name: 'actions',
@@ -314,6 +309,10 @@ $(document).ready(function() {
                 render(data, type, row) {
 
                     let actions = `
+                        <a href="/registry/divisions/${row.id}" 
+                            class="text-purple-600 hover:text-purple-800 transition ms-3">
+                            View
+                        </a>
 
                         <a href="/registry/divisions/${row.id}/edit" 
                             class="text-blue-600 hover:text-blue-800 transition ms-3">
@@ -408,7 +407,6 @@ $(document).ready(function() {
             'registry.divisions.destroy': "{{ route('registry.divisions.destroy', ':id') }}".replace(':id', id)
         }[name];
     }
-
 
     // Open PDF Viewer Modal
     $(document).on('click', '.view-btn', function(e) {

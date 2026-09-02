@@ -22,13 +22,26 @@ class Division extends Model implements Auditable
         'name',
         'location',
         'is_active',
-        'hod_id'
-       
+        'hod_id',
+        'email',
+        'phone',
+        'created_by',
+        'updated_by',
     ];
 
     public function ministry()
     {
-        return $this->belongsTo(Ministry::class);
+        return $this->belongsTo(Ministry::class, 'ministry_id');
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 
     public function hod()

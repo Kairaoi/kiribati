@@ -74,7 +74,6 @@ class ExternalPartnerController extends Controller
         return view('national.eregistry.external_partners.create', compact('identityOrganisations', 
                                                                            'organisationTypes',
                                                                            'ministry'));
-       
     }
 
     /**
@@ -82,7 +81,7 @@ class ExternalPartnerController extends Controller
      */
     public function store(Request $request)
     {
-          $validated = $request->validate([
+        $validated = $request->validate([
             'name' => [
                 'required',
                 'string',

@@ -42,6 +42,8 @@ class IdentityOrganisationRepository extends BaseRepository
             'code' => $input['code'],
             'description' => $input['description'],
             'is_active' => $input['is_active'] ?? true,
+            'address' => $input['address'],
+            'organisation_type_id' => $input['organisation_type_id'],
             'created_by' => Auth::id(),
             'updated_by' => Auth::id(),
         ];
@@ -51,22 +53,22 @@ class IdentityOrganisationRepository extends BaseRepository
 
     /**
      * Update an existing global organisation record
-     * 
-     * @param IdentityOrganisation $model
      * @param array $input
-     * @return bool
+     * @return IdentityOrganisation
      */
-    public function update(IdentityOrganisation $model, array $input)
-    {
-        $data = [
-            'name' => $input['name'],
-            'code' => $input['code'],
-            'description' => $input['description'],
-            'is_active' => $input['is_active'] ?? $model->is_active,
-            'updated_by' => Auth::id(),
-        ];
+    public function update(IdentityOrganisation $organisation, array $input): IdentityOrganisation {
+        
+        $organisation->update([
+            'name'                 => $input['name'],
+            'code'                 => $input['code'],
+            'description'          => $input['description'] ?? null,
+            'is_active'            => $input['is_active'] ?? true,
+            'address'              => $input['address'] ?? null,
+            'organisation_type_id' => $input['organisation_type_id'],
+            'updated_by'           => auth()->id(),
+        ]);
 
-        return $model->update($data);
+        return $organisation->refresh();
     }
 
     /**
@@ -80,10 +82,12 @@ class IdentityOrganisationRepository extends BaseRepository
      */
     public function getForDataTable($selectedType, $search = '', $order_by = 'id', $sort = 'asc', $trashed = false)
     {
-        $query = $this->model()::query()->select(['identity_organisations.id as id', 
+        $query = $this->model()::query()->select([
+                                                  'identity_organisations.id as id', 
                                                   'identity_organisations.name as name', 
                                                   'identity_organisations.code as code', 
-                                                  'organisation_types.name as type_name'])
+                                                  'organisation_types.name as type_name',
+                                                  'identity_organisations.is_active as is_active', ])
                                         ->join('organisation_types', 'identity_organisations.organisation_type_id', '=', 'organisation_types.id')
                                         ->forSelectedType($selectedType);
         if (!empty($search)) {

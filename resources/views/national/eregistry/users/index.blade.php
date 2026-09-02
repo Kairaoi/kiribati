@@ -40,14 +40,16 @@
     </div>
     <div class="mb-4 flex items-start justify-between">
         <div>
-            <a href="{{ route('registry.users.create') }}"
-                class="inline-flex items-center mt-3 gap-2 px-4 py-2 bg-cyan-600 font-semibold text-sm text-white hover:bg-cyan-700 transition">
-                Create New User
-            </a>
+            @can('create', $user)
+                <a href="{{ route('registry.users.create') }}"
+                    class="inline-flex items-center mt-3 gap-2 px-4 py-2 bg-cyan-600 font-semibold text-sm text-white hover:bg-cyan-700 transition">
+                    Create New User
+                </a>
+            @endcan
 
             <a href="{{ route('registry.users.edit-review-officer') }}"
                 class="inline-flex items-center mt-3 gap-2 px-4 py-2 bg-cyan-600 font-semibold text-sm text-white hover:bg-cyan-700 transition">
-                Review Officer: {{ $reviewOfficer->name }}
+                Review Officer: {{ $reviewOfficer?->name }}
             </a>
 
             <a href="{{ route('registry.users.edit-secretary') }}"
@@ -273,6 +275,9 @@
 $(document).ready(function() {
     let activeDropdown = null;
 
+    const isSystemAdmin = @json($isSystemAdmin);
+    const isMinistryAdmin = @json($isMinistryAdmin);
+
     // Close dropdown when clicking outside
     $(document).on('click', function(e) {
         if (!$(e.target).closest('.action-dropdown').length) {
@@ -327,34 +332,35 @@ $(document).ready(function() {
                                 title="View">
                                 <i class="fa fa-eye text-sm"></i>
                         </a>
-                        <a href="/registry/users/${row.uuid}/edit" 
+                        `;
+                    if (isSystemAdmin || isMinistryAdmin) {
+                        buttons += `<a href="/registry/users/${row.uuid}/edit" 
                             class="inline-flex items-center justify-center hover:text-gray-600 transition ms-3"
-                                title="Edit">
-                                <i class="fa fa-pen text-sm"></i>
+                            title="Edit">
+                            <i class="fa fa-pen text-sm"></i>
                         </a>
-                    `;
-
-                    const isActive = Number(row.is_active);
-
-                    if (isActive === 1) {
-                        buttons += `
-                            <button class="inline-flex items-center justify-center hover:text-red-600 transition ms-3 deactivate-action" 
-                                data-id="${row.uuid}" 
-                                title="Deactivate">
-                                <i class="fa fa-user-slash text-sm"></i>
-                            </button>
-                        `;
-                    } else {
-                        buttons += `
-                            <button class="inline-flex items-center justify-center hover:text-red-600 transition ms-3 activate-action" 
-                                data-id="${row.uuid}" 
-                                title="Activate">
-                                <i class="fa fa-user text-sm"></i>
-                            </button>
-                        `;
-
+                         `;
+                        const isActive = Number(row.is_active);
+                        if (isActive === 1) {
+                            buttons += `
+                                <button class="inline-flex items-center justify-center hover:text-red-600 transition ms-3 deactivate-action" 
+                                    data-id="${row.uuid}" 
+                                    title="Deactivate">
+                                    <i class="fa fa-user-slash text-sm"></i>
+                                </button>
+                            `;
+                        } else {
+                            buttons += `
+                                <button class="inline-flex items-center justify-center hover:text-red-600 transition ms-3 activate-action" 
+                                    data-id="${row.uuid}" 
+                                    title="Activate">
+                                    <i class="fa fa-user text-sm"></i>
+                                </button>
+                            `;
+                        }
                     }
-                    return buttons;
+                     return buttons;
+                
                 }
             }
         ],

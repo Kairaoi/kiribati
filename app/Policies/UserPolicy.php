@@ -12,7 +12,7 @@ class UserPolicy
      */
     public function viewAny(User $user): bool
     {
-        if( $user->hasRole('ministry-admin') || $user->hasRole('registry') ){
+        if( $user->hasRole('ministry-admin') || $user->hasRole('registry') ||  $user->hasRole('system-admin')  ){
             return true;
         }
         return false;
@@ -26,19 +26,27 @@ class UserPolicy
         if( ($user->hasRole('ministry-admin') || $user->hasRole('registry')) && $user->ministry_id === $model->ministry_id) {
             return true;
         }
+
+        if ($user->hasRole('system-admin')) {
+            return true;
+        }
+        
         return false;
     }
+
+
 
     /**
      * Determine whether the user can create models.
      */
     public function create(User $user): bool
     {
-        if( $user->hasRole('ministry-admin') || $user->hasRole('registry') ){
+        if( $user->hasRole('ministry-admin') || $user->hasRole('system-admin') ){
             return true;
         }
         return false;
     }
+
 
     /**
      * Determine whether the user can update the model.
@@ -48,6 +56,11 @@ class UserPolicy
         if( ($user->hasRole('ministry-admin') || $user->hasRole('registry')) && $user->ministry_id === $model->ministry_id) {
             return true;
         }
+
+        if ($user->hasRole('system-admin')) {
+            return true;
+        }
+        
         return false;
     }
 

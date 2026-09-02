@@ -17,10 +17,12 @@ class IdentityOrganisation extends Model implements Auditable
         'name',
         'code',
         'description',
-        'location',
+        'address',
         'is_active',
         'created_by',
         'updated_by',
+        'created_at',
+        'updated_at',
         'organisation_type_id',
     ];
 
@@ -29,11 +31,16 @@ class IdentityOrganisation extends Model implements Auditable
         return $this->belongsTo(OrganisationType::class, 'organisation_type_id');
     }
 
+    public function ministry()
+    {
+        return $this->hasOne(Ministry::class,'identity_organisation_id','id');
+    }
+
+
     public function files()
     {
         return $this->morphMany(File::class, 'source');
     }
-
 
     public function scopeForSelectedType($query, $selectedType)
     {
@@ -54,10 +61,7 @@ class IdentityOrganisation extends Model implements Auditable
                 
             } 
 
-
             return $query;
     }
-
-
 
 }

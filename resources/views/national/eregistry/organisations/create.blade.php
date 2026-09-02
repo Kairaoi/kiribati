@@ -15,14 +15,13 @@
         </div>
     @endif
 
-    <form action="{{ route('registry.ministries.store') }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ route('registry.organisations.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
-        @method('PUT')
  
         <div class="bg-white shadow-sm font-poppins rounded-2xl p-6 max-w-2xl mx-auto mt-4 mb-4">
 
             <h2 class="text-m font-semibold text-gray-800 mb-6">
-                <span class="text-cyan-600">Create Identity Organsation</span>
+                <span class="text-cyan-600">Create Organisation</span>
             </h2>
 
             <div class="mb-3 relative">
@@ -30,7 +29,7 @@
                     Name <span class="text-red-500">*</span>
                 </label>
 
-                <input type="text" name="name" id="file_type_name"
+                <input type="text" name="name" id="organisation_name"
                     value="{{ old('name') }}"
                     class="mt-1 w-full rounded-lg border-gray-300 shadow-sm 
                         focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 
@@ -66,13 +65,12 @@
 
                 <!-- Helper text -->
                 <p class="text-xs text-gray-500 mt-1">
-                    Use a unique 2 or 3-letter code to identify this file type (e.g. <span class="font-medium">WKS</span> for Workshop, 
-                    <span class="font-medium">LTR</span> for Letter).
+                    Use a unique 2 or 5-letter code to identify this organisation.
                 </p>
 
                 <input type="text" name="code" id="code"
                     value="{{ old('code') }}"
-                    maxlength="3"
+                    maxlength="5"
                     class="mt-2 w-full rounded-lg border-gray-300 shadow-sm 
                         focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 
                         text-sm px-3 py-2"
@@ -84,13 +82,44 @@
                 @enderror
             </div>
 
+            <div class="mb-3">
+                <label for="address" class="block text-sm font-medium text-gray-700">
+                    Address <span class="text-red-600">*</span>
+                </label>
+                <input type="text" name="address" id="address"
+                    value="{{ old('address') }}"
+                    class="mt-1 w-full rounded-lg border-gray-300 shadow-sm 
+                        focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 
+                        text-sm px-3 py-2"
+                    >
+            </div>
+
+            <div class="mb-3">
+                <label class="block text-sm font-medium text-gray-700">
+                    Category <span class="text-red-600">*</span>
+                </label>
+
+                <select name="organisation_type_id" id="organisation_type_id"
+                    class="mt-1 w-full rounded-lg border-gray-300 shadow-sm text-sm px-3 py-2">
+
+                    <option value="">-- None --</option>
+
+                    @foreach($organisationTypes as $type)
+                        <option value="{{ $type->id }}"
+                            {{ old('organisation_type_id') == $type->id ? 'selected' : '' }}>
+                            {{ $type->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
             <!-- Divider -->
-            <div class="border-t border-gray-200 pt-5 flex justify-center gap-3">
+            <div class="border-t border-gray-200 pt-3 flex justify-center gap-3">
                 <button type="submit"
                     class="px-5 py-2 text-sm font-medium rounded-lg 
                         bg-cyan-600 text-white hover:bg-cyan-700 
                         focus:ring-2 focus:ring-cyan-300">
-                    Create File Type
+                    Submit
                 </button>
             </div>
         </div>

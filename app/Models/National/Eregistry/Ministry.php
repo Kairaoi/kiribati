@@ -7,24 +7,23 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Ministry extends Model implements Auditable
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
     use \OwenIt\Auditing\Auditable;
 
     protected $table = 'ministries';
 
     protected $fillable = [
-        'name',
-        'code',
         'is_active',
         'created_by',
         'updated_by',
         'updated_at',
         'organisation_type_id',
         'identity_organisation_id',
-        'address',
         'status',
         'phone',
         'email',
@@ -32,6 +31,17 @@ class Ministry extends Model implements Auditable
         'website',
         'po_box',
     ];
+
+    public function uniqueIds(): array
+    {
+        return ['uuid'];
+    }
+
+    
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
 
     public function organisationType()
     {
@@ -50,10 +60,16 @@ class Ministry extends Model implements Auditable
     }
 
 
-    public function users()
+    public function users(): HasMany
     {
-        return $this->hasMany(User::class);
+        return $this->hasMany(User::class, 'ministry_id');
     }
+
+    public function files(): HasMany
+    {
+        return $this->hasMany(File::class, 'ministry_id');
+    }
+
 
     public function receivedFiles()
     {
@@ -70,12 +86,6 @@ class Ministry extends Model implements Auditable
             ->withTimestamps();
     }
 
-
-    public function files()
-    {
-        return $this->hasMany(File::class, 'ministry_id');
-    }
-
     // public function fileAccess()
     // {
     //     return $this->hasMany(FileAccess::class);
@@ -85,6 +95,7 @@ class Ministry extends Model implements Auditable
     {
         return $this->hasMany(FileCirculation::class);
     }
+
 
     public function fileDispatches()
     {

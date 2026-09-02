@@ -3,15 +3,18 @@
 namespace App\Http\Requests\National\Eregistry;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
-class OrganisationStoreRequest extends FormRequest
+class MinistryStoreRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
+
         return true;
     }
 
@@ -23,25 +26,13 @@ class OrganisationStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-            'code' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('organisations')->whereNull('deleted_at'), // Ensure the code is unique
-            ],
+           
+            
             'description' => [
                 'required',
                 'string',
             ],
-            'is_active' => [
-                'nullable',
-                'boolean',
-            ],
+           
         ];
     }
 }

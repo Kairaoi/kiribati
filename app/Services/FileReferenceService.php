@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\DB;
+use App\Models\National\Eregistry\Ministry;
 
 class FileReferenceService
 {
@@ -13,9 +14,11 @@ class FileReferenceService
         return DB::transaction(function () use ($ministry_id, $file_type_id, $year) {
 
             // Get ministry code
-            $ministryCode = DB::table('ministries')
-                ->where('id', $ministry_id)
-                ->value('code') ?? 'OTH';
+            $ministryCode = Ministry::query()
+                        ->with('identityOrganisation:id,code')
+                        ->find($ministry_id)
+                        ?->identityOrganisation
+                        ?->code ?? 'OTH';
 
             // Get file type details
             $fileType = DB::table('file_types')

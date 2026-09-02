@@ -126,15 +126,32 @@ class File extends Model implements Auditable
 
     public function getMemoRecipients()
     {
-        $recipientIds = $this->memo_recipients ?? [];
+        $recipientIds = collect($this->memo_recipients ?? [])
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
 
         if (empty($recipientIds)) {
             return collect();
         }
 
         return Ministry::query()
-            ->whereIn('id', $recipientIds)
-            ->get(['id', 'name', 'code', 'reviewer_title']);
+            ->join(
+                'identity_organisations',
+                'identity_organisations.id',
+                '=',
+                'ministries.identity_organisation_id'
+            )
+            ->whereIn('ministries.id', $recipientIds)
+            ->get([
+                'ministries.id',
+                'ministries.uuid',
+                'ministries.reviewer_title',
+                'identity_organisations.name as name',
+                'identity_organisations.code as code',
+            ]);
     }
 
 

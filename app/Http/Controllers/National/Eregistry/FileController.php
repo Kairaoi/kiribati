@@ -32,11 +32,12 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Support\Facades\Storage;
+use App\Http\Requests\National\Eregistry\FileStoreRequest;
 
 class FileController extends Controller
 {
@@ -214,7 +215,7 @@ class FileController extends Controller
             ->where('ministry_id', $ministryId)
             ->first();
 
-        $officerInCharge = $currentReviewOfficer->id === $sro->id;
+        $officerInCharge = $currentReviewOfficer?->id === $sro?->id;
     
         return view('national.eregistry.files.create', compact('identityOrganisations',
                                                                 'externalPartners',  
@@ -235,90 +236,11 @@ class FileController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function store(Request $request)
+    public function store(FileStoreRequest $request)
     {
         // dd($request->all());
-        $validated = $request->validate([
-            'source_type' => 'required|in:identity_organisation,external_partner,own_ministry',
-            'source_id' => 'required_unless:source_type,own_ministry|integer',
-            'document_source' => [
-                'required',
-                Rule::in(
-                    request('source_type') === 'own_ministry'
-                        ? ['upload', 'online']
-                        : ['upload']
-                ),
-            ],
-            'from_division_id' => 'nullable|exists:divisions,id',
-            'subject' => 'required|string|max:255',
-            'file_type_id' => 'required|exists:file_types,id',
-            'category_id' => 'nullable|exists:categories,id',
-            'due_date' => 'nullable|date',
-            'additional_files' => 'nullable|array|max:3',
-            'additional_files.*' => 'file|mimes:pdf,xls,xlsx,png,jpg,jpeg,doc,docx,ppt,pptx|max:10240',
-            'main_file' => 'exclude_unless:document_source,upload|required|file|mimes:pdf,jpg,jpeg,png,gif,webp,tif,tiff|max:10240',
-            'content' => [
-                    'exclude_unless:document_source,online',
-                    'required',
-                    'string',
-            ],
-            'correspondence_type' => 'exclude_unless:document_source,online|required|in:letter,internal,memo',
-            'memo_from_field' => [
-                'exclude_unless:correspondence_type,memo',
-                'required',
-                'string',
-                'max:255',
-            ],
+        $validated = $request->validated();
 
-            'memo_cc_field' => [
-                'exclude_unless:correspondence_type,memo',
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'memo_attention_to' => [
-                'exclude_unless:correspondence_type,memo',
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'internal_from_field' => [
-                'exclude_unless:correspondence_type,internal',
-                'required',
-                'string',
-                'max:255',
-            ],
-
-            'internal_to_field' => [
-                'exclude_unless:correspondence_type,internal',
-                'required',
-                'string',
-                'max:255',
-            ],
-
-            'internal_cc_field' => [
-                'exclude_unless:correspondence_type,internal',
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'internal_ufs_id' => [
-                'exclude_unless:correspondence_type,internal',
-                'required',
-                'exists:users,id',
-            ],
-        ]);
-
-        if (!$request->filled('content') && !$request->hasFile('main_file')) {
-            return back()
-                ->withErrors([
-                    'content' => 'Please upload a file or write content online.',
-                ])
-                ->withInput();
-        }
 
         if ($validated['document_source'] === 'online' && !$request->filled('content')) {
             return back()
@@ -373,7 +295,7 @@ class FileController extends Controller
                     'memo_recipients'   => ['nullable', 'array'],
                     'memo_recipients.*' => ['integer', 'exists:ministries,id'],
                 ]);
-         }else if ($correspondenceType !== null && $validated['correspondence_type']=== 'internal') {
+        }else if ($correspondenceType !== null && $validated['correspondence_type']=== 'internal') {
                 $request->validate([
                     'internal_ufs_id' => [
                         'required',
@@ -388,6 +310,7 @@ class FileController extends Controller
         }
         
         $memoRecipients = $request->memo_recipients ?? [];
+
         $mainFilePath = null;
         if ($request->hasFile('main_file')) {
             $mainFile = $request->file('main_file');
@@ -408,33 +331,17 @@ class FileController extends Controller
                     ];
                 }
             }
-
            
-            $correspondenceType = $validated['correspondence_type'] ?? null;
-           
-            $fileData = array_merge($validated, [
-                'main_file_path' => $mainFilePath,
-                'additional_file_paths' => $additionalFilePaths,
-                'reference_no' => $referenceNo,
-                'is_active' => true,
-                'created_by' => auth()->id(),
-                'updated_by' => auth()->id(),
-                'letter_date' => now()->toDateString(),
-                'ministry_id' => Auth::user()->ministry_id,
-                'status' => $validated['document_source'] === 'online' ? 'Pending Signature' : 'Pending Action',
-
-                'letter_recipients' => $correspondenceType === 'letter'
-                    ? $letterRecipients
-                    : [],
-
-                'memo_recipients' => $correspondenceType === 'memo'
-                    ? $memoRecipients
-                    : [],
-
-                ''
-            ]);
-
-            $file = File::create($fileData);
+            $file = $this->files->createFile(
+                validated: $validated,
+                mainFilePath: $mainFilePath,
+                additionalFilePaths: $additionalFilePaths,
+                referenceNo: $referenceNo,
+                letterRecipients: $letterRecipients,
+                memoRecipients: $memoRecipients,
+                userId: auth()->id(),
+                ministryId: auth()->user()->ministry_id,
+            );
             
             activity('file')
                 ->causedBy(Auth::user())
@@ -712,7 +619,7 @@ class FileController extends Controller
                 'to_ministry_id' => Auth::user()->ministry_id,
             ],
             [
-                'updated_by'     => auth()->id(),
+                'updated_by'     => Auth::user()->id,
                 'status'         => $status,
             ]
         );
@@ -793,15 +700,13 @@ class FileController extends Controller
             'final_pdf_hash'        => hash('sha256', $pdfContent),
         ]);
 
-
-
         return redirect()->route('registry.files.index')->with('success', 'File is signed and final PDF generated.');
     }
 
 
     public function storeInternalReviewer(Request $request, File $file) 
     {
-        // dd($request);
+    
         $validated = $request->validate([
             'review_officer' => 'required|exists:users,id'
         ]);
@@ -814,9 +719,9 @@ class FileController extends Controller
                 'to_ministry_id' => $ministryId,
             ],
             [
-                'circulated_by'  => auth()->id(),
+                'circulated_by'  => Auth::user()->id,
                 'circulated_at'  => now(),
-                'updated_by'     => auth()->id(),
+                'updated_by'     => Auth::user()->id,
                 'status'         => 'Pending Review',
                 'review_officer' => $validated['review_officer']
             ]
@@ -889,8 +794,8 @@ class FileController extends Controller
         try {
             // Handle main file replacement if uploaded
             if ($request->hasFile('main_file')) {
-                if ($file->main_file_path && \Storage::exists($file->main_file_path)) {
-                    \Storage::delete($file->main_file_path);
+                if ($file->main_file_path && Storage::exists($file->main_file_path)) {
+                    Storage::delete($file->main_file_path);
                 }
                 $mainFilePath = $request->file('main_file')->store('uploads/main_files', 'public');
             } else {
@@ -965,12 +870,11 @@ class FileController extends Controller
      * @param int $id
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function destroy($id)
+    public function destroy(File $file)
     {
-        $file = $this->files->getById($id);
-        // dd($file);
-        $this->files->delete($file);
-        return redirect()->route('registry.files.index')->with('message', 'File deleted successfully.');
+        $this->authorize('delete', $file);
+        $this->files->deleteById($file->id);
+        return redirect()->route('registry.files.index')->with('success', 'File deleted.');
     }
 
 

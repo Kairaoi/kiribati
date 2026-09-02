@@ -32,7 +32,7 @@ class MICTUserSeeder extends Seeder
         $systemAdmin->assignRole('system-admin');
 
         // get the MICT organisation
-        $ministry = Ministry::where('code', 'MICT')->first();
+        $ministry = Ministry::where('id', 16)->first();
         $dtoDivision = Division::where('name', 'Digital Transformation Office')->first();
         $marineDivision = Division::where('name', 'Marine Division')->first();
         $corporateDivision = Division::where('name', 'Corporate Services')->first();

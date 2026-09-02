@@ -23,18 +23,143 @@ class FileStoreRequest extends FormRequest
     public function rules()
     {
         return [
-            // 'folder_id' => ['required', 'exists:folders,id'],
-            'organisation_id' => ['required', 'exists:organisations,id'],
-            'name' => ['required', 'string', 'max:255'],
-            'receive_date' => ['required', 'date'],
-            'letter_date' => ['required', 'date'],
-            'letter_ref_no' => ['required', 'string', 'max:100'],
-            // 'details' => ['nullable', 'string'],
-            // 'from_details_name' => ['required', 'string', 'max:255'],
-            // 'to_details_person_name' => ['required', 'string', 'max:255'],
-            // 'security_level' => ['required', 'in:public,internal,confidential,strictly_confidential'],
-            'file_type_id' => ['required', 'exists:file_types,id'],
-            'file' => ['required', 'file', 'mimes:pdf,docx,xlsx', 'max:10240'], // 10MB max
+            'source_type' => [
+                'required',
+                Rule::in([
+                    'identity_organisation',
+                    'external_partner',
+                    'own_ministry',
+                ]),
+            ],       
+            'source_id' => [
+                'required_unless:source_type,own_ministry',
+                'nullable',
+                'integer',
+            ],     
+            'document_source' => [
+                'required',
+                Rule::in(
+                    request('source_type') === 'own_ministry'
+                        ? ['upload', 'online']
+                        : ['upload']
+                ),
+            ],
+            'from_division_id' => 'nullable|exists:divisions,id',
+            'subject' => 'required|string|max:255',
+            'file_type_id' => 'required|exists:file_types,id',
+            'category_id' => 'nullable|exists:categories,id',
+            'due_date' => 'nullable|date',
+            'additional_files' => 'nullable|array|max:3',
+            'additional_files.*' => 'file|mimes:pdf,xls,xlsx,png,jpg,jpeg,doc,docx,ppt,pptx|max:10240',
+            'main_file' => [
+                'exclude_unless:document_source,upload',
+                'required_if:document_source,upload',
+                'file',
+                'mimes:pdf,jpg,jpeg,png,gif,webp,tif,tiff',
+                'max:10240'
+            ],
+            'content' => [
+                'exclude_unless:document_source,online',
+                'required_if:document_source,online',
+                'string',
+            ],
+            'correspondence_type' => 'exclude_unless:document_source,online|required|in:letter,internal,memo',
+            
+            'memo_recipients' => [
+                'exclude_unless:correspondence_type,memo',
+                'required',
+                'array',
+                'min:1',
+            ],
+
+            'memo_recipients.*' => [
+                'integer',
+                'exists:ministries,id',
+            ],
+
+            'registered_organisations' => [
+                'exclude_unless:correspondence_type,letter',
+                'required_without:external_partners',
+                'array',
+                'min:1',
+            ],
+
+            'registered_organisations.*' => [
+                'integer',
+                'distinct',
+                'exists:identity_organisations,id',
+            ],
+
+            'external_partners' => [
+                'exclude_unless:correspondence_type,letter',
+                'required_without:registered_organisations',
+                'array',
+                'min:1',
+            ],
+
+            'external_partners.*' => [
+                'integer',
+                'distinct',
+                'exists:external_partners,id',
+            ],
+
+            'memo_from_field' => [
+                'exclude_unless:correspondence_type,memo',
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'memo_cc_field' => [
+                'exclude_unless:correspondence_type,memo',
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'memo_attention_to' => [
+                'exclude_unless:correspondence_type,memo',
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'internal_from_field' => [
+                'exclude_unless:correspondence_type,internal',
+                'required',
+                'string',
+                'max:255',
+            ],
+            'internal_to_field' => [
+                'exclude_unless:correspondence_type,internal',
+                'required',
+                'string',
+                'max:255',
+            ],
+            'internal_cc_field' => [
+                'exclude_unless:correspondence_type,internal',
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'internal_ufs_id' => [
+                'exclude_unless:correspondence_type,internal',
+                'required',
+                'exists:users,id',
+            ],
+            'content' => [
+                'nullable',
+                'required_if:document_source,online',
+                'required_without:main_file',
+                'string',
+            ],
+            'main_file' => [
+                'nullable',
+                'required_without:content',
+                'file',
+                'mimes:pdf,doc,docx',
+                'max:10240',
+            ],
         ];
+    
+    
     }
 }

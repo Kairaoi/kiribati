@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mx-auto font-montserrat px-4 py-6 max-w-3xl">
+<div class="container mx-auto shadow mt-6 mb-10 rounded-lg font-montserrat px-4 py-6 max-w-3xl">
     <h1 class="flex mt-4 text-xl font-bold mb-6">Create New Division</h1>
 
     @if ($errors->any())
@@ -18,45 +18,80 @@
         
         <div class="grid grid-cols-1 md:grid-cols-1 gap-3">
 
-              <!-- Ministry -->
-            <div>
-                <label for="ministry_id" class="block text-sm font-medium text-gray-700">
-                    Ministry <span class="text-red-600">*</span>
-                </label>
+             <div>
+                @if ($isSystemAdmin)
+                    <div>
+                        <label
+                            for="ministry_id"
+                            class="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                            Ministry
+                        </label>
 
-                @unless(Auth::user()->hasRole('system-admin'))
-                    {{-- Display ministry name --}}
-                    <input
-                        type="text"
-                        value="{{ $ministryName }}"
-                        class="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 text-gray-700 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
-                        readonly
-                    >
+                        <select
+                            name="ministry_id"
+                            id="ministry_id"
+                            required
+                            class="mt-1 text-sm block w-full rounded-md border-gray-300
+                                shadow-sm focus:border-cyan-500
+                                focus:ring-cyan-500"
+                        >
+                            <option value="">Select ministry</option>
+
+                            @foreach ($ministries as $ministry)
+                                <option
+                                    value="{{ $ministry->id }}"
+                                    @selected(
+                                        old('ministry_id') == $ministry->id
+                                    )
+                                >
+                                    {{ $ministry->name }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        @error('ministry_id')
+                            <p class="mt-1 text-sm text-red-600">
+                                {{ $message }}
+                            </p>
+                        @enderror
+                    </div>
                 @else
-                    <select
-                        name="ministry_id"
-                        id="ministry_id"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
-                        required
-                    >
-                        <option value="">-- Select Ministry --</option>
+                    <div>
+                        <label
+                            class="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                            Ministry
+                        </label>
 
-                        @foreach($ministries as $ministry)
-                            <option
-                                value="{{ $ministry->id }}"
-                                {{ old('ministry_id', $ministryId) == $ministry->id ? 'selected' : '' }}
-                            >
-                                {{ $ministry->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                @endunless
+                        <input
+                            type="text"
+                            value="{{ $user->ministry->identityOrganisation->name }}"
+                            readonly
+                            class="mt-1 block text-sm w-full rounded-md border-gray-300
+                                bg-gray-100 text-gray-600 shadow-sm"
+                        >
+
+                        <input
+                            type="hidden"
+                            id="ministry_id"
+                            name="ministry_id"
+                            value="{{ $user->ministry_id }}"
+                        >
+                    </div>
+                @endif
             </div>
+
 
             <!-- Division Name -->
             <div>
                 <label for="name" class="block text-sm font-medium text-gray-700">Division Name: <span class="text-red-600">*</span></label>
                 <input type="text" name="name" id="name" value="{{ old('name') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm" required>
+            </div>
+
+            <div>
+                <label for="description" class="block text-sm font-medium text-gray-700">Description:</label>
+                <textarea name="description" id="description" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm">{{ old('description') }}</textarea>
             </div>
 
             <div>
