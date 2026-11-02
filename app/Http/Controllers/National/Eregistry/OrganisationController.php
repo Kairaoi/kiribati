@@ -3,37 +3,34 @@
 namespace App\Http\Controllers\National\Eregistry;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\National\Eregistry\IdentityOrganisationStoreRequest;
-use App\Http\Requests\National\Eregistry\IdentityOrganisationUpdateRequest;
+use App\Http\Requests\National\Eregistry\OrganisationStoreRequest;
+use App\Http\Requests\National\Eregistry\OrganisationUpdateRequest;
 use App\Models\National\Eregistry\IdentityOrganisation;
-use App\Repositories\National\Eregistry\IdentityOrganisationRepository;
+use App\Repositories\National\Eregistry\OrganisationRepository;
 use App\Repositories\National\Eregistry\OrganisationTypeRepository;
 use App\Repositories\National\Eregistry\MinistryRepository;
 use App\Repositories\National\Eregistry\FileRepository;
-use App\Models\National\Eregistry\Ministry;
+use App\Models\National\Eregistry\Organisation;
 use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
-class IdentityOrganisationController extends Controller
+class OrganisationController extends Controller
 {
 
     private $organisations;
     private $organisation_types;
-    private $ministries;
     private $files;
 
-    public function __construct(IdentityOrganisationRepository $organisations,
+    public function __construct(OrganisationRepository $organisations,
                                 OrganisationTypeRepository $organisation_types,
-                                MinistryRepository $ministries,
                                 FileRepository $files,
                                 )
     {
         $this->organisations = $organisations;
         $this->organisation_types = $organisation_types;
-        $this->ministries = $ministries;
         $this->files = $files;
     }   
 
@@ -51,7 +48,7 @@ class IdentityOrganisationController extends Controller
         if (is_array($search)) {
             $search = $search['value'];
         }
-        $query = $this->organisations->getForDataTable($selectedType, $search);
+        $query = $this->organisations->getForDataTable($selectedType, 'id', 'asc', $search);
         $datatables = DataTables::make($query)->make(true);
         return $datatables;
     }

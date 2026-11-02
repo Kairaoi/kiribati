@@ -40,8 +40,10 @@ class ExternalPartnerRepository extends BaseRepository
     {
         $data = [
             'name' => $input['name'],
-            'code' => $input['code'],
-            'description' => $input['description'],
+            'email' => $input['email'] ?? null,
+            'phone' => $input['phone'] ?? null,
+            'organisation_type_id' => $input['organisation_type_id'] ?? null,
+            'ministry_id' => $this->auth->ministry_id,
             'is_active' => $input['is_active'] ?? true,
             'created_by' => Auth::id(),
             'updated_by' => Auth::id(),
@@ -88,6 +90,7 @@ class ExternalPartnerRepository extends BaseRepository
                                                  'external_partners.phone as phone',
                                                  'external_partners.is_active as is_active',
                                                 ])              
+                                                ->withCount('files')
                                                 ->join('ministries', function ($join) use ($ministryId) {
                                                            $join->on('ministries.id', '=', 'external_partners.ministry_id')
                                                                 ->where('external_partners.ministry_id', $ministryId);
@@ -129,10 +132,10 @@ class ExternalPartnerRepository extends BaseRepository
      * @param string $key
      * @return \Illuminate\Support\Collection
      */
-    public function list($ministryId = null, $column = 'name')
+    public function list($organisationId = null, $column = 'name')
     {
         return $this->model()::query()
-            ->where('ministry_id', $ministryId)
+            ->where('organisation_id', $organisationId)
             ->where('is_active', "1")
             ->orderBy('id')
             ->orderBy($column)

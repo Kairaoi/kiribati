@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\National\Eregistry\Division;
-use App\Models\National\Eregistry\Ministry;
+use App\Models\National\Eregistry\Organisation;
 use App\Models\Role;
 use App\Models\User;
 use Carbon\Carbon;
@@ -19,28 +19,21 @@ class MFEDUserSeeder extends Seeder
         app()['cache']->forget('spatie.permission.cache');
 
         //GET THE MFED MINISTRY
-        $ministry = Ministry::where('id', 17)->first();
+        $organisation = Organisation::where('id', 17)->first();
         $headquartersDivision = Division::where('name', 'Headquarters')
-            ->where('ministry_id', $ministry->id)->first();
+            ->where('organisation_id', $organisation->id)->first();
         $accountDivision = Division::where('name', 'Accounts Section')
-            ->where('ministry_id', $ministry->id)->first();
+            ->where('organisation_id', $organisation->id)->first();
         $customsDivision = Division::where('name', 'Customs Division')
-            ->where('ministry_id', $ministry->id)->first();
+            ->where('organisation_id', $organisation->id)->first();
 
 
-        if (!$ministry) {
-            $this->command->error('MFED ministry not found. Please run Ministry Seeder first.');
+        if (!$organisation) {
+            $this->command->error('MFED organisation not found. Please run Organisation Seeder first.');
             return;
         }
 
-        // Now update the admin user with the ministry_id
-        // $adminUser->ministry_id = $ministry->id;
-        // $adminUser->save();
 
-        // // Assign admin role to the Ministry of Finance admin
-        // $adminUser->assignRole('admin');
-
-        // Users data (roles now are admin, registry, or user)
         
 
         $user1 = User::withTrashed()->updateOrCreate(
@@ -49,7 +42,7 @@ class MFEDUserSeeder extends Seeder
                 'first_name' => 'Domingo',
                 'last_name' => 'Kabunare',
                 'password' => Hash::make('sec'),
-                'ministry_id' => $ministry->id,
+                'organisation_id' => $organisation->id,
                 'division_id' => $headquartersDivision->id,
                 'designation' => 'Secretary',
                 'deleted_at' => null
@@ -65,7 +58,7 @@ class MFEDUserSeeder extends Seeder
                 'first_name' => 'Jane',
                 'last_name' => 'Austen',
                 'password' => Hash::make('ds'),
-                'ministry_id' => $ministry->id,
+                'organisation_id' => $organisation->id,
                 'division_id' => $headquartersDivision->id,
                 'designation' => 'Deputy Secretary',
                 'deleted_at' => null
@@ -79,7 +72,7 @@ class MFEDUserSeeder extends Seeder
                 'first_name' => 'Samuel',
                 'last_name' => 'Adams',
                 'password' => Hash::make('sas'),
-                'ministry_id' => $ministry->id,
+                'organisation_id' => $organisation->id,
                 'division_id' => $headquartersDivision->id,
                 'designation' => 'Senior Administrative Officer',
                 'deleted_at' => null
@@ -93,7 +86,7 @@ class MFEDUserSeeder extends Seeder
                 'first_name' => 'Teringa',
                 'last_name' => 'Toabwa',
                 'password' => Hash::make('custom'),
-                'ministry_id' => $ministry->id,
+                'organisation_id' => $organisation->id,
                 'division_id' => $customsDivision->id,
                 'designation' => 'Customs Officer',
                 'deleted_at' => null
@@ -107,7 +100,7 @@ class MFEDUserSeeder extends Seeder
                 'first_name' => 'Tetobi',
                 'last_name' => 'Mariko',
                 'password' => Hash::make('om'),
-                'ministry_id' => $ministry->id,
+                'organisation_id' => $organisation->id,
                 'division_id' => $headquartersDivision->id,
                 'designation' => 'Office Manager',
                 'deleted_at' => null

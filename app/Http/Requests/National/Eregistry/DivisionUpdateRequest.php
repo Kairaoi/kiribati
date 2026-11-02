@@ -25,7 +25,7 @@ class DivisionUpdateRequest extends FormRequest
 
         //ensure a user does not update a division that does not belong to their ministry
         return $authenticatedUser->hasRole('registry')
-            && $authenticatedUser->ministry_id === $targetDivision->ministry_id;
+            && $authenticatedUser->organisation_id === $targetDivision->organisation_id;
     }
 
 
@@ -37,9 +37,9 @@ class DivisionUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'ministry_id' => [
+            'organisation_id' => [
                 'required',
-                'exists:ministries,id', // Validates that the ministry_id exists in the ministries table
+                'exists:organisations,id', // Validates that the organisation_id exists in the organisations table
             ],
             'name' => [
                 'required',

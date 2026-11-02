@@ -32,8 +32,8 @@ class UserUpdateRequest extends FormRequest
             return true;
         }
 
-        return $authenticatedUser->hasRole('ministry-admin')
-            && $authenticatedUser->ministry_id === $targetUser->ministry_id;
+        return $authenticatedUser->hasRole('it-admin')
+            && $authenticatedUser->organisation_id === $targetUser->organisation_id;
     }
 
     /**
@@ -46,17 +46,17 @@ class UserUpdateRequest extends FormRequest
         $user = $this->route('user');
 
         return [
-            'ministry_id' => [
+            'organisation_id' => [
                 'required',
                 'integer',
-                'exists:ministries,id',
+                'exists:organisations,id',
             ],
             'division_id' => [
                 'required',
                 'integer',
                 Rule::exists('divisions', 'id')
                     ->where(fn (Builder $query) =>
-                        $query->where('ministry_id', $this->input('ministry_id'))
+                        $query->where('organisation_id', $this->input('organisation_id'))
                     ),
             ],
             'first_name' => [
@@ -91,17 +91,17 @@ class UserUpdateRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'ministry_id.required' =>
-                'Please select a ministry.',
+            'organisation_id.required' =>
+                'Please select an organisation.',
 
-            'ministry_id.exists' =>
-                'The selected ministry is invalid.',
+            'organisation_id.exists' =>
+                'The selected organisation is invalid.',
 
             'division_id.required' =>
                 'Please select a division.',
 
             'division_id.exists' =>
-                'The selected division does not belong to the selected ministry.',
+                'The selected division does not belong to the selected organisation.',
         ];
     }
 }

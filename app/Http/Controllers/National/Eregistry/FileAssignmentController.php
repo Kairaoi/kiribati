@@ -11,7 +11,7 @@ use App\Models\User;
 use App\Repositories\National\Eregistry\DivisionRepository;
 use App\Repositories\National\Eregistry\FileCirculationRepository;
 use App\Repositories\National\Eregistry\FileRepository;
-use App\Repositories\National\Eregistry\MinistryRepository;
+use App\Repositories\National\Eregistry\OrganisationRepository;
 use App\Repositories\National\Eregistry\UserRepository;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -24,18 +24,18 @@ class FileAssignmentController extends Controller
 {
     private $fileCirculations;
     private $divisions;
-    private $ministries;
+    private $organisations;
     private $users;
     private $files;
 
     public function __construct(DivisionRepository $divisions, 
-                                MinistryRepository $ministries, 
+                                OrganisationRepository $organisations, 
                                 UserRepository $users,
                                 FileRepository $files,
                                 FileCirculationRepository $fileCirculations)
     {
         $this->divisions = $divisions;
-        $this->ministries = $ministries;
+        $this->organisations = $organisations;
         $this->users = $users;
         $this->files = $files;
         $this->fileCirculations = $fileCirculations;    
@@ -48,12 +48,12 @@ class FileAssignmentController extends Controller
     {
 
         $fileCirculation = FileCirculation::findOrFail($fileCirculationId);
+        
         $this->authorize('review', $fileCirculation);
 
         $validated = $request->validate(
             [
-                'comment' => 'nullable|string',
-                'status' => 'required|in:Reviewed,Approved,Rejected',
+                'comment' => 'required|string',
                 'officers' => ['nullable', 'array'],
                 'officers.*' => ['exists:users,id'],
                 'file_id' => ['required', 'exists:files,id'],
@@ -91,12 +91,10 @@ class FileAssignmentController extends Controller
         }
        
         $fileCirculation->update([
-            'status' => $validated['status'],
+            'status' => 'Reviewed',
+            'final_review_status' => 'Reviewed',
             'review_comment' => $validated['comment'] ?? null,
-            'reviewed_at' => now(),
             'updated_by' => Auth::user()->id,
-            'approved_at' => $validated['status'] === 'Approved' ? now() : null,
-            'approved_by' => $validated['status'] === 'Approved' ? Auth::user()->id : null,
             'reviewed_by' => Auth::user()->id,
             'date_reviewed' => now(),
         ]);

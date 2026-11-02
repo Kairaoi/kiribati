@@ -4,6 +4,7 @@ namespace App\Http\Controllers\National\Eregistry;
 use App\Http\Controllers\Controller;
 
 use App\Models\National\Eregistry\ExternalPartner;
+use App\Http\Requests\National\Eregistry\ExternalStoreRequest;
 use App\Repositories\National\Eregistry\ExternalPartnerRepository;
 use App\Repositories\National\Eregistry\IdentityOrganisationRepository;
 use App\Repositories\National\Eregistry\OrganisationTypeRepository;
@@ -54,6 +55,7 @@ class ExternalPartnerController extends Controller
         return DataTables::of($query)->make(true);
     }
 
+
     /**
      * Display a listing of the resource.
      */
@@ -61,6 +63,7 @@ class ExternalPartnerController extends Controller
     {
         return view('national.eregistry.external_partners.index');
     }
+
 
     /**
      * Show the form for creating a new resource.
@@ -79,57 +82,16 @@ class ExternalPartnerController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(ExternalStoreRequest $request)
     {
-        $validated = $request->validate([
-            'name' => [
-                'required',
-                'string',
-                function ($attribute, $value, $fail) {
+        $validated = $request->validated();
 
-                    $name = trim(strtolower($value));
-                    $ministryId = Auth::user()->ministry_id;
+        //ensure that the user is not creating other ministries partners.
+        if (auth()->user()->hasRole('registry')) {
+            $validated['ministry_id'] = auth()->user()->ministry_id;
+        }
 
-                    // Check External Partners (scoped to ministry)
-                    $existsInPartners = DB::table('external_partners')
-                        ->whereRaw('LOWER(TRIM(name)) = ?', [$name])
-                        ->where('ministry_id', $ministryId)
-                        ->exists();
-
-                    // Check Identity Organisations (global)
-                    $existsInOrgs = DB::table('identity_organisations')
-                        ->whereRaw('LOWER(TRIM(name)) = ?', [$name])
-                        ->exists();
-
-                    if ($existsInPartners || $existsInOrgs) {
-                        $fail('This name already exists as a registered organisation or external partner.');
-                    }
-                },
-            ],
-            'phone' => [
-                'nullable',
-                'string',
-                'max:20',
-                'regex:/^\+?[0-9\s\-()]+$/',
-            ],
-            'email' => 'nullable|email|max:255',
-            'organisation_type_id' => [
-                'required',
-                'exists:organisation_types,id'
-            ],
-            
-        ]);
-
-        ExternalPartner::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'] ?? null,
-            'phone' => $validated['phone'] ?? null,
-            'identity_organisation_id' => $validated['identity_organisation_id'] ?? null,
-            'organisation_type_id' => $validated['organisation_type_id'] ?? null,
-            'ministry_id' => Auth::user()->ministry_id,
-            'created_by' => Auth::id(),
-            'updated_by' => Auth::id(),
-        ]);
+        $this->externalPartners->create($validated);
 
         return redirect()->route('registry.external-partners.index')->with('success', 'External Partner created successfully.');
     }
@@ -156,11 +118,11 @@ class ExternalPartnerController extends Controller
     public function show(ExternalPartner $externalPartner)
     {
         $totalFiles = $externalPartner->files()
-                                ->where('ministry_id', Auth::user()->ministry_id)
+                                ->where('ministry_id', $externalPartner->ministry_id)
                                 ->count();
 
         $activeFiles = $externalPartner->files()
-            ->where('ministry_id', Auth::user()->ministry_id)
+            ->where('ministry_id', $externalPartner->ministry_id)
             ->where('is_active', true)
             ->count();
 

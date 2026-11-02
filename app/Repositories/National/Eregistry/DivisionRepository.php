@@ -27,7 +27,7 @@ class DivisionRepository extends BaseRepository
     public function create(array $input)
     {
         $data = [
-            'ministry_id' => $input['ministry_id'],
+            'organisation_id' => $input['organisation_id'],
             'name' => $input['name'],
             'description' => $input['description'] ?? null,
             'location' => $input['location'] ?? null,
@@ -57,7 +57,7 @@ class DivisionRepository extends BaseRepository
     public function update(Division $model, array $input)
     {
         $data = [
-            'ministry_id' => $input['ministry_id'],
+            'organisation_id' => $input['organisation_id'],
             'name' => $input['name'],
             'description' => $input['description'] ?? null,
             'location' => $input['location'] ?? null,
@@ -86,19 +86,18 @@ class DivisionRepository extends BaseRepository
                       'divisions.name as division_name', 
                       'divisions.location as location', 
                       'divisions.is_active as is_active',
-                      'identity_organisations.name as name',
+                      'organisations.name as org.name',
                       'divisions.created_at as created_at',
                       DB::raw("CONCAT(users.first_name, ' ', users.last_name) as hod_name"),
                       'divisions.updated_at as updated_at'])
 
-            ->join('ministries', 'divisions.ministry_id', '=', 'ministries.id')
-            ->leftJoin('users', 'divisions.hod_id', '=', 'users.id')
-            ->join('identity_organisations', 'ministries.identity_organisation_id', '=', 'identity_organisations.id');
+            ->join('organisations', 'divisions.organisation_id', '=', 'organisations.id')
+            ->leftJoin('users', 'divisions.hod_id', '=', 'users.id');
 
             if($user && $user->hasRole('system-admin')) {
                 // System Admin can see all divisions, no additional filtering needed
             } else {
-                $query->where('divisions.ministry_id', $ministryId); // Filter by ministry
+                $query->where('divisions.organisation_id', $ministryId); // Filter by organisation
             }   
 
     
@@ -107,8 +106,6 @@ class DivisionRepository extends BaseRepository
 
             $query->where(function ($q) use ($search) {
                 $q->whereRaw('LOWER(divisions.name) LIKE ?', [$search])
-                    ->orWhereRaw('LOWER(ministries.code) LIKE ?', [$search])
-                    ->orWhereRaw('LOWER(divisions.location) LIKE ?', [$search])
                     ->orWhereRaw(
                         "LOWER(CONCAT(users.first_name, ' ', users.last_name)) LIKE ?",
                         [$search]
@@ -150,21 +147,21 @@ class DivisionRepository extends BaseRepository
     }
 
 
-    //Get the list of divisions for a specific ministry
+    //Get the list of divisions for a specific organisation
     //used in create function in file controller
-    public function listWithMinistry(?int $ministryId = null)
+    public function listWithOrganisation(?int $organisationId = null)
     {
         return $this->model()::query()
             ->select([
                 'id',
-                'ministry_id',
+                'organisation_id',
                 'name',
             ])
             ->when(
-                $ministryId !== null,
+                $organisationId !== null,
                 fn ($query) => $query->where(
-                    'ministry_id',
-                    $ministryId
+                    'organisation_id',
+                    $organisationId
                 )
             )
             ->where('is_active', true)

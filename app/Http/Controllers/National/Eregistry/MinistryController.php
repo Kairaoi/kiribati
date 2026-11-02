@@ -4,27 +4,27 @@ namespace App\Http\Controllers\National\Eregistry;
 
 use App\Http\Controllers\Controller;
 use App\Models\National\Eregistry\Ministry;
-use App\Repositories\National\Eregistry\MinistryRepository;
+use App\Repositories\National\Eregistry\OrganisationRepository;
 use App\Repositories\National\Eregistry\UserRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
-use App\Http\Requests\National\Eregistry\MinistryStoreRequest;
+use App\Http\Requests\National\Eregistry\OrganisationStoreRequest;
 
 
-class MinistryController extends Controller
+class OrganisationController extends Controller
 {
     
-    private $ministries;
+    private $organisations;
     private $users;
 
-    public function __construct(MinistryRepository $ministries,
+    public function __construct(OrganisationRepository $organisations,
                                 UserRepository $users
                                 )
     {
         $this->users = $users;
-        $this->ministries = $ministries;
+        $this->organisations = $organisations;
     }   
    
 
@@ -40,7 +40,7 @@ class MinistryController extends Controller
         if (is_array($search)) {
             $search = $search['value'];
         }
-        $query = $this->ministries->getForDataTable($search);
+        $query = $this->organisations->getForDataTable($search);
         $datatables = DataTables::make($query)->make(true);
         return $datatables;
 
@@ -57,7 +57,7 @@ class MinistryController extends Controller
 
         abort_unless($user->hasRole('system-admin'),403);
 
-        return view('national.eregistry.ministries.index');
+        return view('national.eregistry.organisations.index');
     }
 
 
@@ -76,10 +76,10 @@ class MinistryController extends Controller
 
         abort_unless($user->hasRole('system-admin'),403);
 
-        return view('national.eregistry.ministries.create');
+        return view('national.eregistry.organisations.create');
     }
 
-    public function store(MinistryStoreRequest $request )
+    public function store(OrganisationStoreRequest $request )
     {
         // $validated = $request->validated();
 
@@ -137,7 +137,7 @@ class MinistryController extends Controller
                 Storage::disk('public')->delete($ministry->logo);
             }
             $validated['logo'] = $request->file('logo')
-                ->store('ministries/logos', 'public');
+                ->store('organisations/logos', 'public');
 
         } else {
             // keep old logo
@@ -158,7 +158,7 @@ class MinistryController extends Controller
         ]);
 
         return redirect()
-            ->route('registry.ministries.edit', $ministry)
+            ->route('registry.organisations.edit', $ministry)
             ->with('success', 'Ministry details updated');
     }
 
@@ -175,7 +175,7 @@ class MinistryController extends Controller
 
         abort_unless($user->hasRole('system-admin'),403);
 
-        return view('national.eregistry.ministries.show', compact('ministry'));
+        return view('national.eregistry.organisations.show', compact('ministry'));
     }
 
 
@@ -188,7 +188,7 @@ class MinistryController extends Controller
      */
     public function edit(Ministry $ministry)
     {
-        return view('national.eregistry.ministries.edit', compact('ministry'));
+        return view('national.eregistry.organisations.edit', compact('ministry'));
     }
 
 
@@ -205,8 +205,8 @@ class MinistryController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $minsitry = $this->ministries->getById($id);
-        $this->ministries->delete($ministry);
+        $minsitry = $this->organisations->getById($id);
+        $this->organisations->delete($ministry);
 
         return redirect()->route('organisation.index')->with('message', 'Organisation deleted successfully.');
     }

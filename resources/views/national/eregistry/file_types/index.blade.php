@@ -331,7 +331,7 @@ $(document).ready(function() {
                 render: function (data, type, row) {
                     let buttons = `
                         <a href="/registry/file-types/${row.id}"
-                            class="inline-flex items-center justify-center rounded-md p-2 text-purple-600 transition hover:bg-purple-50 hover:text-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                            class="inline-flex items-center justify-center rounded-md p-2 transition hover:bg-purple-50 hover:text-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
                             title="View"
                             aria-label="View file type">
                             <i class="fa fa-eye text-sm"></i>

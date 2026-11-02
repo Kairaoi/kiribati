@@ -283,9 +283,10 @@ $(document).ready(function() {
                 render: function (data, type, row) {
                     let buttons = `
                         <a href="/registry/external-partners/${row.id}"
-                            class="inline-flex items-center border justify-center gap-2 rounded-md px-4 py-2 text-xs font-medium shadow-sm transition hover:bg-gray-100"
-                            title="View">
-                            View
+                            class="inline-flex items-center justify-center rounded-md p-2 text-purple-600 transition hover:bg-purple-50 hover:text-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                            title="View"
+                            aria-label="View file type">
+                            <i class="fa fa-eye text-sm"></i>
                         </a>
                     `;
 
@@ -294,19 +295,36 @@ $(document).ready(function() {
                     if (isActive === 1) {
                         buttons += `
                             <button
+                                type="button"
                                 data-id="${row.id}"
-                                class="inline-flex items-center mt-1 border justify-center gap-2 rounded-md px-4 py-2 text-xs font-medium shadow-sm transition hover:bg-gray-100 deactivate-action"
-                                title="Deactivate">
-                                Deactivate
+                                class="deactivate-action inline-flex items-center justify-center rounded-md p-2 text-orange-600 transition hover:bg-orange-50 hover:text-orange-800 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                                title="Deactivate"
+                                aria-label="Deactivate file type">
+                                <i class="fa fa-ban text-sm"></i>
                             </button>
                         `;
-                    } else {
+                    } else if (isActive === 0) {
                         buttons += `
                             <button
+                                type="button"
                                 data-id="${row.id}"
-                                class="inline-flex items-center mt-1 border justify-center gap-2 rounded-md px-4 py-2 text-xs font-medium shadow-sm transition hover:bg-gray-100 activate-action"
-                                title="Activate">
-                                Activate
+                                class="activate-action inline-flex items-center justify-center rounded-md p-2 text-green-600 transition hover:bg-green-50 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                                title="Activate"
+                                aria-label="Activate file type">
+                                <i class="fa fa-check-circle text-sm"></i>
+                            </button>
+                        `;
+                    }
+
+                    if (Number(row.files_count) === 0) {
+                        buttons += `
+                            <button
+                                type="button"
+                                data-id="${row.id}"
+                                class="delete-action inline-flex items-center justify-center rounded-md p-2 text-red-600 transition hover:bg-red-50 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                                title="Delete"
+                                aria-label="Delete file type">
+                                <i class="fa fa-trash text-sm"></i>
                             </button>
                         `;
                     }

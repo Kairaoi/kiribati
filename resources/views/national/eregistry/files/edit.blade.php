@@ -352,7 +352,6 @@
 
                                                 <span class="text-sm text-gray-700">
                                                     {{ $ministry->reviewer_title }}
-
                                                     <span class="text-gray-500">
                                                         - {{ $ministry->name }}
                                                     </span>

@@ -22,7 +22,7 @@ class FileAssignmentPolicy
     public function reassign(User $user, FileAssignment $fileAssignment): bool
     {
         if ($fileAssignment->status === "pending" && 
-            $fileAssignment->fileCirculation?->to_ministry_id === $user->ministry_id && 
+            $fileAssignment->fileCirculation?->to_organisation_id === $user->organisation_id && 
             $fileAssignment->officer_id === $user->id &&
             $fileAssignment->reassigned_from === null
         ) {
@@ -37,7 +37,7 @@ class FileAssignmentPolicy
      */
     public function viewHodAssignments(User $user, FileAssignment $fileAssignment): bool
     {
-        if ($fileAssignment->fileCirculation?->to_ministry_id === $user->ministry_id && 
+        if ($fileAssignment->fileCirculation?->to_organisation_id === $user->organisation_id && 
             $fileAssignment->officer_id === $user->id &&
             $user->hasRole('hod')
         ) {
@@ -54,7 +54,7 @@ class FileAssignmentPolicy
     public function accept(User $user, FileAssignment $fileAssignment): bool
     {
         if ($fileAssignment->status === "pending" && 
-            $fileAssignment->fileCirculation?->to_ministry_id === $user->ministry_id && 
+            $fileAssignment->fileCirculation?->to_organisation_id === $user->organisation_id && 
             $fileAssignment->officer_id === $user->id &&
             $fileAssignment->reassigned_from !== null
         ) {
@@ -70,7 +70,7 @@ class FileAssignmentPolicy
     public function complete(User $user, FileAssignment $fileAssignment): bool
     {
         if ( ($fileAssignment->status === "in_progress" || $fileAssignment->status === "reassigned") && 
-            $fileAssignment->fileCirculation?->to_ministry_id === $user->ministry_id && 
+            $fileAssignment->fileCirculation?->to_organisation_id === $user->organisation_id && 
             $fileAssignment->officer_id === $user->id
         ) {
             return true;

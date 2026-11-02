@@ -28,22 +28,22 @@ class FileCirculationPolicy
     /**
      * Determine whether the user can close the model.
      */
-    public function close(User $user, FileCirculation $fileCirculation): bool
-    {
+    // public function close(User $user, FileCirculation $fileCirculation): bool
+    // {
         
-        if($user->hasRole('registry') && 
-           $fileCirculation->to_ministry_id === $user->ministry_id) {
-            return true;
-           }
+    //     if($user->hasRole('registry') && 
+    //        $fileCirculation->to_organisation_id === $user->organisation_id) {
+    //         return true;
+    //        }
 
-        return false;
-    }
+    //     return false;
+    // }
 
     
     /**
      * Determine whether the user can view the circulation final reviews.
      */
-    public function viewFinalReview(User $user, FileCirculation $fileCirculation): bool
+    public function viewSROReview(User $user, FileCirculation $fileCirculation): bool
     {
         $fileAssignment = $fileCirculation->activeAssignments()->where('officer_id', $user->id)->first(); // Get the file assignment for the logged-in user, if it exists
         
@@ -51,16 +51,31 @@ class FileCirculationPolicy
             return true;
         }
 
-        if (($fileCirculation->status === 'Reviewed' || $fileCirculation->status === 'Approved' || $fileCirculation->status === 'Rejected' || $fileCirculation->status === 'Pending SRO Approval') &&
-            $fileCirculation->to_ministry_id === $user->ministry_id &&
-            ($fileCirculation->created_by === $user->id|| $user->hasRole('registry') || $fileCirculation->reviewed_by === $user->id)
-          
-        ) {
+        if (($fileCirculation->status === 'Pending SRO Review' ||
+            $fileCirculation->status === 'Reviewed') && 
+            $fileCirculation->to_organisation_id === $user->organisation_id &&
+            ($fileCirculation->created_by === $user->id|| 
+            $user->hasRole(['registry', 'review-officer', 'sro']) || 
+            $fileCirculation->reviewed_by === $user->id ||
+            $fileCirculation->file->createdBy->id === $user->id)) {
             return true;
         }
-        
         return false;
     }
+
+
+    /**
+     * Determine whether the user can view the file HOD review.
+     */
+    // public function viewHodReview(User $user, FileCirculation $fileCirculation): bool
+    // {
+
+    //     if($fileCirculation->file->created_by === $user->id || $fileCirculation->status === 'Pending HOD Review' && $fileCirculation->colleague_id === $user->id) {
+    //         return true;
+    //     }
+
+    //     return false;
+    // }
 
 
     /**
@@ -69,7 +84,7 @@ class FileCirculationPolicy
     public function viewAssignments(User $user, FileCirculation $fileCirculation): bool
     {
         if ( ($user->hasRole('registry') || $user->hasRole('review-officer') || $fileCirculation->reviewed_by === $user->id) && 
-            $fileCirculation->to_ministry_id === $user->ministry_id &&
+            $fileCirculation->to_organisation_id === $user->organisation_id &&
             $fileCirculation->activeAssignments()
             ->where('is_active', true)
             ->exists()
@@ -125,8 +140,8 @@ class FileCirculationPolicy
     public function markReceive(User $user, FileCirculation $fileCirculation): bool
     {
          
-        if ($fileCirculation->to_ministry_id === $user->ministry_id && 
-            $fileCirculation->file->ministry_id !== $user->ministry_id &&
+        if ($fileCirculation->to_organisation_id === $user->organisation_id && 
+            $fileCirculation->file->organisation_id !== $user->organisation_id &&
             $fileCirculation->status === "Pending Receipt" && 
             $user->hasRole('registry')) {
             return true;
@@ -153,11 +168,26 @@ class FileCirculationPolicy
     /**
     * Determine whether the user can circulate the file for approval/review
     */
-    public function circulateToReviewOfficer(User $user, FileCirculation $fileCirculation): bool
+    public function submitForSroReview(User $user, FileCirculation $fileCirculation): bool
     {
 
-        if (($fileCirculation->status === "Received" || $fileCirculation->status === "UFS Approved" || $fileCirculation->status === 'Pending SRO Submission' || $fileCirculation->status === "Returned for Amendment" ) && 
-            $fileCirculation->to_ministry_id === $user->ministry_id &&
+        if (($fileCirculation->status === "Received" || 
+            $fileCirculation->status === "UFS Approved" || 
+            $fileCirculation->status === 'Pending SRO Submission' || 
+            $fileCirculation->status === "Returned for Amendment" ) && 
+            $fileCirculation->to_organisation_id === $user->organisation_id &&
+            $user->hasRole('registry') ) {
+            return true;
+        }
+        return false;
+    }
+
+
+    public function submitForSroSignature(User $user, FileCirculation $fileCirculation): bool
+    {
+
+        if ($fileCirculation->status === "Pending Signature" || 
+            $fileCirculation->to_organisation_id === $user->organisation_id &&
             $user->hasRole('registry') ) {
             return true;
         }
@@ -186,17 +216,17 @@ class FileCirculationPolicy
     {
 
         //review a file from other ministries
-        if ($fileCirculation->file->ministry_id !== $user->ministry_id &&
-           ($fileCirculation->status === "Pending SRO Approval" || $fileCirculation->status === "Pending HOD Approval") && 
+        if ($fileCirculation->file->organisation_id !== $user->organisation_id &&
+           ($fileCirculation->status === "Pending SRO Review" || $fileCirculation->status === "Pending HOD Approval") && 
             $user->hasAnyRole(['review-officer', 'hod']) &&
             $fileCirculation->review_officer === $user->id) {
             return true;
         }
 
         //review an internal file 
-        if ($fileCirculation->file->ministry_id === $user->ministry_id &&
+        if ($fileCirculation->file->organisation_id === $user->organisation_id &&
            ($fileCirculation->file->correspondence_type === 'internal' || $fileCirculation->file->document_source === 'upload') &&
-           ($fileCirculation->status === "Pending SRO Approval" || $fileCirculation->status === "Pending HOD Approval") && 
+           ($fileCirculation->status === "Pending SRO Review" || $fileCirculation->status === "Pending HOD Approval") && 
             $user->hasAnyRole(['review-officer', 'hod']) &&
             $fileCirculation->review_officer === $user->id) {
             return true;

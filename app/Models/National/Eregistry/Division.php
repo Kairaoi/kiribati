@@ -18,7 +18,7 @@ class Division extends Model implements Auditable
     protected $table = 'divisions';
 
     protected $fillable = [
-        'ministry_id',
+        'organisation_id',
         'name',
         'location',
         'is_active',
@@ -29,9 +29,9 @@ class Division extends Model implements Auditable
         'updated_by',
     ];
 
-    public function ministry()
+    public function organisation()
     {
-        return $this->belongsTo(Ministry::class, 'ministry_id');
+        return $this->belongsTo(Organisation::class, 'organisation_id');
     }
 
     public function createdBy()

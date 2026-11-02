@@ -5,10 +5,10 @@ namespace App\Http\Requests\National\Eregistry;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
-use App\Models\National\Eregistry\IdentityOrganisation;
+use App\Models\National\Eregistry\Organisation;
 
 
-class IdentityOrganisationUpdateRequest extends FormRequest
+class OrganisationUpdateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -37,7 +37,7 @@ class IdentityOrganisationUpdateRequest extends FormRequest
         $organisation = $this->route('organisation');
 
         // Supports either route-model binding or a direct ID.
-        $organisationId = $organisation instanceof IdentityOrganisation
+        $organisationId = $organisation instanceof Organisation
             ? $organisation->id
             : $organisation;
 
@@ -48,7 +48,7 @@ class IdentityOrganisationUpdateRequest extends FormRequest
                 function ($attribute, $value, $fail) use ($organisationId) {
                     $name = trim(strtolower($value));
 
-                    $existsInOrgs = DB::table('identity_organisations')
+                    $existsInOrgs = DB::table('organisations')
                         ->whereRaw('LOWER(TRIM(name)) = ?', [$name])
                         ->where('id', '!=', $organisationId)
                         ->exists();
@@ -64,7 +64,7 @@ class IdentityOrganisationUpdateRequest extends FormRequest
                 'min:2',
                 'max:5',
                 'regex:/^[A-Z]{2,5}$/',
-                Rule::unique('identity_organisations', 'code')
+                Rule::unique('organisations', 'code')
                     ->ignore($organisationId),
             ],
             'description' => [

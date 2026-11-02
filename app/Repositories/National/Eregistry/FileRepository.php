@@ -29,7 +29,7 @@ class FileRepository extends BaseRepository
                            array $letterRecipients = [],
                            array $memoRecipients = [],
                            int $userId,
-                           int $ministryId
+                           int $organisationId
     ): File {
 
     $correspondenceType = $validated['correspondence_type'] ?? null;
@@ -42,7 +42,7 @@ class FileRepository extends BaseRepository
         'created_by'            => $userId,
         'updated_by'            => $userId,
         'letter_date'           => now()->toDateString(),
-        'ministry_id'           => $ministryId,
+        'organisation_id'       => $organisationId,
 
         'status' => $validated['document_source'] === 'online'
             ? 'Pending Signature'
@@ -119,23 +119,23 @@ class FileRepository extends BaseRepository
         return false;
     }
 
-    public function getForFilteredTable($selectedType, int $userMinistryId, array $filterOrgIds = [], $fromDate = null, $toDate = null)
-    {
-        return $this->model->query()
-            ->forType($selectedType, $userMinistryId) //scope in Model
-            ->forOrganisation($filterOrgIds)  //scope in Model
-            ->forDateRange($fromDate, $toDate) //scope in Model
-            ->join('organisations as from_org', 'files.organisation_id', '=', 'from_org.id')
+    // public function getForFilteredTable($selectedType, int $userMinistryId, array $filterOrgIds = [], $fromDate = null, $toDate = null)
+    // {
+    //     return $this->model->query()
+    //         ->forType($selectedType, $userMinistryId) //scope in Model
+    //         ->forOrganisation($filterOrgIds)  //scope in Model
+    //         ->forDateRange($fromDate, $toDate) //scope in Model
+    //         ->join('organisations as from_org', 'files.organisation_id', '=', 'from_org.id')
           
-            ->select([
-                'files.id',
-                'files.subject as file_subject',
-                'files.letter_date as letter_date',
-                'from_org.code as organisation_code',
-            ]);
-    } 
+    //         ->select([
+    //             'files.id',
+    //             'files.subject as file_subject',
+    //             'files.letter_date as letter_date',
+    //             'from_org.code as organisation_code',
+    //         ]);
+    // } 
 
-    public function getForDataTable($search, int $userMinistryId, string $type = 'active', $selectedType = null, $fileType = null, $category = null, $ministry = null,? int $organisationId = null, $partner = null, $fromDate = null, $toDate = null)
+    public function getForDataTable($search, int $userOrgId, string $type = 'active', $selectedType = null, $fileType = null, $category = null,? int $organisationId = null, $partner = null, $fromDate = null, $toDate = null)
     {
         $user = Auth::user();
 
@@ -147,10 +147,12 @@ class FileRepository extends BaseRepository
                                 'files.status as file_status',
                                 'fc.id as circulation_id',
                                 'fc.status as circulation_status',
-                                'fc.to_ministry_id as circulation_ministry_id',
+                                'fc.review_comment as review_comment',
+                                'fc.reviewed_by as circulation_reviewed_by',
+                                'fc.to_organisation_id as circulation_organisation_id',
                                 'files.reference_no as reference_no',
                                 'files.letter_date as letter_date',
-                                'files.ministry_id as ministry_id',
+                                'files.organisation_id as organisation_id',
                                 'files.due_date as due_date',
                                 'categories.name as category',
                                 'file_types.name as file_type',
@@ -159,38 +161,56 @@ class FileRepository extends BaseRepository
                                 DB::raw("CONCAT(received_user.first_name, ' ', received_user.last_name) as received_by"),
                                 'files.correspondence_type as correspondence_type'
                             ])
-                            ->join('ministries', 'files.ministry_id', '=', 'ministries.id')
+                            ->join('organisations', 'files.organisation_id', '=', 'organisations.id')
                             ->leftJoin('categories', 'categories.id', '=', 'files.category_id')
                             ->leftJoin('file_types', 'file_types.id', '=', 'files.file_type_id')
-                            ->leftJoin('file_circulations as fc', function ($join) use ($userMinistryId) {
+                            ->leftJoin('file_circulations as fc', function ($join) use ($userOrgId) {
                                 $join->on('files.id', '=', 'fc.file_id')
-                                    ->where('fc.to_ministry_id', $userMinistryId);
+                                    ->where('fc.to_organisation_id', $userOrgId);
+                            })
+                            ->where(function ($query) {
+                                $query->whereNull('fc.status')
+                                    ->orWhere('fc.status', '!=', 'Filed');
                             })
                             ->leftJoin('users as received_user', 'fc.received_by', '=', 'received_user.id')
                             ->leftJoin('file_assignments as fa', function ($join) use ($user) {
                                 $join->on('fa.file_circulation_id', '=', 'fc.id')
-                                    ->where('fa.officer_id', $user->id)
-                                    ->where('fa.is_active', true);
+                                    ->where('fa.officer_id', $user->id);
+        
                             })
                             ->leftJoin('dispatches', function ($join) {
                                 $join->on('dispatches.file_id', '=', 'files.id');
                             });
-        
+
+
         if ($this->userHasRole($user, ['system-admin', 'ministry-admin']) && 
             !$this->userHasRole($user, ['registry', 'user', 'review-officer', 'ufs'])) {
                 $query->whereRaw('1 = 0');
 
                 return $query;
         }
+
+
+        if ($this->userHasRole($user, 'registry')) {
+            $query->where(function ($query) use ($userOrgId, $user) {
+                $query->where('files.organisation_id', $userOrgId)
+                    ->orWhere('fc.to_organisation_id', $userOrgId)
+                    ->orWhere(function ($ufs) use ($user) {
+                        $ufs->where('files.internal_ufs_id', $user->id)
+                            ->where('files.status', 'Pending UFS');
+                    });
+            });
+        }
+
         
         if ($this->userHasRole($user, 'sro')) {
             $query->where(function ($q) use ($user) {
                 $q->where('fc.status', 'Pending SRO Approval')
                   ->orWhere('fc.status', 'Pending SRO Review')
                   ->orWhere('fc.status', 'Reviewed')
-                  ->orWhere('fc.approved_by', $user->id)
                   ->orWhere('fc.reviewed_by', $user->id)
-                  ->orWhere('fc.review_officer', $user->id);
+                  ->orWhere('fc.review_officer', $user->id)
+                  ->orWhere('files.created_by', $user->id);
             });
         }
 
@@ -219,25 +239,25 @@ class FileRepository extends BaseRepository
             });
         }
 
+
         if ($type === 'active') {
-            $query->whereNotExists(function ($query) use ($userMinistryId) {
+            $query->whereNotExists(function ($query) use ($userOrgId) {
                     $query->selectRaw(1)
-                        ->from('ministry_closed_files as mcf')
+                        ->from('organisation_closed_files as mcf')
                         ->whereColumn('mcf.file_id', 'files.id')
-                        ->where('mcf.ministry_id', $userMinistryId);
+                        ->where('mcf.organisation_id', $userOrgId);
                     });
         } 
         
 
         //Filter closed files
         if ($type === 'closed') {
-                $query->forType($selectedType, $userMinistryId)
-                      ->forFileType($fileType, $userMinistryId)
-                      ->forCategory($category, $userMinistryId)
-                      ->forMinistry($ministry, $userMinistryId)
-                      ->forPartner($partner, $userMinistryId)
-                      ->forOrganisation($organisationId, $userMinistryId)
-                      ->forDateRange($fromDate, $toDate, $userMinistryId);
+                $query->forType($selectedType, $userOrgId)
+                      ->forFileType($fileType, $userOrgId)
+                      ->forCategory($category, $userOrgId)
+                      ->forPartner($partner, $userOrgId)
+                      ->forOrganisation($organisationId, $userOrgId)
+                      ->forDateRange($fromDate, $toDate, $userOrgId);
         }
 
            

@@ -7,7 +7,7 @@ use App\Models\National\Eregistry\FileType;
 use App\Models\National\Eregistry\Ministry;
 use App\Repositories\National\Eregistry\DivisionRepository;
 use App\Repositories\National\Eregistry\FileTypeRepository;
-use App\Repositories\National\Eregistry\MinistryRepository;
+use App\Repositories\National\Eregistry\OrganisationRepository;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,15 +19,15 @@ use Yajra\DataTables\Facades\DataTables;
 class FileTypeController extends Controller {
 
     private $fileTypes;
-    private $ministries;
+    private $organisations;
     private $divisions;
 
     public function __construct(FileTypeRepository $fileTypes,
-                                MinistryRepository $ministries,
+                                OrganisationRepository $organisations,
                                 DivisionRepository $divisions)
     {
         $this->fileTypes = $fileTypes;
-        $this->ministries = $ministries;
+        $this->organisations = $organisations;
         $this->divisions = $divisions;
     }
 
@@ -41,11 +41,11 @@ class FileTypeController extends Controller {
     {
         $selectedType = $request->get('selected_type');
 
-        $ministryId = Auth::user()?->ministry_id;
+        $organisationId = Auth::user()?->organisation_id;
         $user = Auth::user();
 
-        if (!$ministryId) {
-            abort(403, 'Ministry not found');
+        if (!$organisationId) {
+            abort(403, 'Organisation not found');
         }
 
         $search = $request->get('search', '') ;
@@ -53,7 +53,7 @@ class FileTypeController extends Controller {
             $search = $search['value'];
         }
         
-        $query = $this->fileTypes->getForDataTable($selectedType, $ministryId, $user, $search);
+        $query = $this->fileTypes->getForDataTable($selectedType, $organisationId, $user, $search);
         
         $datatables = DataTables::make($query)
                         ->addColumn('can_edit', function ($row) {
@@ -138,7 +138,7 @@ class FileTypeController extends Controller {
                                     ->orWhere(function ($query) use ($user) {
                                         $query
                                             ->where('is_global', false)
-                                            ->where('ministry_id', $user->ministry_id);
+                                            ->where('organisation_id', $user->organisation_id);
                                     });
                             })
                             ->exists();
@@ -157,11 +157,11 @@ class FileTypeController extends Controller {
                 'max:3',
                 'regex:/^[A-Z]{2,3}$/',
                 Rule::unique('file_types')->where(function ($query) {
-                    $orgId = Auth::user()->ministry_id;
+                    $orgId = Auth::user()->organisation_id;
 
                     $query->where(function ($q) use ($orgId) {
                         $q->where('is_global', 1)
-                        ->orWhere('ministry_id', $orgId);
+                        ->orWhere('organisation_id', $orgId);
                     });
                 }),
             ],
@@ -183,11 +183,11 @@ class FileTypeController extends Controller {
     {
         
         $totalFiles = $fileType->files()
-                                ->where('ministry_id', Auth::user()->ministry_id)
+                                ->where('organisation_id', Auth::user()->organisation_id)
                                 ->count();
 
         $activeFiles = $fileType->files()
-            ->where('ministry_id', Auth::user()->ministry_id)
+            ->where('organisation_id', Auth::user()->organisation_id)
             ->where('is_active', true)
             ->count();
 
@@ -200,11 +200,11 @@ class FileTypeController extends Controller {
     public function suggestions(Request $request)
     {
         $query = $request->q;
-        $orgId = Auth::user()->ministry_id;
+        $orgId = Auth::user()->organisation_id;
 
         return FileType::where('name', 'LIKE', "%{$query}%")
             ->where(function ($q) use ($orgId) {
-                $q->where('ministry_id', $orgId)
+                $q->where('organisation_id', $orgId)
                 ->orWhere('is_global', 1);
             })
             ->distinct()
@@ -215,11 +215,11 @@ class FileTypeController extends Controller {
     public function codeSuggestions(Request $request)
     {
         $query = $request->q;
-        $orgId = Auth::user()->ministry_id;
+        $orgId = Auth::user()->organisation_id;
 
         return FileType::where('code', 'LIKE', "%{$query}%")
             ->where(function ($q) use ($orgId) {
-                $q->where('ministry_id', $orgId)
+                $q->where('organisation_id', $orgId)
                 ->orWhere('is_global', 1);
             })
             ->distinct()

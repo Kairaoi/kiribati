@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="max-w-3xl mx-auto">
-    <div class="mt-4 mb-4 shadow rounded-lg">
+    <div class="mt-2 mb-4 shadow rounded-lg">
 
         <form action="{{ route('registry.divisions.update', $division) }}" method="POST">
             @csrf
@@ -49,16 +49,16 @@
                             @else
                                 <input
                                     type="text"
-                                    value="{{ $user->ministry->identityOrganisation->name }}"
+                                    value="{{ $user->organisation->name }}"
                                     readonly
                                     class="block w-full rounded-lg border-gray-300 bg-gray-50 text-sm text-gray-600 shadow-sm"
                                 >
 
                                 <input
                                     type="hidden"
-                                    id="ministry_id"
-                                    name="ministry_id"
-                                    value="{{ $user->ministry_id }}"
+                                    id="organisation_id"
+                                    name="organisation_id"
+                                    value="{{ $user->organisation_id }}"
                                 >
                             @endif
 
@@ -187,7 +187,7 @@
                         </dd>
                     </div>
 
-                    <div class="flex justify-end border-t border-gray-200 px-6 py-4">
+                    <div class="flex border-t border-gray-200 px-6 py-4">
                         <button
                             type="submit"
                             class="inline-flex items-center rounded-lg bg-cyan-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"

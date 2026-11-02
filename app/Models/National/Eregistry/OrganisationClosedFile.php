@@ -9,16 +9,16 @@ use App\Models\National\Eregistry\Ministry;
 use App\Models\National\Eregistry\File;
 use OwenIt\Auditing\Contracts\Auditable;
 
-class MinistryClosedFile extends Model implements Auditable
+class OrganisationClosedFile extends Model implements Auditable
 {
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
 
-    protected $table = 'ministry_closed_files';
+    protected $table = 'organisation_closed_files';
 
     protected $fillable = [
         'file_id',
-        'ministry_id',
+        'organisation_id',
         'closed_by',
         'closed_at',
         'remarks',
@@ -39,9 +39,9 @@ class MinistryClosedFile extends Model implements Auditable
         return $this->belongsTo(File::class);
     }
 
-    public function ministry()
+    public function organisation()
     {
-        return $this->belongsTo(Ministry::class);
+        return $this->belongsTo(Organisation::class);
     }
 
     public function closedBy()

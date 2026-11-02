@@ -95,18 +95,19 @@ class FileCirculationRepository extends BaseRepository
     }    
 
     
-    public function ministryCirculations($fileId, $ministryId)
+    public function organisationCirculations($fileId, $organisationId)
     {
         return $this->model()::query()
             ->where('file_id', $fileId)
-            ->where('to_ministry_id', '!=', $ministryId);
+            ->where('to_organisation_id', '!=', $organisationId);
     }
 
-    public function thisCirculation($fileId, $ministryId)
+
+    public function thisCirculation($fileId, $organisationId)
     {
         return $this->model()::query()
             ->where('file_id', $fileId)
-            ->where('to_ministry_id', $ministryId)
+            ->where('to_organisation_id', $organisationId)
             ->latest();
     }
     

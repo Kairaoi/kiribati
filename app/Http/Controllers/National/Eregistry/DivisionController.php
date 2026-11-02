@@ -4,7 +4,7 @@ namespace App\Http\Controllers\National\Eregistry;
 
 use App\Http\Controllers\Controller;
 use App\Repositories\National\Eregistry\DivisionRepository;
-use App\Repositories\National\Eregistry\MinistryRepository;
+use App\Repositories\National\Eregistry\OrganisationRepository;
 use App\Repositories\National\Eregistry\UserRepository;
 use App\Repositories\National\Eregistry\UnitRepository;
 use DB;
@@ -19,17 +19,17 @@ use App\Models\User;
 class DivisionController extends Controller
 {
     private $divisions;
-    private $ministries;
+    private $organisations;
     private $users;
     private $units;
 
     public function __construct(DivisionRepository $divisions, 
-                                MinistryRepository $ministries,
+                                OrganisationRepository $organisations,
                                 UserRepository $users,
                                 UnitRepository $units)
     {
         $this->divisions = $divisions;
-        $this->ministries = $ministries;
+        $this->organisations = $organisations;
         $this->users = $users;
         $this->units = $units;
     }
@@ -50,8 +50,8 @@ class DivisionController extends Controller
         }
     
         $user = Auth::user();
-        $ministryId = Auth::user()->ministry_id;
-        $query = $this->divisions->getForDataTable($search, 'id', 'asc', $ministryId, $user);
+        $organisationId = Auth::user()->organisation_id;
+        $query = $this->divisions->getForDataTable($search, 'id', 'asc', $organisationId, $user);
     
         return DataTables::of($query)
                     ->addColumn('can_delete', function ($row) {
@@ -59,6 +59,9 @@ class DivisionController extends Controller
                     })
                     ->addColumn('can_edit', function ($row) {
                         return Auth::user()->hasRole('system-admin');
+                    })
+                    ->addColumn('hod_name', function ($row) {
+                        return $row->hod_name;
                     })
                     ->make(true);
     }
@@ -88,9 +91,9 @@ class DivisionController extends Controller
 
         $user = Auth::user();
 
-        $ministries = $isSystemAdmin ? $this->ministries->list() : collect();
+        $organisations = $isSystemAdmin ? $this->organisations->list() : collect();
 
-        return view('national.eregistry.divisions.create', compact('ministries',
+        return view('national.eregistry.divisions.create', compact('organisations',
                                                                     'user',
                                                                     'isSystemAdmin'                                                    ));
     }
@@ -124,8 +127,9 @@ class DivisionController extends Controller
     {
 
         // $this->authorize('view', $division);
-
-        return view('national.eregistry.divisions.show', compact('division'));
+        $isRegistry = auth()->user()->hasRole('registry');
+        $isSystemAdmin = auth()->user()->hasRole('system-admin');
+        return view('national.eregistry.divisions.show', compact('division', 'isRegistry', 'isSystemAdmin'));
     }
 
     /**
@@ -143,7 +147,7 @@ class DivisionController extends Controller
 
         $user = Auth::user();
 
-        $ministries = $isSystemAdmin ? $this->ministries->list() : collect();
+        $ministries = $isSystemAdmin ? $this->organisations->listMinistries() : collect();
 
         return view('national.eregistry.divisions.edit', compact('division',
                                                                  'ministries',

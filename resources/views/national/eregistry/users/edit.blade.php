@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mx-auto shadow font-montserrat px-4 py-6 max-w-5xl">
-    <h1 class="flex mt-4 text-xl font-bold mb-6">Edit User</h1>
+<div class="container mt-6 mx-auto shadow rounded-lg px-4 py-6 max-w-5xl">
+    <h1 class="flex mt-2 text-xl font-bold mb-6">Edit User</h1>
 
     @if ($errors->any())
         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -23,35 +23,29 @@
             <div>
                 @if ($isSystemAdmin)
                     <div>
-                        <label
-                            for="ministry_id"
-                            class="mb-1 block text-sm font-medium text-gray-700"
-                        >
+                        <label for="organisation_id" class="mb-1 block text-sm font-medium text-gray-700">
                             Ministry
                         </label>
 
                         <select
-                            name="ministry_id"
-                            id="ministry_id"
+                            name="organisation_id"
+                            id="organisation_id"
                             required
-                            class="mt-1 text-sm block w-full rounded-md border-gray-300
-                                shadow-sm focus:border-cyan-500
-                                focus:ring-cyan-500"
+                            class="mt-1 text-sm block w-full rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
                         >
                             <option value="">Select ministry</option>
 
-                            @foreach ($ministries as $ministry)
+                            @foreach ($organisations as $organisation)
                                 <option
-                                    value="{{ $ministry->id }}"
-                                    @selected(old('ministry_id', $user->ministry_id) == $ministry->id)
+                                    value="{{ $organisation->id }}"
+                                    @selected(old('organisation_id', $user->organisation_id) == $organisation->id)
                                 >
-        
-                                    {{ $ministry->name }}
+                                    {{ $organisation->name }}
                                 </option>
                             @endforeach
                         </select>
 
-                        @error('ministry_id')
+                        @error('organisation_id')
                             <p class="mt-1 text-sm text-red-600">
                                 {{ $message }}
                             </p>
@@ -67,7 +61,7 @@
 
                         <input
                             type="text"
-                            value="{{ $user->ministry->identityOrganisation->name }}"
+                            value="{{ $user->organisation->name }}"
                             readonly
                             class="mt-1 block text-sm w-full rounded-md border-gray-300
                                 bg-gray-100 text-gray-600 shadow-sm"
@@ -75,8 +69,8 @@
 
                         <input
                             type="hidden"
-                            id="ministry_id"
-                            value="{{ $user->ministry_id }}"
+                            id="organisation_id"
+                            value="{{ $user->organisation_id }}"
                         >
                     </div>
                 @endif
@@ -84,18 +78,20 @@
 
             <!-- Division -->
             <div>
-                    <label for="division" class="block text-sm font-medium text-gray-700"> Select division: <span class="text-red-600">*</span></label>
-                    <select name="division_id" id="division_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm" required>
-                        <option value="">Select a division </option>
-                        @foreach($divisions as $division)
-                            <option value="{{ $division->id }}"
-                                @selected((string) old('division_id', $user->division_id) === (string) $division->id)
-                            >
-                                {{ $division->name }}
-                            </option>
-                        @endforeach
-                    </select>
-            </div> 
+                <label for="division_id" class="block text-sm font-medium text-gray-700">
+                    Select division: <span class="text-red-600">*</span>
+                </label>
+
+                <select
+                    name="division_id"
+                    id="division_id"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
+                    required
+                    disabled
+                >
+                    <option value="">Select an organisation first</option>
+                </select>
+            </div>
 
             <!-- First Name -->
             <div>
@@ -136,7 +132,7 @@
             </div>
                           
         </div>
-            <button type="submit" class="w-full bg-cyan-600 text-white py-2 px-4 rounded-md hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
+            <button type="submit" class="mt-4 mb-10 justify-left bg-cyan-600 text-white py-3 px-6 rounded-md hover:bg-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:ring-offset-2">
                 Edit User
             </button>
     </form>
@@ -221,50 +217,58 @@
     </script>
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const ministrySelect = document.getElementById('ministry_id');
+        const organisationSelect = document.getElementById('organisation_id');
         const divisionSelect = document.getElementById('division_id');
 
         const divisions = @json($divisions);
-        const selectedDivisionId = @json(
-            old('division_id', $user->division_id)
-        );
+        const selectedDivisionId = @json(old('division_id', $user->division_id));
 
-        function loadDivisions(ministryId, divisionId = null) {
-            divisionSelect.innerHTML =
-                '<option value="">Select division</option>';
+        function loadDivisions(organisationId, divisionId = null) {
+            // Clear the previous options.
+            divisionSelect.innerHTML = '';
 
-            if (!ministryId) {
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+
+            if (!organisationId) {
+                placeholder.textContent = 'Select an organisation first';
+                divisionSelect.appendChild(placeholder);
+                divisionSelect.disabled = true;
                 return;
             }
 
-            divisions
-                .filter((division) =>
-                    String(division.ministry_id) === String(ministryId)
-                )
-                .forEach((division) => {
-                    const option = document.createElement('option');
+            const matchingDivisions = divisions.filter((division) =>
+                String(division.organisation_id) === String(organisationId)
+            );
 
-                    option.value = division.id;
-                    option.textContent = division.name;
+            placeholder.textContent = matchingDivisions.length
+                ? 'Select a division'
+                : 'No divisions available for this organisation';
 
-                    option.selected =
-                        String(division.id) === String(divisionId);
+            divisionSelect.appendChild(placeholder);
 
-                    divisionSelect.appendChild(option);
-                });
+            matchingDivisions.forEach((division) => {
+                const option = document.createElement('option');
+
+                option.value = division.id;
+                option.textContent = division.name;
+
+                option.selected =
+                    String(division.id) === String(divisionId);
+
+                divisionSelect.appendChild(option);
+            });
+
+            divisionSelect.disabled = matchingDivisions.length === 0;
         }
 
-        ministrySelect?.addEventListener('change', function () {
-            // Do not retain the old division when another ministry is selected
+        organisationSelect?.addEventListener('change', function () {
+            // Clear the previous division when the organisation changes.
             loadDivisions(this.value);
         });
 
-        if (ministrySelect?.value) {
-            loadDivisions(
-                ministrySelect.value,
-                selectedDivisionId
-            );
-        }
+        // Restore the existing or previously submitted division on page load.
+        loadDivisions(organisationSelect?.value, selectedDivisionId);
     });
 </script>
 </div>

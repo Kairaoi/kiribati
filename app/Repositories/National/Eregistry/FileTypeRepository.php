@@ -77,7 +77,7 @@ class FileTypeRepository extends BaseRepository
      * @param string $sort
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function getForDataTable($selectedType, int $ministryId, $user, $search = '', $order_by = 'id', $sort = 'asc')
+    public function getForDataTable($selectedType, int $ministryId, $user, $search = '', $order_by = 'id', $sort = 'desc')
     {
         
         $query = $this->model->query()
@@ -89,7 +89,7 @@ class FileTypeRepository extends BaseRepository
                       'file_types.created_at as created_at', 
                       'file_types.updated_at as updated_at'])
             ->withCount('files')
-            ->leftJoin('ministries', 'file_types.ministry_id', '=', 'ministries.id')
+            ->leftJoin('organisations', 'file_types.organisation_id', '=', 'organisations.id')
             ->groupBy('file_types.id');
 
             //scope in Model
@@ -138,16 +138,16 @@ class FileTypeRepository extends BaseRepository
     }
 
 
-    public function listWithMinistryTypes($ministryId)
+    public function listWithOrganisationTypes($organisationId)
     {
         return $this->model->query()
-            ->where(function ($query) use ($ministryId) {
+            ->where(function ($query) use ($organisationId) {
                 $query->where('is_global', 1)
-                    ->orWhere('ministry_id', $ministryId)
+                    ->orWhere('organisation_id', $organisationId)
                     ->where('is_active', '1');
             })
             ->orderBy('name')
-            ->get(['id', 'name', 'is_global']);
+            ->get(['id', 'name', 'code', 'is_global']);
     }
 
     public function getFileTypes()

@@ -18,7 +18,7 @@ class Unit extends Model implements Auditable
     protected $table = 'units';
 
     protected $fillable = [
-        'ministry_id',
+        'organisation_id',
         'division_id',
         'name',
         'location',
@@ -30,14 +30,14 @@ class Unit extends Model implements Auditable
         'is_active' => 'boolean',
     ];
 
-    public function ministry()
+    public function organisation()
     {
-        return $this->belongsTo(Ministry::class);
+        return $this->belongsTo(Organisation::class, 'organisation_id');
     }
 
     public function division()
     {
-        return $this->belongsTo(Division::class);
+        return $this->belongsTo(Division::class, 'division_id');
     }
 
     public function headUnit()

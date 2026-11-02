@@ -49,12 +49,12 @@
         <table id="divisionsTable" class="bg-gray-50 text-gray-800 divide-y text-sm divide-gray-200 stripe">
             <thead>
                 <tr>
-                    <th>Ministry</th>
-                    <th>Name</th>
-                    <th>Head of Division</th>
-                    <th>Created At</th>
-                    <th>Updated At</th>
-                    <th>Actions</th>
+                    <th class="uppercase">Ministry</th>
+                    <th class="uppercase">Name</th>
+                    <th class="uppercase">Head of Division</th>
+                    {{-- <th class="uppercase">Created At</th> --}}
+                    <th class="uppercase">Updated At</th>
+                    <th class="uppercase">Actions</th>
                 </tr>
             </thead>
             <tbody></tbody> <!-- DataTable will populate this -->
@@ -280,18 +280,9 @@ $(document).ready(function() {
             }
         },
         columns: [
-            { data: 'name', name: 'identity_organisations.name' },
+            { data: 'org.name', name: 'organisations.name' },
             { data: 'division_name', name: 'divisions.name' },
-            { data: 'hod_name', name: 'users.name', defaultContent: 'not assigned' },
-            { data: 'created_at', 
-                render(data) {
-                    return new Date(data).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                    });
-                }
-            },
+            { data: 'hod_name', defaultContent: '-' },
             { data: 'updated_at', 
                 render(data) {
                     return new Date(data).toLocaleDateString('en-US', {

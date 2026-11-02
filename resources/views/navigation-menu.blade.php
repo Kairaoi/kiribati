@@ -16,7 +16,7 @@
                                         @click.outside="open = false"
                                         class="inline-flex items-center gap-1 text-cyan-600 hover:text-cyan-700">
                                     <span>
-                                        {{ Auth::user()->ministry->identityOrganisation->code ?? 'No Ministry Assigned' }}
+                                        {{ Auth::user()->organisation->code ?? 'No Organisation Assigned' }}
                                     </span>
                                 </button>
                             </div>
@@ -60,8 +60,21 @@
                                         </a>
                                     </div>
                                 </div>
+                            @hasrole(['registry', 'system-admin'])
+
+                                <div class="relative flex items-center h-16">
+                                    <x-nav-link
+                                            href="{{ route('registry.folders.index') }}"
+                                            :active="request()->routeIs('registry.folders.*')"
+                                            class="flex items-center h-full cursor-pointer"
+                                        >
+                                        <span class="leading-none flex items-center text-gray-500 font-semibold">
+                                            {{ __('E-Filing') }}
+                                        </span>
+                                    </x-nav-link>
+                                </div>
                     
-                        @hasrole(['registry', 'system-admin'])
+                        
                                 <div x-data="{ open: false }"
                                     class="relative flex items-center h-16"
                                     @mouseenter="open = true"
@@ -152,8 +165,8 @@
 
                                 <div class="relative flex items-center h-16">
                                     <x-nav-link
-                                            href="{{ route('registry.ministries.edit', Auth::user()->ministry) }}"
-                                            :active="request()->routeIs('registry.ministries.edit')"
+                                            href="{{ route('registry.organisations.edit', Auth::user()->organisation) }}"
+                                            :active="request()->routeIs('registry.organisations.edit')"
                                             class="flex items-center h-full cursor-pointer"
                                         >
                                         <span class="leading-none flex items-center text-gray-500 font-semibold">
@@ -161,7 +174,7 @@
                                         </span>
                                     </x-nav-link>
                                 </div>
-                                 <div class="relative flex items-center h-16">
+                                <div class="relative flex items-center h-16">
                                     <x-nav-link
                                             href="{{ route('registry.divisions.index') }}"
                                             :active="request()->routeIs('registry.divisions.*')"
@@ -172,9 +185,7 @@
                                         </span>
                                     </x-nav-link>
                                 </div>
-                            </div>
-                        @endhasrole
-                        @hasanyrole(['registry','ministry-admin', 'system-admin'])
+
                                 <div class="relative flex items-center h-16">
                                     <x-nav-link
                                             href="{{ route('registry.users.index') }}"
@@ -186,7 +197,9 @@
                                         </span>
                                     </x-nav-link>
                                 </div>
-                        @endhasanyrole
+                            </div>
+                        @endhasrole
+                        
 
                                
 

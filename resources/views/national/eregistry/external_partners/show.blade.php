@@ -90,18 +90,6 @@
             </div>
 
             <div class="col-span-2 sm:grid sm:grid-cols-3 sm:gap-4 py-2 border-b">
-                <dt class="font-semibold text-sm text-gray-700">Ministry:</dt>
-                <dd class="sm:col-span-2 text-sm text-gray-900">{{ $externalPartner->ministry->name }}</dd>
-
-            </div>
-
-            <div class="col-span-2 sm:grid sm:grid-cols-3 sm:gap-4 py-2 border-b">
-                <dt class="font-semibold text-sm text-gray-700">Ministry:</dt>
-                <dd class="sm:col-span-2 text-sm text-gray-900">{{ $fileType->ministry->name ?? '-' }}</dd>
-            </div>
-           
-
-            <div class="col-span-2 sm:grid sm:grid-cols-3 sm:gap-4 py-2 border-b">
                 <dt class="font-semibold text-sm text-gray-700">Created At:</dt>
                 <dd class="sm:col-span-2 text-sm text-gray-900">
                     {{ $externalPartner->created_at->format('d M Y') }}
@@ -109,9 +97,23 @@
             </div>
 
             <div class="col-span-2 sm:grid sm:grid-cols-3 sm:gap-4 py-2 border-b">
+                <dt class="font-semibold text-sm text-gray-700">Created By:</dt>
+                <dd class="sm:col-span-2 text-sm text-gray-900">
+                    {{ $externalPartner->createdBy->name }}
+                </dd>
+            </div>
+
+            <div class="col-span-2 sm:grid sm:grid-cols-3 sm:gap-4 py-2 border-b">
                 <dt class="font-semibold text-sm text-gray-700">Updated At:</dt>
                 <dd class="sm:col-span-2 text-sm text-gray-900">
                     {{ $externalPartner->updated_at->format('d M Y') }}
+                </dd>
+            </div>
+
+            <div class="col-span-2 sm:grid sm:grid-cols-3 sm:gap-4 py-2 border-b">
+                <dt class="font-semibold text-sm text-gray-700">Updated By:</dt>
+                <dd class="sm:col-span-2 text-sm text-gray-900">
+                    {{ $externalPartner->updatedBy->name }}
                 </dd>
             </div>
         </dl>

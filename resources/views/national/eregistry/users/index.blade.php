@@ -40,27 +40,29 @@
     </div>
     <div class="mb-4 flex items-start justify-between">
         <div>
-            @can('create', $user)
+            @hasanyrole(['ministry-admin', 'system-admin'])
                 <a href="{{ route('registry.users.create') }}"
                     class="inline-flex items-center mt-3 gap-2 px-4 py-2 bg-cyan-600 font-semibold text-sm text-white hover:bg-cyan-700 transition">
                     Create New User
                 </a>
-            @endcan
+            @endhasrole
 
-            <a href="{{ route('registry.users.edit-review-officer') }}"
-                class="inline-flex items-center mt-3 gap-2 px-4 py-2 bg-cyan-600 font-semibold text-sm text-white hover:bg-cyan-700 transition">
-                Review Officer: {{ $reviewOfficer?->name }}
-            </a>
+            @hasrole('registry')  
+                <a href="{{ route('registry.users.edit-review-officer') }}"
+                    class="inline-flex items-center mt-3 gap-2 px-4 py-2 bg-cyan-600 font-semibold text-sm text-white hover:bg-cyan-700 transition">
+                    Review Officer: {{ $reviewOfficer?->name }}
+                </a>
+                
+                <a href="{{ route('registry.users.edit-secretary') }}"
+                    class="inline-flex items-center mt-3 gap-2 px-4 py-2 bg-cyan-600 font-semibold text-sm text-white hover:bg-cyan-700 transition">
+                    {{ $organisation->reviewer_title ?? 'Reviewer title not set' }}: {{ $sro->name ?? 'SRO not set'}}
+                </a>
 
-            <a href="{{ route('registry.users.edit-secretary') }}"
-                class="inline-flex items-center mt-3 gap-2 px-4 py-2 bg-cyan-600 font-semibold text-sm text-white hover:bg-cyan-700 transition">
-                {{ $ministry->reviewer_title ?? 'Reviewer title not set' }}: {{ $sro->name ?? 'SRO not set'}}
-            </a>
-
-            <a href="{{ route('registry.divisions.index') }}"
-                class="inline-flex items-center mt-3 gap-2 px-4 py-2 bg-cyan-600 font-semibold text-sm text-white hover:bg-cyan-700 transition">
-                Assign Division HOD
-            </a>
+                <a href="{{ route('registry.divisions.index') }}"
+                    class="inline-flex items-center mt-3 gap-2 px-4 py-2 bg-cyan-600 font-semibold text-sm text-white hover:bg-cyan-700 transition">
+                    Assign Division HOD
+                </a>
+            @endhasrole
         </div>
     </div>
 
@@ -74,9 +76,9 @@
                     <th>Email</th>
                     <th>Division</th>
                     <th>Designation</th>
-                    <th>Role</th>
+                    <th>Roles</th>
                     <th>Status</th>
-                    <th>Actions</th>
+                    <th class="w-28">Actions</th>
                 </tr>
             </thead>
             <tbody></tbody> <!-- DataTable will populate this -->

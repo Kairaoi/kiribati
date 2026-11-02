@@ -112,203 +112,203 @@
         </div>
     </form>
 
-@push('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
 
-        const input = document.getElementById('file_type_name');
-        const box = document.getElementById('name-suggestions');
-        const warning = document.getElementById('name-warning');
+            const input = document.getElementById('file_type_name');
+            const box = document.getElementById('name-suggestions');
+            const warning = document.getElementById('name-warning');
 
-        const suggestionUrl = "{{ route('registry.file-types.name.suggestions') }}";
+            const suggestionUrl = "{{ route('registry.file-types.name.suggestions') }}";
 
-        let currentSuggestions = [];
+            let currentSuggestions = [];
 
-        if (!input || !box || !warning) return;
+            if (!input || !box || !warning) return;
 
-        function checkDuplicate(value) {
-            const exists = currentSuggestions.some(
-                name => name.toLowerCase() === value.toLowerCase()
-            );
+            function checkDuplicate(value) {
+                const exists = currentSuggestions.some(
+                    name => name.toLowerCase() === value.toLowerCase()
+                );
 
-            if (exists) {
-                warning.classList.remove('hidden');
-            } else {
-                warning.classList.add('hidden');
-            }
-        }
-
-        input.addEventListener('input', function () {
-
-            let query = this.value.trim();
-
-            checkDuplicate(query);
-
-            if (query.length < 2) {
-                box.classList.add('hidden');
-                warning.classList.add('hidden');
-                return;
+                if (exists) {
+                    warning.classList.remove('hidden');
+                } else {
+                    warning.classList.add('hidden');
+                }
             }
 
-            fetch(`${suggestionUrl}?q=${encodeURIComponent(query)}`, {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json',
-                },
-                credentials: 'same-origin'
-            })
-            .then(res => res.json())
-            .then(data => {
+            input.addEventListener('input', function () {
 
-                currentSuggestions = data; // store for duplicate check
+                let query = this.value.trim();
 
-                box.innerHTML = '';
+                checkDuplicate(query);
 
-                if (!data.length) {
+                if (query.length < 2) {
                     box.classList.add('hidden');
+                    warning.classList.add('hidden');
                     return;
                 }
 
-                box.classList.remove('hidden');
+                fetch(`${suggestionUrl}?q=${encodeURIComponent(query)}`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(res => res.json())
+                .then(data => {
 
-                // Header
-                const header = document.createElement('div');
-                header.className = "px-2 py-1 text-xs text-gray-500 border-b";
-                header.textContent = "Existing file-types:";
-                box.appendChild(header);
+                    currentSuggestions = data; // store for duplicate check
 
-                data.forEach(name => {
+                    box.innerHTML = '';
 
-                    const isExact = name.toLowerCase() === query.toLowerCase();
-
-                    const item = document.createElement('div');
-                    item.className = `
-                        p-2 cursor-pointer text-sm
-                        ${isExact ? 'bg-red-50 text-red-600 font-medium' : 'hover:bg-gray-100'}
-                    `;
-                    item.textContent = name;
-
-                    item.addEventListener('click', () => {
-                        input.value = name;
+                    if (!data.length) {
                         box.classList.add('hidden');
+                        return;
+                    }
 
-                        // show warning immediately
-                        warning.classList.remove('hidden');
+                    box.classList.remove('hidden');
+
+                    // Header
+                    const header = document.createElement('div');
+                    header.className = "px-2 py-1 text-xs text-gray-500 border-b";
+                    header.textContent = "Existing file-types:";
+                    box.appendChild(header);
+
+                    data.forEach(name => {
+
+                        const isExact = name.toLowerCase() === query.toLowerCase();
+
+                        const item = document.createElement('div');
+                        item.className = `
+                            p-2 cursor-pointer text-sm
+                            ${isExact ? 'bg-red-50 text-red-600 font-medium' : 'hover:bg-gray-100'}
+                        `;
+                        item.textContent = name;
+
+                        item.addEventListener('click', () => {
+                            input.value = name;
+                            box.classList.add('hidden');
+
+                            // show warning immediately
+                            warning.classList.remove('hidden');
+                        });
+
+                        box.appendChild(item);
                     });
 
-                    box.appendChild(item);
-                });
-
-                // re-check after fetch
-                checkDuplicate(query);
-            })
-            .catch(() => {
-                box.classList.add('hidden');
-            });
-        });
-
-    });
-</script>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-
-        const input = document.getElementById('code');
-        const box = document.getElementById('code-suggestions');
-        const warning = document.getElementById('code-warning');
-
-        const suggestionUrl = "{{ route('registry.file-types.code.suggestions') }}";
-
-        let currentSuggestions = [];
-
-        if (!input || !box || !warning) return;
-
-        function checkDuplicate(value) {
-            const exists = currentSuggestions.some(
-                name => name.toLowerCase() === value.toLowerCase()
-            );
-
-            if (exists) {
-                warning.classList.remove('hidden');
-            } else {
-                warning.classList.add('hidden');
-            }
-        }
-
-        input.addEventListener('input', function () {
-
-            let query = this.value.trim();
-
-            checkDuplicate(query);
-
-            if (query.length < 2) {
-                box.classList.add('hidden');
-                warning.classList.add('hidden');
-                return;
-            }
-
-            fetch(`${suggestionUrl}?q=${encodeURIComponent(query)}`, {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json',
-                },
-                credentials: 'same-origin'
-            })
-            .then(res => res.json())
-            .then(data => {
-
-                currentSuggestions = data; // store for duplicate check
-
-                box.innerHTML = '';
-
-                if (!data.length) {
+                    // re-check after fetch
+                    checkDuplicate(query);
+                })
+                .catch(() => {
                     box.classList.add('hidden');
+                });
+            });
+
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            const input = document.getElementById('code');
+            const box = document.getElementById('code-suggestions');
+            const warning = document.getElementById('code-warning');
+
+            const suggestionUrl = "{{ route('registry.file-types.code.suggestions') }}";
+
+            let currentSuggestions = [];
+
+            if (!input || !box || !warning) return;
+
+            function checkDuplicate(value) {
+                const exists = currentSuggestions.some(
+                    name => name.toLowerCase() === value.toLowerCase()
+                );
+
+                if (exists) {
+                    warning.classList.remove('hidden');
+                } else {
+                    warning.classList.add('hidden');
+                }
+            }
+
+            input.addEventListener('input', function () {
+
+                let query = this.value.trim();
+
+                checkDuplicate(query);
+
+                if (query.length < 2) {
+                    box.classList.add('hidden');
+                    warning.classList.add('hidden');
                     return;
                 }
 
-                box.classList.remove('hidden');
+                fetch(`${suggestionUrl}?q=${encodeURIComponent(query)}`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(res => res.json())
+                .then(data => {
 
-                // Header
-                const header = document.createElement('div');
-                header.className = "px-2 py-1 text-xs text-gray-500 border-b";
-                header.textContent = "Existing file-types:";
-                box.appendChild(header);
+                    currentSuggestions = data; // store for duplicate check
 
-                data.forEach(name => {
+                    box.innerHTML = '';
 
-                    const isExact = name.toLowerCase() === query.toLowerCase();
-
-                    const item = document.createElement('div');
-                    item.className = `
-                        p-2 cursor-pointer text-sm
-                        ${isExact ? 'bg-red-50 text-red-600 font-medium' : 'hover:bg-gray-100'}
-                    `;
-                    item.textContent = name;
-
-                    item.addEventListener('click', () => {
-                        input.value = name;
+                    if (!data.length) {
                         box.classList.add('hidden');
+                        return;
+                    }
 
-                        // show warning immediately
-                        warning.classList.remove('hidden');
+                    box.classList.remove('hidden');
+
+                    // Header
+                    const header = document.createElement('div');
+                    header.className = "px-2 py-1 text-xs text-gray-500 border-b";
+                    header.textContent = "Existing file-types:";
+                    box.appendChild(header);
+
+                    data.forEach(name => {
+
+                        const isExact = name.toLowerCase() === query.toLowerCase();
+
+                        const item = document.createElement('div');
+                        item.className = `
+                            p-2 cursor-pointer text-sm
+                            ${isExact ? 'bg-red-50 text-red-600 font-medium' : 'hover:bg-gray-100'}
+                        `;
+                        item.textContent = name;
+
+                        item.addEventListener('click', () => {
+                            input.value = name;
+                            box.classList.add('hidden');
+
+                            // show warning immediately
+                            warning.classList.remove('hidden');
+                        });
+
+                        box.appendChild(item);
                     });
 
-                    box.appendChild(item);
+                    // re-check after fetch
+                    checkDuplicate(query);
+                })
+                .catch(() => {
+                    box.classList.add('hidden');
                 });
-
-                // re-check after fetch
-                checkDuplicate(query);
-            })
-            .catch(() => {
-                box.classList.add('hidden');
             });
-        });
 
-    });
-</script>
-@endpush
+        });
+    </script>
+    @endpush
 @endsection
 
 

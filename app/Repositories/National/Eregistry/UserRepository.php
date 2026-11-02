@@ -31,7 +31,7 @@ class UserRepository extends BaseRepository
     {
         return DB::transaction(function () use ($validated) {
             $user = $this->model()::create([
-                'ministry_id' => $validated['ministry_id'],
+                'organisation_id' => $validated['organisation_id'],
                 'division_id' => $validated['division_id'],
                 'first_name'  => $validated['first_name'],
                 'last_name'   => $validated['last_name'],
@@ -62,7 +62,7 @@ class UserRepository extends BaseRepository
     public function update(User $user, array $data): User
     {
         $user->update([
-            'ministry_id' => $data['ministry_id'],
+            'organisation_id' => $data['organisation_id'],
             'division_id' => $data['division_id'],
             'first_name'  => $data['first_name'],
             'last_name'   => $data['last_name'],
@@ -101,7 +101,7 @@ class UserRepository extends BaseRepository
             DB::raw('GROUP_CONCAT(roles.name SEPARATOR ", ") as role_names')
         ])
         ->leftJoin('divisions', 'users.division_id', '=', 'divisions.id')
-        ->join('ministries', 'users.ministry_id', '=', 'ministries.id')
+        ->leftJoin('organisations', 'users.organisation_id', '=', 'organisations.id')
         ->leftJoin('model_has_roles', function ($join) {
             $join->on('users.id', '=', 'model_has_roles.model_id')
                  ->where('model_has_roles.model_type', '=', User::class);
@@ -116,7 +116,7 @@ class UserRepository extends BaseRepository
              // System admin sees all users
         } else if ($user->hasRole('ministry-admin') || $user->hasRole('registry')) {
             // Ministry admin only sees users from their ministry
-            $query->where('users.ministry_id', $user->ministry_id)
+            $query->where('users.organisation_id', $user->organisation_id)
                 ->whereDoesntHave('roles', function ($q) {
                     $q->where('name', 'system-admin');
                 });
@@ -151,12 +151,12 @@ class UserRepository extends BaseRepository
      */
     public function pluck($column = 'first_name', $key = 'id')
     {
-        $ministry_id = Auth::user()->ministry_id;
+        $organisation_id = Auth::user()->organisation_id;
 
         //return users name and id for the logged in organisation 
         //and with the role of 'admin'
         return $this->model->query()
-            ->where('ministry_id', $ministry_id)
+            ->where('organisation_id', $organisation_id)
             ->orderBy($column)
             ->pluck($column, $key);
     }
@@ -188,7 +188,7 @@ class UserRepository extends BaseRepository
         return $this->model->query()
             ->select('users.id', 'users.division_id', 'users.first_name', 'users.last_name', 'divisions.name as division_name', 'users.designation')
             ->join('divisions', 'users.division_id', '=', 'divisions.id')
-            ->where('users.ministry_id', Auth::user()->ministry_id)->where('users.email', '!=', 'admin@system.gov.ki')
+            ->where('users.organisation_id', Auth::user()->organisation_id)->where('users.email', '!=', 'admin@system.gov.ki')
             ->where('users.id', '!=', Auth::user()->id)
             ->where('users.is_active', true)
             ->orderBy('divisions.name')
@@ -218,7 +218,7 @@ class UserRepository extends BaseRepository
             ->join('divisions', 'users.division_id', '=', 'divisions.id')
             ->where('users.id', '!=', Auth::user()->id)
             ->where('users.is_active', true)
-            ->where('users.ministry_id', Auth::user()->ministry_id)->where('users.email', '!=', 'admin@system.gov.ki')
+            ->where('users.organisation_id', Auth::user()->organisation_id)->where('users.email', '!=', 'admin@system.gov.ki')
             ->where('users.division_id', $userDivisionId)
             ->orderBy('divisions.name')
             ->orderBy('users.first_name')
@@ -244,9 +244,5 @@ class UserRepository extends BaseRepository
 
         $user->assignRole($role);
     }
-
-
-
-
 
 }

@@ -6,14 +6,13 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 
-class IdentityOrganisationStoreRequest extends FormRequest
+class OrganisationStoreRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-
         return auth()->user()->hasRole('system-admin');
     }
 
@@ -32,7 +31,7 @@ class IdentityOrganisationStoreRequest extends FormRequest
                     $name = trim(strtolower($value));
 
                     // Check Identity Organisations (global)
-                    $existsInOrgs = DB::table('identity_organisations')
+                    $existsInOrgs = DB::table('organisations')
                         ->whereRaw('LOWER(TRIM(name)) = ?', [$name])
                         ->exists();
 
@@ -47,7 +46,7 @@ class IdentityOrganisationStoreRequest extends FormRequest
                 'min:2',
                 'max:5',
                 'regex:/^[A-Z]{2,5}$/',
-                Rule::unique('identity_organisations', 'code'),                   
+                Rule::unique('organisations', 'code'),                   
             ],
             'description' => [
                 'nullable',

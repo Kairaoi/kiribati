@@ -17,7 +17,7 @@ class FileType extends Model implements Auditable
         'name',
         'description',
         'code',
-        'ministry_id',
+        'organisation_id',
         'is_global',
         'is_active'
     ];
@@ -33,9 +33,9 @@ class FileType extends Model implements Auditable
         return $this->hasMany(File::class, 'file_type_id');
     }
 
-    public function ministry()
+    public function organisation()
     {
-        return $this->belongsTo(Ministry::class);
+        return $this->belongsTo(Organisation::class);
     }
 
 
@@ -46,22 +46,22 @@ class FileType extends Model implements Auditable
 
 
     //filetypes index 
-    public function scopeForType($query,  $selectedType, int $ministryId)
+    public function scopeForType($query,  $selectedType, int $organisationId)
     {
             //if dispatched is selected, then show files archived by the organisation
             if ($selectedType === 'ministry') {
                 return $query
                     ->where('is_global', 0)
-                    ->where('ministry_id', $ministryId);
+                    ->where('organisation_id', $organisationId);
                 
             } else if ($selectedType === 'global') {
                 return $query
                     ->where('is_global', 1);
             }else {
                 // Default: combine both (global + ministry for this organisation)
-                $query->where(function ($q) use ($ministryId) {
+                $query->where(function ($q) use ($organisationId) {
                     $q->where('is_global', 1)
-                    ->orWhere('ministry_id', $ministryId);
+                    ->orWhere('organisation_id', $organisationId);
                 });
             }
             return $query;

@@ -30,10 +30,10 @@ class AppServiceProvider extends ServiceProvider
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
 
-        // $this->app->make('events')->listen(
-        //     SocialiteWasCalled::class,
-        //     KeycloakExtendSocialite::class . '@handle'
-        // );
+        $this->app->make('events')->listen(
+            SocialiteWasCalled::class,
+            KeycloakExtendSocialite::class . '@handle'
+        );
     }
 }
 

@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mx-auto font-montserrat shadow px-4 py-6 max-w-5xl">
-    <h1 class="flex mt-4 text-xl font-bold mb-6">Create New User</h1>
+<div class="container mt-6 mx-auto shadow rounded-lg px-4 py-6 max-w-5xl">
+    <h1 class="flex mt-2 text-xl font-bold mb-6">Create User</h1>
 
     @if ($errors->any())
         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -22,16 +22,14 @@
             <div>
                 @if ($isSystemAdmin)
                     <div>
-                        <label
-                            for="ministry_id"
-                            class="mb-1 block text-sm font-medium text-gray-700"
+                        <label for="ministry_id" class="mb-1 block text-sm font-medium text-gray-700"
                         >
                             Ministry
                         </label>
 
                         <select
-                            name="ministry_id"
-                            id="ministry_id"
+                            name="organisation_id"
+                            id="organisation_id"
                             required
                             class="mt-1 text-sm block w-full rounded-md border-gray-300
                                 shadow-sm focus:border-cyan-500
@@ -39,19 +37,19 @@
                         >
                             <option value="">Select ministry</option>
 
-                            @foreach ($ministries as $ministry)
+                            @foreach ($organisations as $organisation)
                                 <option
-                                    value="{{ $ministry->id }}"
+                                    value="{{ $organisation->id }}"
                                     @selected(
-                                        old('ministry_id') == $ministry->id
+                                        old('organisation_id') == $organisation->id
                                     )
                                 >
-                                    {{ $ministry->name }}
+                                    {{ $organisation->name }}
                                 </option>
                             @endforeach
                         </select>
 
-                        @error('ministry_id')
+                        @error('organisation_id')
                             <p class="mt-1 text-sm text-red-600">
                                 {{ $message }}
                             </p>
@@ -67,7 +65,7 @@
 
                         <input
                             type="text"
-                            value="{{ $user->ministry->identityOrganisation->name }}"
+                            value="{{ $user->organisation->name }}"
                             readonly
                             class="mt-1 block text-sm w-full rounded-md border-gray-300
                                 bg-gray-100 text-gray-600 shadow-sm"
@@ -75,9 +73,9 @@
 
                         <input
                             type="hidden"
-                            id="ministry_id"
-                            name="ministry_id"
-                            value="{{ $user->ministry_id }}"
+                            id="organisation_id"
+                            name="organisation_id"
+                            value="{{ $user->organisation_id }}"
                         >
                     </div>
                 @endif
@@ -147,9 +145,9 @@
             </div>
                           
         </div>
-            <button type="submit" class="w-full bg-cyan-600 text-white py-2 px-4 rounded-md hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
-                Create User
-            </button>
+        <button type="submit" class="mt-4 mb-10 justify-left bg-cyan-600 text-white py-3 px-6 rounded-md hover:bg-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:ring-offset-2">
+            Create User
+        </button>
     </form>
 
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -157,7 +155,6 @@
 
         <!-- JavaScript to toggle all checkboxes -->
     <script>
-
         document.addEventListener('DOMContentLoaded', function () {
             let fileCounter = 1;  // Start with the initial file
             const container = document.getElementById('file-upload-container');
@@ -231,7 +228,7 @@
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const ministrySelect = document.getElementById('ministry_id');
+            const ministrySelect = document.getElementById('organisation_id');
             const divisionSelect = document.getElementById('division_id');
 
             const divisions = @json($divisions);
@@ -247,7 +244,7 @@
 
                 divisions
                     .filter((division) =>
-                        String(division.ministry_id) === String(ministryId)
+                        String(division.organisation_id) === String(ministryId)
                     )
                     .forEach((division) => {
                         const option = document.createElement('option');

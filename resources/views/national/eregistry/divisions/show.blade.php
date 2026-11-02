@@ -4,7 +4,7 @@
 
 <div class="container mx-auto px-4 py-6 max-w-5xl">
 
-    <div class="bg-white rounded-lg shadow-md p-6 mt-6 mb-6">
+    <div class="bg-white rounded-lg shadow-md p-6 mt-6 mb-2">
         <dl class="grid text-base">
             <div class="col-span-2 sm:grid sm:grid-cols-3 sm:gap-4 py-2 border-b">
                 <dt class="font-bold text-cyan-700">Division Details</dt>
@@ -17,7 +17,7 @@
 
             <div class="col-span-2 sm:grid sm:grid-cols-3 sm:gap-4 py-2 border-b">
                 <dt class="font-semibold text-sm text-gray-700">Ministry:</dt>
-                <dd class="sm:col-span-2 text-sm text-gray-900">{{ $division->ministry->identityOrganisation->name ?? '-' }}</dd>
+                <dd class="sm:col-span-2 text-sm text-gray-900">{{ $division->organisation->name ?? '-' }}</dd>
             </div>
             
             <div class="col-span-2 sm:grid sm:grid-cols-3 sm:gap-4 py-2 border-b">
@@ -72,13 +72,14 @@
                 </dd>
             </div>
         </dl>
-
         
     </div>
-
-
-
-    
+    @if($isRegistry || $isSystemAdmin)
+        <a href="{{ route('registry.divisions.edit', $division) }}"
+            class="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-6 py-3 text-sm font-medium text-amber-700 shadow-sm transition-all duration-200 hover:bg-amber-100 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-amber-400">
+            Edit Division
+        </a>
+    @endif
 </div>
 
 @endsection

@@ -44,13 +44,38 @@ class FileStoreRequest extends FormRequest
                         : ['upload']
                 ),
             ],
-            'from_division_id' => 'nullable|exists:divisions,id',
-            'subject' => 'required|string|max:255',
-            'file_type_id' => 'required|exists:file_types,id',
-            'category_id' => 'nullable|exists:categories,id',
-            'due_date' => 'nullable|date',
-            'additional_files' => 'nullable|array|max:3',
-            'additional_files.*' => 'file|mimes:pdf,xls,xlsx,png,jpg,jpeg,doc,docx,ppt,pptx|max:10240',
+            'division' => [
+                'required_if:source_type,own_ministry',
+                'nullable',
+                'exists:divisions,id'
+            ],
+            'subject' => [
+                'required',
+                'string', 
+                'max:255'
+            ],
+            'file_type_id' => [
+                'required', 
+                'exists:file_types,id'
+            ],
+            'category_id' => [
+                'nullable',
+                'exists:categories,id'
+            ],
+            'due_date' => [
+                'nullable',
+                'date'
+            ],
+            'additional_files' => [
+                'nullable',
+                'array',
+                'max:3'
+            ],
+            'additional_files.*' => [
+                'file',
+                'mimes:pdf,xls,xlsx,png,jpg,jpeg,doc,docx,ppt,pptx',
+                'max:10240'
+            ],
             'main_file' => [
                 'exclude_unless:document_source,upload',
                 'required_if:document_source,upload',
@@ -58,13 +83,12 @@ class FileStoreRequest extends FormRequest
                 'mimes:pdf,jpg,jpeg,png,gif,webp,tif,tiff',
                 'max:10240'
             ],
-            'content' => [
+            'correspondence_type' => [
                 'exclude_unless:document_source,online',
-                'required_if:document_source,online',
-                'string',
+                'required',
+                'in:letter,internal,memo'
             ],
-            'correspondence_type' => 'exclude_unless:document_source,online|required|in:letter,internal,memo',
-            
+
             'memo_recipients' => [
                 'exclude_unless:correspondence_type,memo',
                 'required',
@@ -74,7 +98,7 @@ class FileStoreRequest extends FormRequest
 
             'memo_recipients.*' => [
                 'integer',
-                'exists:ministries,id',
+                'exists:organisations,id',
             ],
 
             'registered_organisations' => [
@@ -87,7 +111,7 @@ class FileStoreRequest extends FormRequest
             'registered_organisations.*' => [
                 'integer',
                 'distinct',
-                'exists:identity_organisations,id',
+                'exists:organisations,id',
             ],
 
             'external_partners' => [
@@ -105,6 +129,7 @@ class FileStoreRequest extends FormRequest
 
             'memo_from_field' => [
                 'exclude_unless:correspondence_type,memo',
+                 'exclude_unless:document_source,online',
                 'required',
                 'string',
                 'max:255',
@@ -112,54 +137,68 @@ class FileStoreRequest extends FormRequest
 
             'memo_cc_field' => [
                 'exclude_unless:correspondence_type,memo',
+                'exclude_unless:document_source,online',
                 'nullable',
                 'string',
                 'max:255',
             ],
             'memo_attention_to' => [
                 'exclude_unless:correspondence_type,memo',
+                'exclude_unless:document_source,online',
                 'nullable',
                 'string',
                 'max:255',
             ],
             'internal_from_field' => [
                 'exclude_unless:correspondence_type,internal',
+                'exclude_unless:document_source,online',
                 'required',
                 'string',
                 'max:255',
             ],
             'internal_to_field' => [
                 'exclude_unless:correspondence_type,internal',
+                'exclude_unless:document_source,online',
                 'required',
                 'string',
                 'max:255',
             ],
             'internal_cc_field' => [
                 'exclude_unless:correspondence_type,internal',
+                'exclude_unless:document_source,online',
                 'nullable',
                 'string',
                 'max:255',
             ],
             'internal_ufs_id' => [
                 'exclude_unless:correspondence_type,internal',
+                'exclude_unless:document_source,online',
                 'required',
                 'exists:users,id',
             ],
             'content' => [
                 'nullable',
-                'required_if:document_source,online',
+                'exclude_unless:document_source,online',
                 'required_without:main_file',
                 'string',
             ],
-            'main_file' => [
-                'nullable',
-                'required_without:content',
-                'file',
-                'mimes:pdf,doc,docx',
-                'max:10240',
-            ],
+           
         ];
     
     
+    }
+
+    public function messages()
+    {
+        return [
+            'source_type.required' => 'The source type selected is required.',
+            'source_type.in' => 'The selected source type is invalid.',
+            'source_id.required_unless' => 'The source field is required unless the source type is "own_ministry".',
+            'source_id.integer' => 'The source field must be an integer.',
+            'document_source.required' => 'The document source field is required.',
+            'document_source.in' => 'The selected document source is invalid.',
+            'division.required_if' => 'A division is required when the source type is your own organisation.',
+            'division.exists' => 'The selected division is invalid.',
+        ];
     }
 }

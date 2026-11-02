@@ -9,11 +9,12 @@ use App\Http\Controllers\National\Eregistry\FileAssignmentController;
 use App\Http\Controllers\National\Eregistry\FileCirculationController;
 use App\Http\Controllers\National\Eregistry\FileController;
 use App\Http\Controllers\National\Eregistry\FileTypeController;
+use App\Http\Controllers\National\Eregistry\FolderController;
 use App\Http\Controllers\National\Eregistry\MinistryController;
 use App\Http\Controllers\National\Eregistry\UserController;
 use App\Http\Controllers\National\Eregistry\ExternalPartnerController;
 use App\Http\Controllers\National\Eregistry\UfsApprovalController;
-use App\Http\Controllers\National\Eregistry\IdentityOrganisationController;
+use App\Http\Controllers\National\Eregistry\OrganisationController;
 use App\Http\Controllers\National\Eregistry\DocumentOverlayController;
 use App\Http\Controllers\National\Eregistry\AuthController;
 use App\Http\Controllers\National\Eregistry\UnitController;
@@ -21,36 +22,22 @@ use App\Models\National\Eregistry\Ministry;
 use Illuminate\Support\Facades\Route;
 
 
-Route::get('/', function () {
-    return view('auth.login');
-});
 
-// Route::get('/login', [AuthController::class, 'redirect'])
-//     ->middleware('guest')
-//     ->name('login');
+// Route::get('/', [AuthController::class, 'redirect'])->middleware('guest')->name('login');
 
-// Route::get('/', function () {
-//     return auth()->check()
-//         ? redirect()->route('dashboard')
-//         : redirect()->route('login');
-// });
-
-// Route::get('/login', function () {
-//     if (auth()->check()) {
-//         return redirect()->route('dashboard');
-//     }
-
-//     return app(AuthController::class)->redirect();
-// })->name('login');
+// Route::get('/auth/callback', [AuthController::class, 'callback'])->name('keycloak.callback');
 
 
-// Route::get('/auth/callback', [AuthController::class, 'callback'])
-//     ->name('keycloak.callback');
+// Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
+
+Route::get('/', [AuthController::class, 'redirect'])
+    ->middleware('guest')
+    ->name('keycloak.login');
 
 
-// Route::post('/logout', [AuthController::class, 'logout'])
-//     ->middleware('auth')
-//     ->name('logout');
+// Keycloak callback.
+Route::get('/auth/callback', [AuthController::class, 'callback'])
+    ->name('keycloak.callback');
 
 
 Route::middleware([
@@ -58,41 +45,76 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    Route::get('dashboard', [EregistryBoradController::class, 'index'])->name('dashboard');
+    Route::get('dashboard', [FileController::class, 'index'])
+        ->name('dashboard');
 });
 
-// Route::middleware('auth')->group(function () {
-//         Route::get('/dashboard', fn () => view('dashboard'));
-//         Route::get('/profile', fn () => view('profile'));
-//     });
 
-Route::group([
-    'as' => 'registry.',
-    'prefix' => 'registry',
-    'middleware' => ['auth'],
-], function () {
+Route::group(['as' => 'registry.', 
+              'prefix' => 'registry', 
+              'middleware' => ['auth', 'active'], 
+            ], 
+            function () {
 
-    // Ministry Routes
-    Route::match(['get', 'post'], 'ministries/datatables', [MinistryController::class, 'getDataTables'])->name('ministries.datatables');
-    Route::resource('ministries', MinistryController::class);
+    Route::middleware('role:registry|system-admin')->group(function () {
 
-    Route::match(['get', 'post'], 'organisations/datatables', [IdentityOrganisationController::class, 'getDataTables'])->name('organisations.datatables');
-    Route::resource('organisations', IdentityOrganisationController::class);
+        // User management for registry and system-admin roles
+        Route::match(['get', 'post'], 'users/datatables', [UserController::class, 'getDataTables'])->name('users.datatables');
+        Route::get('users/edit-review-officer', [UserController::class, 'editReviewOfficer'])->name('users.edit-review-officer');
+        Route::patch('users/update-review-officer', [UserController::class, 'updateReviewOfficer'])->name('users.update-review-officer');
+        Route::get('users/edit-secretary', [UserController::class, 'editSecretary'])->name('users.edit-secretary');
+        Route::patch('users/update-secretary', [UserController::class, 'updateSecretary'])->name('users.update-secretary');
+        Route::get('users/', [UserController::class, 'index'])->name('users.index');
+        Route::get('users/{user}', [UserController::class, 'show'])->name('users.show');
+
+        // Ministry and Organisation Routes
+        Route::match(['get', 'post'], 'organisations/datatables', [OrganisationController::class, 'getDataTables'])->name('organisations.datatables');
+        Route::resource('organisations', OrganisationController::class);
+
+        Route::post('/folders/{folder}/files/{file}/move',[FolderController::class, 'moveFile'])->name('folders.files.move');
+        Route::get('/folders/{folder}/files', [FolderController::class, 'files'])->name('folders.files');        
+        Route::get('folders/{folder}/children', [FolderController::class, 'children'])->name('folders.children');
+        Route::resource('folders', FolderController::class);
+
+        // File Type Routes 
+        Route::get('/file-types/name/suggestions', [FileTypeController::class, 'suggestions'])->name('file-types.name.suggestions');
+        Route::get('/file-types/code/suggestions', [FileTypeController::class, 'codeSuggestions'])->name('file-types.code.suggestions');
+
+        Route::match(['get', 'post'], 'file-types/datatables', [FileTypeController::class, 'getDataTables'])->name('file-types.datatables');
+        Route::patch('/file-types/{fileType}/activate', [FileTypeController::class, 'activate'])->name('file-types.activate');
+        Route::patch('/file-types/{fileType}/deactivate', [FileTypeController::class, 'deactivate'])->name('file-types.deactivate');
+        Route::resource('file-types', FileTypeController::class);
+
+        // External Partner Routes
+        Route::get('/external-partners/name/suggestions', [ExternalPartnerController::class, 'suggestions'])->name('external-partners.name.suggestions');
+        Route::patch('/external-partners/{partner}/activate', [ExternalPartnerController::class, 'activate'])->name('external-partners.activate');
+        Route::patch('/external-partners/{partner}/deactivate', [ExternalPartnerController::class, 'deactivate'])->name('external-partners.deactivate');
+        Route::match(['get', 'post'], 'external-partners/datatables', [ExternalPartnerController::class, 'getDataTables'])->name('external-partners.datatables');
+        Route::resource('external-partners', ExternalPartnerController::class);
+        
+        // Division Routes
+        Route::match(['get', 'post'], 'divisions/datatables', [DivisionController::class, 'getDataTables'])->name('divisions.datatables');
+        Route::get('divisions/{division}/assign-hod', [DivisionController::class, 'assignHod'])->name('divisions.assign-hod');
+        Route::put('divisions/{division}/update-hod', [DivisionController::class, 'updateHod'])->name('divisions.update-hod');
+        Route::resource('divisions', DivisionController::class);
+
+    });
 
 
-    // Division Routes
-    Route::match(['get', 'post'], 'divisions/datatables', [DivisionController::class, 'getDataTables'])->name('divisions.datatables');
-    Route::get('divisions/{division}/assign-hod', [DivisionController::class, 'assignHod'])->name('divisions.assign-hod');
-    Route::put('divisions/{division}/update-hod', [DivisionController::class, 'updateHod'])->name('divisions.update-hod');
-    Route::resource('divisions', DivisionController::class);
+     // User management
+    Route::middleware('role:ministry-admin|system-admin')->group(function () {
+        Route::patch('/users/{user}/activate', [UserController::class, 'activate'])->name('users.activate');
+        Route::patch('/users/{user}/deactivate', [UserController::class, 'deactivate'])->name('users.deactivate');
+        Route::resource('users', UserController::class)->except(['index', 'show']);
 
+    });
+
+
+    // User Routes   
+    Route::get('users/edit/signature', [UserController::class, 'editSignature'])->name('users.signature.edit');
+    Route::patch('users/update/signature', [UserController::class, 'updateSignature'])->name('users.signature.update');
     
-    // Unit Routes
-    Route::match(['get', 'post'], 'units/datatables', [UnitController::class, 'getDataTables'])->name('units.datatables');
-    Route::get('units/create/{division_id}', [UnitController::class, 'create'])->name('units.create');
-    Route::resource('units', UnitController::class)->except(['create']);
-    
-    
+
     // File Routes
     Route::match(['get', 'post'], 'files/datatables', [FileController::class, 'getDataTables'])->name('files.datatables');
     Route::get('files/{file}/preview', [FileController::class, 'preview'])->name('files.preview');
@@ -108,42 +130,26 @@ Route::group([
     Route::get('files/{id}/download', [FileController::class, 'download'])->name('files.download.main');
     Route::get('files/{file}/download-additional/{number}', [FileController::class, 'downloadAdditionalFile'])->name('files.download.additional');    
 
+
     Route::post('files/{file}/ufs', [FileController::class, 'ufsCirculate'])->name('files.ufsCirculate');
     Route::post('files/{file}/sign', [FileController::class, 'signFile'])->name('files.sign');
+    Route::post('files/{file}/cancel-signature', [FileController::class, 'cancelSignature'])->name('files.cancel-signature');
     Route::post('files/{file}/archive', [FileController::class, 'archive'])->name('files.archive');
     Route::post('files/{file}/close', [FileController::class, 'close'])->name('files.close');
-
-
-    Route::get('/file-types/name/suggestions', [FileTypeController::class, 'suggestions'])->name('file-types.name.suggestions');
-    Route::get('/file-types/code/suggestions', [FileTypeController::class, 'codeSuggestions'])->name('file-types.code.suggestions');
-
-
-    Route::match(['get', 'post'], 'file-types/datatables', [FileTypeController::class, 'getDataTables'])->name('file-types.datatables');
-    Route::patch('/file-types/{fileType}/activate', [FileTypeController::class, 'activate'])->name('file-types.activate');
-    Route::patch('/file-types/{fileType}/deactivate', [FileTypeController::class, 'deactivate'])->name('file-types.deactivate');
-    Route::resource('file-types', FileTypeController::class);
-
-
-    Route::get('/external-partners/name/suggestions', [ExternalPartnerController::class, 'suggestions'])->name('external-partners.name.suggestions');
-    Route::patch('/external-partners/{partner}/activate', [ExternalPartnerController::class, 'activate'])->name('external-partners.activate');
-    Route::patch('/external-partners/{partner}/deactivate', [ExternalPartnerController::class, 'deactivate'])->name('external-partners.deactivate');
-    Route::match(['get', 'post'], 'external-partners/datatables', [ExternalPartnerController::class, 'getDataTables'])->name('external-partners.datatables');
-    Route::resource('external-partners', ExternalPartnerController::class);
-    
+    Route::post('files/{file}/file-to-folder', [FileController::class, 'fileToFolder'])->name('files.file-to-folder');
+    Route::post('files/{file}/submit-for-sro-signature', [FileController::class, 'submitForSroSignature'])->name('files.submitForSroSignature');
 
     // File Access Routes
     Route::match(['get', 'post'], 'file-access/datatables', [FileAccessController::class, 'getDataTables'])->name('file-access.datatables');
     Route::resource('file-access', FileAccessController::class);
 
-
     // Dispatch Routes
     Route::get('dispatches/userIndex', [DispatchController::class, 'userIndex'])->name('dispatches.user.index');
-    // Route::match(['get', 'post'], 'dispatches/datatables', [DispatchController::class, 'getDataTables'])->name('dispatches.datatables');
     Route::resource('dispatches', DispatchController::class);
-    // Route::match(['get', 'post'], 'user-dispatches/datatables', [DispatchController::class, 'getUserDataTables'])->name('dispatches.user.datatables');
     
-    Route::resource('file-circulations', FileCirculationController::class);
 
+    // File Circulation Routes
+    Route::resource('file-circulations', FileCirculationController::class);
     Route::get('/file-circulations/review/index', [FileCirculationController::class, 'reviewIndex'])->name('file-circulations.review.index');
 
     Route::get('/file-circulations/{fileCirculation}/review', [FileCirculationController::class, 'reviewFile'])->name('file-circulations.review.file');
@@ -171,27 +177,10 @@ Route::group([
         Route::post('/complete', [FileAssignmentController::class, 'complete'])->name('file.complete');
     });
 
-    // User Routes
-    Route::match(['get', 'post'], 'users/datatables', [UserController::class, 'getDataTables'])->name('users.datatables');
-   
-    Route::get('users/edit/signature', [UserController::class, 'editSignature'])->name('users.signature.edit');
-    Route::patch('users/update/signature', [UserController::class, 'updateSignature'])->name('users.signature.update');
-    
-    Route::get('users/edit-review-officer', [UserController::class, 'editReviewOfficer'])->name('users.edit-review-officer');
-    Route::patch('users/update-review-officer', [UserController::class, 'updateReviewOfficer'])->name('users.update-review-officer');
-    
-    Route::get('users/edit-secretary', [UserController::class, 'editSecretary'])->name('users.edit-secretary');
-    Route::patch('users/update-secretary', [UserController::class, 'updateSecretary'])->name('users.update-secretary');
-
-
-    Route::patch('/users/{user}/activate', [UserController::class, 'activate'])->name('users.activate');
-    Route::patch('/users/{user}/deactivate', [UserController::class, 'deactivate'])->name('users.deactivate');
-    Route::resource('users', UserController::class);
-
-    Route::get('/login', fn () => view('login'))->name('login');
-    Route::get('/auth/redirect', [AuthController::class, 'redirect'])->name('auth.redirect');
-    Route::get('/auth/callback', [AuthController::class, 'callback'])->name('auth.callback');
-    Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
+    // Route::get('/login', fn () => view('login'))->name('login');
+    // Route::get('/auth/redirect', [AuthController::class, 'redirect'])->name('auth.redirect');
+    // Route::get('/auth/callback', [AuthController::class, 'callback'])->name('auth.callback');
+    // Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
    
 
     // Activity Log Routes
@@ -206,6 +195,7 @@ Route::group([
     // Add additional routes here if needed, such as PDF download or specific actions
 
 });
+
 
 
 

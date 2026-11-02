@@ -19,7 +19,7 @@ class FileCirculation extends Model implements Auditable
     protected $fillable = [
         'file_id',
         'dispatch_id',
-        'to_ministry_id',
+        'to_organisation_id',
         'circulated_by',
         'circulated_at',
         'read_at',
@@ -33,6 +33,7 @@ class FileCirculation extends Model implements Auditable
         'reviewed_by',
         'status',
         'ufs_status',
+        'final_review_status',
         'ufs_approved_at',
         'ufs_rejected_at',
         'ufs_comment',
@@ -78,9 +79,9 @@ class FileCirculation extends Model implements Auditable
         return $this->morphTo(null, 'from_type', 'from_id');
     }
 
-    public function toMinistry()
+    public function toOrganisation()
     {
-        return $this->belongsTo(Ministry::class, 'to_ministry_id');
+        return $this->belongsTo(Organisation::class, 'to_organisation_id');
     }
 
     public function circulatedBy()

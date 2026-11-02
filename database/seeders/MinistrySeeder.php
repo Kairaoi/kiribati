@@ -17,7 +17,17 @@ class MinistrySeeder extends Seeder
         DB::table('ministries')->insert([
 
             //ministries
-            ['uuid' => (string) Str::uuid(), 'identity_organisation_id' => '1', 'organisation_type_id' => '1', 'reviewer_title' => 'Secretary',         'created_by' => '1', 'updated_by' => '1', 'phone' => null, 'email' => null, 'website' => null, 'po_box' => null, 'logo_path' => null],
+            ['uuid' => (string) Str::uuid(), 
+            'identity_organisation_id' => '1', 
+            'organisation_type_id' => '1', 
+            'reviewer_title' => 'Secretary',         
+            'created_by' => '1', 
+            'updated_by' => '1', 
+            'phone' => null, 
+            'email' => null, 
+            'website' => null, 
+            'po_box' => null, 
+            'logo_path' => null],
             ['uuid' => (string) Str::uuid(), 'identity_organisation_id' => '2', 'organisation_type_id' => '1', 'reviewer_title' => 'Secretary',         'created_by' => '1', 'updated_by' => '1',  'phone' => null, 'email' => null, 'website' => null, 'po_box' => null, 'logo_path' => null],
             ['uuid' => (string) Str::uuid(), 'identity_organisation_id' => '3','organisation_type_id' => '1',  'reviewer_title' => 'Chief Justice',      'created_by' => '1', 'updated_by' => '1',  'phone' => null, 'email' => null, 'website' => null, 'po_box' => null, 'logo_path' => null],
             ['uuid' => (string) Str::uuid(), 'identity_organisation_id' => '4','organisation_type_id' => '1',  'reviewer_title' => 'Commissioner of Police', 'created_by' => '1', 'updated_by' => '1',  'phone' => null, 'email' => null, 'website' => null, 'po_box' => null, 'logo_path' => null],

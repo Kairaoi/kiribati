@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+
 
 class Ministry extends Model implements Auditable
 {
@@ -18,31 +18,18 @@ class Ministry extends Model implements Auditable
     protected $table = 'ministries';
 
     protected $fillable = [
-        'is_active',
+      
         'created_by',
         'updated_by',
         'updated_at',
         'organisation_type_id',
         'identity_organisation_id',
-        'status',
-        'phone',
-        'email',
-        'logo_path',
-        'website',
-        'po_box',
+        
     ];
 
-    public function uniqueIds(): array
-    {
-        return ['uuid'];
-    }
-
+   
     
-    public function getRouteKeyName(): string
-    {
-        return 'uuid';
-    }
-
+    
     public function organisationType()
     {
         return $this->belongsTo(OrganisationType::class, 'organisation_type_id');
@@ -54,58 +41,22 @@ class Ministry extends Model implements Auditable
     }
 
 
-    public function divisions()
-    {
-        return $this->hasMany(Division::class);
-    }
-
-
+   
     public function users(): HasMany
     {
         return $this->hasMany(User::class, 'ministry_id');
     }
 
-    public function files(): HasMany
-    {
-        return $this->hasMany(File::class, 'ministry_id');
-    }
+  
 
 
-    public function receivedFiles()
-    {
-        return $this->belongsToMany(File::class, 'file_recipients')
-            ->withPivot('status')
-            ->withTimestamps();
-    }
-
-
-    public function archivedFiles()
-    {
-        return $this->belongsToMany(File::class, 'ministry_archived_files', 'ministry_id', 'file_id')
-            ->withPivot('archived_by', 'archived_at')
-            ->withTimestamps();
-    }
+   
 
     // public function fileAccess()
     // {
     //     return $this->hasMany(FileAccess::class);
     // }
 
-    public function fileCirculation()
-    {
-        return $this->hasMany(FileCirculation::class);
-    }
-
-
-    public function fileDispatches()
-    {
-        return $this->hasMany(Dispatch::class);
-    }
-
-
-    public function sourcedFiles()
-    {
-        return $this->morphMany(File::class, 'source');
-    }
+   
 
 }

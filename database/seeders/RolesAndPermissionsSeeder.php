@@ -15,7 +15,7 @@ class RolesAndPermissionsSeeder extends Seeder
     public function run(): void
     {
         $systemadmin = Role::create(['name' => 'system-admin']);
-        $ministryadmin = Role::create(['name' => 'ministry-admin']);
+        $ministryAdmin = Role::create(['name' => 'ministry-admin']);
         $registry = Role::create(['name' => 'registry']);
         $sro = Role::create(['name' => 'sro']);
         $hod = Role::create(['name' => 'hod']);
