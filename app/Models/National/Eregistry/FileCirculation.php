@@ -42,8 +42,8 @@ class FileCirculation extends Model implements Auditable
         'approval_comment',
         'approved_by',
         'approved_at',
-        'colleague_comment',
-        'colleague_id',
+        'hod_comment',
+        'hod_reviewer',
     ];
 
 

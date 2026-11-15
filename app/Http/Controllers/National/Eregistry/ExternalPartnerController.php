@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\National\Eregistry\ExternalPartner;
 use App\Http\Requests\National\Eregistry\ExternalStoreRequest;
 use App\Repositories\National\Eregistry\ExternalPartnerRepository;
-use App\Repositories\National\Eregistry\IdentityOrganisationRepository;
+use App\Repositories\National\Eregistry\OrganisationRepository;
 use App\Repositories\National\Eregistry\OrganisationTypeRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,18 +18,18 @@ class ExternalPartnerController extends Controller
 {
 
     private $organisation_types;
-    private $identityOrganisations;
+    private $organisations;
     private $externalPartners;
     
     public function __construct(
        
-        IdentityOrganisationRepository $identityOrganisations,
+        OrganisationRepository $organisations,
         OrganisationTypeRepository $organisation_types,
         ExternalPartnerRepository $externalPartners
        
     ) {
 
-        $this->identityOrganisations = $identityOrganisations;
+        $this->organisations = $organisations;
         $this->organisation_types = $organisation_types;
         $this->externalPartners = $externalPartners;
         
@@ -43,15 +43,18 @@ class ExternalPartnerController extends Controller
      */
     public function getDataTables(Request $request)
     {
-        $ministryId = Auth::user()->ministry_id;
+        $organisationId = Auth::user()->organisation_id;
+
         $search = $request->get('search');
+
         if (is_array($search)) {
             $search = $search['value'];
         }
-        $query = $this->externalPartners->getForDataTable($ministryId, $search);
+        $query = $this->externalPartners->getForDataTable($organisationId, $search);
 
         $data = $query->get();
         Log::info('External Partners Results:', $data->toArray());
+        
         return DataTables::of($query)->make(true);
     }
 
@@ -71,12 +74,12 @@ class ExternalPartnerController extends Controller
     public function create()
     {
 
-        $identityOrganisations = $this->identityOrganisations->list();
+        $organisations = $this->organisations->list();
         $organisationTypes = $this->organisation_types->list();
-        $ministry = Auth::user()->ministry;
-        return view('national.eregistry.external_partners.create', compact('identityOrganisations', 
+        $organisation = Auth::user()->organisation; // Get the ministry of the logged-in user
+        return view('national.eregistry.external_partners.create', compact('organisations', 
                                                                            'organisationTypes',
-                                                                           'ministry'));
+                                                                           'organisation'));
     }
 
     /**
@@ -88,12 +91,12 @@ class ExternalPartnerController extends Controller
 
         //ensure that the user is not creating other ministries partners.
         if (auth()->user()->hasRole('registry')) {
-            $validated['ministry_id'] = auth()->user()->ministry_id;
+            $validated['organisation_id'] = auth()->user()->organisation_id;
         }
 
         $this->externalPartners->create($validated);
 
-        return redirect()->route('registry.external-partners.index')->with('success', 'External Partner created successfully.');
+        return redirect()->route('registry.external-partners.index')->with('success', 'External Partner created');
     }
 
     public function suggestions(Request $request)
@@ -118,11 +121,11 @@ class ExternalPartnerController extends Controller
     public function show(ExternalPartner $externalPartner)
     {
         $totalFiles = $externalPartner->files()
-                                ->where('ministry_id', $externalPartner->ministry_id)
+                                ->where('organisation_id', $externalPartner->organisation_id)
                                 ->count();
 
         $activeFiles = $externalPartner->files()
-            ->where('ministry_id', $externalPartner->ministry_id)
+            ->where('organisation_id', $externalPartner->organisation_id)
             ->where('is_active', true)
             ->count();
 
@@ -139,14 +142,14 @@ class ExternalPartnerController extends Controller
     public function edit(ExternalPartner $externalPartner)
     {
         // dd($externalPartner);
-        $ministryPartners = $this->externalPartners->list(Auth::user()->ministry_id);
-        $identityOrganisations = $this->identityOrganisations->list();
+        $organisationPartners = $this->externalPartners->list(Auth::user()->organisation_id);
+        $organisations = $this->organisations->list();
         $organisationTypes = $this->organisation_types->list();
     
         return view('national.eregistry.external_partners.edit', compact('externalPartner', 
-                                                                        'ministryPartners',
+                                                                        'organisationPartners',
                                                                         'organisationTypes',
-                                                                        'identityOrganisations'));
+                                                                        'organisations'));
     }
 
 
@@ -183,7 +186,7 @@ class ExternalPartnerController extends Controller
             'updated_at' => now(),
         ]);
 
-        return redirect()->route('registry.external-partners.index')->with('message', 'External Partner updated successfully.');
+        return redirect()->route('registry.external-partners.index')->with('success', 'External Partner updated');
         
     }
 

@@ -57,13 +57,13 @@ class DivisionRepository extends BaseRepository
     public function update(Division $model, array $input)
     {
         $data = [
-            'organisation_id' => $input['organisation_id'],
-            'name' => $input['name'],
-            'description' => $input['description'] ?? null,
-            'location' => $input['location'] ?? null,
-            'email' => $input['email'] ?? null,
-            'phone' => $input['phone'] ?? null,
-            'is_active' => $input['is_active'] ?? true,
+            'organisation_id' => $input['organisation_id'] ?? $model->organisation_id,
+            'name' => $input['name'] ?? $model->name,
+            'description' => $input['description'] ?? $model->description,
+            'location' => $input['location'] ?? $model->location,
+            'email' => $input['email'] ?? $model->email,
+            'phone' => $input['phone'] ?? $model->phone,
+            'is_active' => $input['is_active'] ?? $model->is_active,
             'updated_by' => Auth::id(),
         ];
 

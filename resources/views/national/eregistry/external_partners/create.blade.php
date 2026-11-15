@@ -18,10 +18,10 @@
     <form action="{{ route('registry.external-partners.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
  
-        <div class="bg-white shadow font-poppins rounded-2xl p-6 max-w-2xl mx-auto mt-4 mb-4">
+        <div class="bg-white shadow rounded-2xl p-6 max-w-2xl mx-auto mt-4 mb-4">
 
             <h2 class="text-m font-semibold text-gray-800 mb-6">
-                <span class="text-cyan-600">Create your Ministry External Partner</span>
+                <span class="text-cyan-600">Create your organisation external partner</span>
             </h2>
 
             <!-- File Type Name -->
@@ -42,6 +42,25 @@
                 <div id="name-suggestions"
                     class="absolute z-10 w-full bg-white border rounded-md mt-1 hidden shadow">
                 </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="block text-sm font-medium text-gray-700">
+                    Type <span class="text-red-600">*</span>
+                </label>
+
+                <select name="organisation_type_id" id="organisation_type_id"
+                    class="mt-1 w-full rounded-lg border-gray-300 shadow-sm text-sm px-3 py-2">
+
+                    <option value="">-- None --</option>
+
+                    @foreach($organisationTypes as $type)
+                        <option value="{{ $type->id }}"
+                            {{ old('organisation_type_id') == $type->id ? 'selected' : '' }}>
+                            {{ $type->name }}
+                        </option>
+                    @endforeach
+                </select>
             </div>
 
             <!-- Description -->
@@ -90,31 +109,14 @@
                 </select>
             </div> --}}
 
-            <div class="mb-3">
-                <label class="block text-sm font-medium text-gray-700">
-                    Category <span class="text-red-600">*</span>
-                </label>
+            
 
-                <select name="organisation_type_id" id="organisation_type_id"
-                    class="mt-1 w-full rounded-lg border-gray-300 shadow-sm text-sm px-3 py-2">
-
-                    <option value="">-- None --</option>
-
-                    @foreach($organisationTypes as $type)
-                        <option value="{{ $type->id }}"
-                            {{ old('organisation_type_id') == $type->id ? 'selected' : '' }}>
-                            {{ $type->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div class="border-t border-gray-200 pt-5 flex justify-center gap-3">
+            <div class="border-t border-gray-200 pt-5 flex gap-3">
                 <button type="submit"
-                    class="px-5 py-2 text-sm font-medium rounded-lg 
+                    class="px-5 py-3 text-sm font-medium rounded-lg 
                         bg-cyan-600 text-white hover:bg-cyan-700 
                         focus:ring-2 focus:ring-cyan-300">
-                    Create External Partner
+                    Create
                 </button>
             </div>
         </div>

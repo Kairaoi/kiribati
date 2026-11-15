@@ -61,7 +61,6 @@
                                     </div>
                                 </div>
                             @hasrole(['registry', 'system-admin'])
-
                                 <div class="relative flex items-center h-16">
                                     <x-nav-link
                                             href="{{ route('registry.folders.index') }}"
@@ -181,11 +180,13 @@
                                             class="flex items-center h-full cursor-pointer"
                                         >
                                         <span class="leading-none flex items-center text-gray-500 font-semibold">
-                                            {{ __('Divisions') }}
+                                            {{ __('Divisions & HODs') }}
                                         </span>
                                     </x-nav-link>
                                 </div>
+                            @endhasrole
 
+                            @hasrole(['admin', 'system-admin', 'registry'])
                                 <div class="relative flex items-center h-16">
                                     <x-nav-link
                                             href="{{ route('registry.users.index') }}"
@@ -197,13 +198,14 @@
                                         </span>
                                     </x-nav-link>
                                 </div>
-                            </div>
-                        @endhasrole
+                            @endhasrole
+                                
+                          
                         
 
                                
 
-                        {{-- @hasrole(['ministry-admin', 'system-admin'])
+                        {{-- @hasrole(['admin', 'system-admin'])
                             <div class="relative flex items-center h-16">
                                 <x-nav-link
                                         href="{{ route('registry.users.index') }}"

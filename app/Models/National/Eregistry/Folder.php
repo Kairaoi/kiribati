@@ -59,7 +59,9 @@ class Folder extends Model implements Auditable
 
     public function childrenRecursive()
     {
-        return $this->children()->with('childrenRecursive');
+        return $this->hasMany(self::class, 'parent_id')
+            ->withCount('fileAssignments')
+            ->with('childrenRecursive');
     }
 
     public function fileAssignments()

@@ -62,12 +62,12 @@ class UserRepository extends BaseRepository
     public function update(User $user, array $data): User
     {
         $user->update([
-            'organisation_id' => $data['organisation_id'],
-            'division_id' => $data['division_id'],
-            'first_name'  => $data['first_name'],
-            'last_name'   => $data['last_name'],
-            'email'       => $data['email'],
-            'designation' => $data['designation'],
+            'organisation_id' => $data['organisation_id'] ?? $user->organisation_id ,
+            'division_id' => $data['division_id'] ?? $user->division_id,
+            'first_name'  => $data['first_name'] ?? $user->first_name,
+            'last_name'   => $data['last_name'] ?? $user->last_name,
+            'email'       => $data['email'] ?? $user->email,
+            'designation' => $data['designation'] ?? $user->designation,
             'is_active'   => true,
             'updated_by'  => auth()->id(),
         ]);
@@ -95,7 +95,6 @@ class UserRepository extends BaseRepository
             'users.designation',
             'users.created_at',
             'users.updated_at',
-            'users.profile_photo_path',
             'divisions.name as division_name',
             'users.is_active as is_active',
             DB::raw('GROUP_CONCAT(roles.name SEPARATOR ", ") as role_names')
@@ -107,14 +106,13 @@ class UserRepository extends BaseRepository
                  ->where('model_has_roles.model_type', '=', User::class);
         })
         ->leftJoin('roles', 'model_has_roles.role_id', '=', 'roles.id')
-      
         ->groupBy(
             'users.id',
         );
 
         if ($user->hasRole('system-admin')) {
              // System admin sees all users
-        } else if ($user->hasRole('ministry-admin') || $user->hasRole('registry')) {
+        } else if ($user->hasRole('admin') || $user->hasRole('registry')) {
             // Ministry admin only sees users from their ministry
             $query->where('users.organisation_id', $user->organisation_id)
                 ->whereDoesntHave('roles', function ($q) {
@@ -233,7 +231,7 @@ class UserRepository extends BaseRepository
         $editableRoles = [
             'user',
             'registry',
-            'ministry-admin',
+            'admin',
         ];
 
         foreach ($editableRoles as $editableRole) {

@@ -26,7 +26,7 @@ class FilePolicy
     {
         if ($file->created_by === $user->id || 
            ($file->organisation_id === $user->organisation_id && 
-           $user->hasRole(['registry', 'ministry-admin', 'review-officer', 'sro'])) ) {
+           $user->hasRole(['registry', 'admin', 'review-officer', 'sro'])) ) {
             return true;
         }
 
@@ -44,7 +44,7 @@ class FilePolicy
         }
 
         
-        if ($file->circulations()->where('colleague_id', $user->id)->exists()) {
+        if ($file->circulations()->where('hod_reviewer', $user->id)->exists()) {
             return true;
         }
 
@@ -122,7 +122,7 @@ class FilePolicy
             && (int) $file->source_id === (int) $organisationId;
 
         if ($file->document_source === 'upload' && 
-            $file->status === 'Pending Action' && 
+            ($file->status === 'Pending Action' ||$file->status === 'Dispatched') && 
             $user->hasRole('registry') && $ownedFile) {
             return true;
         }
@@ -197,7 +197,7 @@ class FilePolicy
         $fileCirculation = $file->circulations()
                                 ->where(function ($query) use ($user) {
                                     $query->where('review_officer', $user->id)
-                                        ->orWhere('colleague_id', $user->id);
+                                        ->orWhere('hod_reviewer', $user->id);
                                 })
                                 ->first();
         
@@ -213,15 +213,35 @@ class FilePolicy
 
         if ($file->organisation_id === $user->organisation_id && 
             $fileCirculation && 
-            $fileCirculation->status === "Pending HOD Review" && 
-            $fileCirculation->colleague_id === $user->id) {
-                return true;
+            $fileCirculation->status === "Pending HOD Signature" && 
+            $fileCirculation->hod_reviewer === $user->id) {
+            
+            return true;
         }
 
-
-
         return false;
-    
+    }
+
+    public function finalise(User $user, File $file): bool
+    {
+        
+        if ($file->signedBy?->id === $user->id &&
+            ($file->status === "Pending finalisation"))
+           {
+            return true;
+        }
+        return false;
+    }
+
+    public function editSignature(User $user, File $file): bool
+    {
+        
+        if ($file->signedBy?->id === $user->id &&
+            ($file->status === "Pending finalisation"))
+           {
+            return true;
+        }
+        return false;
     }
 
 
@@ -242,8 +262,15 @@ class FilePolicy
             return true;
         }
 
+        if ($file->organisation_id === $user->organisation_id && 
+            $fileCirculation && 
+            $fileCirculation->status === "Pending HOD Signature" && 
+            $fileCirculation->hod_reviewer === $user->id) {
+            
+            return true;
+        }
+
         return false;
-    
     }
 
 
@@ -273,7 +300,7 @@ class FilePolicy
     * Determine whether the user can circulate the model to review officer
     * Does not work for secretaries as they are the SRO themselves
     */
-    public function circulateToReviewOfficer(User $user, File $file): bool
+    public function submitForSroReview(User $user, File $file): bool
     {
 
         if (($file->document_source === 'upload' && 
@@ -305,6 +332,22 @@ class FilePolicy
     
     }
 
+    public function submitForHodSignature(User $user, File $file): bool
+    {
+
+        if ( ($file->correspondence_type === 'memo' || 
+            $file->correspondence_type === 'letter') && 
+            $file->status === "Pending Signature" &&
+            $file->created_by === $user->id &&
+            (!$user->hasRole('sro') || !$user->hasRole('hod'))
+        ) {
+            
+            return true;
+        } 
+
+        return false;
+    
+    }
 
     /**
      * Determine whether the user can restore the model.
@@ -326,7 +369,8 @@ class FilePolicy
 
     public function viewSignatureDetails(User $user, File $file): bool
     {
-        if ($file->organisation_id === $user->organisation_id && $file->signature_path) {
+        if ($file->organisation_id === $user->organisation_id && 
+            $file->final_pdf_path) {
             return true;
         }
 

@@ -30,7 +30,7 @@ class OrganisationStoreRequest extends FormRequest
                 function ($attribute, $value, $fail) {
                     $name = trim(strtolower($value));
 
-                    // Check Identity Organisations (global)
+                    // Check Organisations
                     $existsInOrgs = DB::table('organisations')
                         ->whereRaw('LOWER(TRIM(name)) = ?', [$name])
                         ->exists();
@@ -46,21 +46,49 @@ class OrganisationStoreRequest extends FormRequest
                 'min:2',
                 'max:5',
                 'regex:/^[A-Z]{2,5}$/',
-                Rule::unique('organisations', 'code'),                   
+                Rule::unique('organisations', 'code'),
             ],
-            'description' => [
+            'reviewer_title' => [
                 'nullable',
                 'string',
                 'max:255',
             ],
             'address' => [
-                'required',
+                'nullable',
                 'string',
+                'max:255',
+            ],
+            'phone' => [
+                'nullable',
+                'string',
+                'max:20',
+                'regex:/^\+?[0-9\s\-()]+$/',
+            ],
+            'email' => [
+                'nullable',
+                'email',
+                'unique:organisations,email',
+                'max:255',
+            ],
+            'website' => [
+                'nullable',
+                'string',
+                'max:255',  
+            ],
+            'po_box' => [
+                'nullable',
+                'integer',
                 'max:255',
             ],
             'organisation_type_id' => [
                 'required',
                 'exists:organisation_types,id'
+            ],
+            'logo' => [
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:2048',
             ],
         ];
     }

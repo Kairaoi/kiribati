@@ -76,12 +76,11 @@
             </div> --}}
         </dl>
     </div>
-
-    @if($isMinistry && $isSystemAdmin)
+    @if($isSystemAdmin)
         <div class="bg-white rounded-lg text-sm shadow-md p-6 mb-6">
             <dl class="grid grid-cols-1 text-sm md:grid-cols-2 gap-x-4 gap-y-1 text-base">
                 <div class="col-span-2 sm:grid sm:grid-cols-3 sm:gap-4 py-2 border-b">
-                    <dt class="font-bold text-cyan-700">Details as a Ministry</dt>
+                    <dt class="font-bold text-cyan-700">More details</dt>
                 </div>
 
                 <div class="col-span-2 sm:grid sm:grid-cols-3 sm:gap-4 py-2 border-b">
@@ -122,19 +121,10 @@
 
             </dl>
         </div>
-
-    @endif
-    
-    @if($isSystemAdmin)
+   
         <a href="{{ route('registry.organisations.edit', $organisation) }}"
             class="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-6 py-3 text-sm font-medium text-amber-700 shadow-sm transition-all duration-200 hover:bg-amber-100 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-amber-400">
             Edit Organisation
-        </a>
-    @endif
-    @if($isSystemAdmin && $isMinistry)
-        <a href="{{ route('registry.ministries.edit', $ministry) }}"
-            class="inline-flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-6 py-3 text-sm font-medium text-green-700 shadow-sm transition-all duration-200 hover:bg-green-100 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-400">
-            View and Edit Ministry Details
         </a>
     @endif
 </div>

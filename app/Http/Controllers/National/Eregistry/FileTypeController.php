@@ -40,8 +40,8 @@ class FileTypeController extends Controller {
     public function getDataTables(Request $request)
     {
         $selectedType = $request->get('selected_type');
-
-        $organisationId = Auth::user()?->organisation_id;
+        Log::info('Selected Type: ' . $selectedType);
+        $organisationId = Auth::user()->organisation_id;
         $user = Auth::user();
 
         if (!$organisationId) {
@@ -55,6 +55,7 @@ class FileTypeController extends Controller {
         
         $query = $this->fileTypes->getForDataTable($selectedType, $organisationId, $user, $search);
         
+
         $datatables = DataTables::make($query)
                         ->addColumn('can_edit', function ($row) {
                             return Auth::user()->hasRole('system-admin');
@@ -72,6 +73,7 @@ class FileTypeController extends Controller {
     public function index()
     {
         $fileTypes = FileType::query()->withCount('files');
+
         return view('national.eregistry.file_types.index', compact('fileTypes'));
     }
 
@@ -186,10 +188,16 @@ class FileTypeController extends Controller {
                                 ->where('organisation_id', Auth::user()->organisation_id)
                                 ->count();
 
+        $isSystemAdmin = auth()->user()->hasRole('system-admin');
+
         $activeFiles = $fileType->files()
-            ->where('organisation_id', Auth::user()->organisation_id)
+            ->when(! $isSystemAdmin, function ($query) {
+                $query->where('organisation_id', auth()->user()->organisation_id);
+            })
             ->where('is_active', true)
             ->count();
+
+        // dd($activeFiles);
 
         return view('national.eregistry.file_types.show', compact('fileType',
                                                                    'totalFiles',

@@ -174,51 +174,7 @@ class FileCirculationController extends Controller
         // dd($request);
         $validated = $request->validate([
             'file_id' => 'required|exists:files,id',
-        ]);
-
-        $file = $this->files->getById($validated['file_id']);
-
-        $fileStatus = $file->status === 'Pending Signature'
-            ? 'Pending Signature'
-            : 'Pending SRO Review';
-
-        $organisationId = Auth::user()->organisation_id;
-
-        $reviewOfficer = User::role('review-officer')
-            ->where('organisation_id', $organisationId)
-            ->where('is_active', true)
-            ->whereNotNull('email')
-            ->first();
-
-        $fileCirculation = FileCirculation::updateOrCreate(
-            [
-                'file_id' => $validated['file_id'],
-                'to_organisation_id' => $organisationId,
-            ],
-            [
-                'circulated_by' => auth()->id(),
-                'circulated_at' => now(),
-                'updated_by' => auth()->id(),
-                'status' => $fileStatus,
-                'review_officer' => $reviewOfficer?->id,
-            ]
-        );
-
-
-        if ($reviewOfficer) {
-            $reviewOfficer->notify(
-                new ReviewOfficerPendingReviewNotification($fileCirculation)
-            );
-        }
-        
-        return redirect()->route('registry.files.index')->with('success', 'File circulated ');
-    }
-
-
-    public function submitForSroReview(Request $request, FileCirculation $fileCirculation) 
-    {
-        $validated = $request->validate([
-            'file_id' => 'required|exists:files,id',
+            'review_officer_id' => 'required|exists:users,id',
         ]);
 
         $organisationId = Auth::user()->organisation_id;
@@ -228,7 +184,6 @@ class FileCirculationController extends Controller
             ->where('is_active', true)
             ->whereNotNull('email')
             ->first();
-        
 
         $fileCirculation = FileCirculation::updateOrCreate(
             [
@@ -244,49 +199,59 @@ class FileCirculationController extends Controller
             ]
         );
 
-        return redirect()->route('registry.files.index')->with('success', 'File submitted for SRO review.');
+
+        if ($reviewOfficer) {
+            $reviewOfficer->notify(
+                new ReviewOfficerPendingReviewNotification($fileCirculation)
+            );
+        }
+        
+        return redirect()->route('registry.files.index')->with('success', 'File circulated ');
     }
 
 
-
-
-
-
+    // When the file is dispatched to the ministry, 
+    // the recipient ministry can circulate the file to their review officer
     public function update(Request $request, FileCirculation $fileCirculation) 
     {
-        $previousStatus = $fileCirculation->status;
+        $validated = $request->validate([
+            'review_officer_id' => 'required|exists:users,id',
+        ]);
+
+        $organisationId = Auth::user()->organisation_id;
+
+        $reviewOfficer = User::role('review-officer')
+            ->where('organisation_id', $organisationId)
+            ->where('is_active', true)
+            ->whereNotNull('email')
+            ->find($validated['review_officer_id']);
+
+        if (! $reviewOfficer) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'review_officer_id' => 'The selected user is not an eligible review officer for your organisation.',
+            ]);
+        }
         
         $fileCirculation->update(
             [
+                'circulated_by' => auth()->id(),
+                'circulated_at' => now(),
                 'updated_by' => auth()->id(),
                 'updated_at' => now(),
-                'status'     => 'Pending SRO Approval',
+                'status'     => 'Pending SRO Review',
+                'final_review_status' => 'Pending SRO Review', //this is added to track the final review status of the file circulation
+                'review_officer' => $reviewOfficer->id,
             ]
         );
 
-        if ($previousStatus !== 'Pending SRO Approval') {
-            $reviewOfficer = User::role('review-officer')
-                ->where('organisation_id', $fileCirculation->to_organisation_id)
-                ->where('is_active', true)
-                ->whereNotNull('email')
-                ->first();
-
-            $fileCirculation->update(
-            [
-                'review_officer' => $reviewOfficer ? $reviewOfficer->id : null,
-            ]
-        );
-
-
-            if ($reviewOfficer) {
-                $reviewOfficer->notify(
-                    new ReviewOfficerPendingReviewNotification($fileCirculation)
-                );
-            }
-
+        if ($reviewOfficer) {
+            $reviewOfficer->notify(
+                new ReviewOfficerPendingReviewNotification($fileCirculation)
+            );
         }
 
         return redirect()->route('registry.files.index')->with('success', 'File circulated ');
+    
     }
 
 

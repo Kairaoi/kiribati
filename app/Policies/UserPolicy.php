@@ -12,7 +12,7 @@ class UserPolicy
      */
     public function viewAny(User $user): bool
     {
-        if( $user->hasRole('ministry-admin') || $user->hasRole('registry') ||  $user->hasRole('system-admin')  ){
+        if( $user->hasRole('admin') || $user->hasRole('registry') ||  $user->hasRole('system-admin')  ){
             return true;
         }
         return false;
@@ -23,7 +23,7 @@ class UserPolicy
      */
     public function view(User $user, User $model): bool
     {
-        if( ($user->hasRole('ministry-admin') || $user->hasRole('registry')) && $user->ministry_id === $model->ministry_id) {
+        if( ($user->hasRole('admin') || $user->hasRole('registry')) && $user->organisation_id === $model->organisation_id) {
             return true;
         }
 
@@ -41,7 +41,7 @@ class UserPolicy
      */
     public function create(User $user): bool
     {
-        if( $user->hasRole('ministry-admin') || $user->hasRole('system-admin') ){
+        if( $user->hasRole('admin') || $user->hasRole('system-admin') ){
             return true;
         }
         return false;
@@ -53,7 +53,7 @@ class UserPolicy
      */
     public function update(User $user, User $model): bool
     {
-        if( ($user->hasRole('ministry-admin') || $user->hasRole('registry')) && $user->ministry_id === $model->ministry_id) {
+        if( ($user->hasRole('admin') || $user->hasRole('registry')) && $user->organisation_id === $model->organisation_id) {
             return true;
         }
 

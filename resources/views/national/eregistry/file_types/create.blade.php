@@ -18,15 +18,15 @@
     <form action="{{ route('registry.file-types.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
  
-        <div class="bg-white shadow font-poppins rounded-2xl p-6 max-w-2xl mx-auto mt-4 mb-4">
+        <div class="bg-white shadow rounded-2xl p-6 max-w-2xl mx-auto mt-4 mb-4">
 
             @if($isSystemAdmin)
                 <h2 class="text-m font-semibold text-gray-800 mb-6">
                     <span class="text-cyan-600">Create Global File Type</span>
                 </h2>
             @else
-                <h2 class="text-m font-semibold text-gray-800 mb-6">
-                    <span class="text-cyan-600">Create Ministry File Type</span>
+                <h2 class="text-sm font-semibold text-gray-800 mb-6">
+                    <span class="text-cyan-600">Create your organisation file type</span>
                 </h2>
             @endif
 

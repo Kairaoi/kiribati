@@ -34,7 +34,7 @@
         <div>
             <h1 class="text-3xl font-bold tracking-wide">Divisions</h1>
             <p class="text-base text-gray-500 mt-1">
-                View and manage all divisions in your ministry.
+                View and manage all divisions in your organisation.
             </p>
         </div>
 
@@ -49,7 +49,7 @@
         <table id="divisionsTable" class="bg-gray-50 text-gray-800 divide-y text-sm divide-gray-200 stripe">
             <thead>
                 <tr>
-                    <th class="uppercase">Ministry</th>
+                    <th class="uppercase">Organisation</th>
                     <th class="uppercase">Name</th>
                     <th class="uppercase">Head of Division</th>
                     {{-- <th class="uppercase">Created At</th> --}}

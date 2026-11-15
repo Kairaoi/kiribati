@@ -58,18 +58,18 @@ class DispatchController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\Response
      */
-    public function getDataTables(Request $request)
-    {
-        $userOrgId = Auth()->user()->organisation_id;
+    // public function getDataTables(Request $request)
+    // {
+    //     $userOrgId = Auth()->user()->organisation_id;
 
-        $search = $request->get('search', '');
-        if (is_array($search)) {
-            $search = $search['value'];
-        }
-        $query = $this->dispatches->getForDataTable($search, $userOrgId);
+    //     $search = $request->get('search', '');
+    //     if (is_array($search)) {
+    //         $search = $search['value'];
+    //     }
+    //     $query = $this->dispatches->getForDataTable($search, $userOrgId);
 
-        return DataTables::of($query)->make(true);
-    }
+    //     return DataTables::of($query)->make(true);
+    // }
 
 
     /**
@@ -78,17 +78,17 @@ class DispatchController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\Response
      */
-    public function getUserDataTables(Request $request)
-    {
+    // public function getUserDataTables(Request $request)
+    // {
         
-        $search = $request->get('search', '');
-        if (is_array($search)) {
-            $search = $search['value'];
-        }
-        $query = $this->dispatches->getForUserDataTable($search);
+    //     $search = $request->get('search', '');
+    //     if (is_array($search)) {
+    //         $search = $search['value'];
+    //     }
+    //     $query = $this->dispatches->getForUserDataTable($search);
 
-        return DataTables::of($query)->make(true);
-    }
+    //     return DataTables::of($query)->make(true);
+    // }
 
 
 

@@ -15,7 +15,7 @@ class DivisionPolicy
      */
     public function viewAny(User $user): bool
     {
-        if ($user->hasRole(['registry', 'ministry-admin', 'system-admin'])) {
+        if ($user->hasRole(['registry', 'admin', 'system-admin'])) {
             return true;
         }
         return false;
@@ -26,9 +26,14 @@ class DivisionPolicy
      */
     public function view(User $user, Division $division): bool
     {
-        if ($user->hasRole(['registry', 'ministry-admin', 'system-admin']) && $user->ministry_id === $division->ministry_id) {
+        if ($user->hasRole(['registry', 'admin']) && $user->organisation_id === $division->organisation_id) {
             return true;
         }
+
+        if ($user->hasRole('system-admin')) {
+            return true;
+        }
+        
         return false;
     }
 
@@ -37,7 +42,7 @@ class DivisionPolicy
      */
     public function create(User $user): bool
     {
-        if ($user->hasRole(['registry', 'ministry-admin', 'system-admin']) ) {
+        if ($user->hasRole(['registry', 'admin', 'system-admin']) ) {
             return true;
         }
         return false;
@@ -48,7 +53,7 @@ class DivisionPolicy
      */
     public function update(User $user, Division $division): bool
     {
-        if ($user->hasRole(['registry', 'ministry-admin']) && $user->ministry_id === $division->ministry_id) {
+        if ($user->hasRole(['registry', 'admin']) && $user->ministry_id === $division->ministry_id) {
             return true;
         }
         return false;

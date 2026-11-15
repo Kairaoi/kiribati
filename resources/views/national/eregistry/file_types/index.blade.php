@@ -1,17 +1,17 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mx-auto px-4 py-8 max-w-5xl mt-3 rounded-md min-h-screen ">
+<div class="container mx-auto px-4 py-8 max-w-7xl mt-3 rounded-md min-h-screen ">
     <div class="mb-4 flex items-start justify-between">
         <div>
             <h1 class="text-3xl font-bold text-gray-800">File Types</h1>
-            <p class="text-gray-500 text-sm mb-2">Manage file types used in file reference numbers:</p>
+            <p class="text-gray-500 text-sm mt-2 mb-2">Manage file types used in file reference numbers:</p>
             
             {{-- <label class="block text-m text-slate-900"></label> --}}
             <select id="fileTypeFilter" class="filter-input w-full text-sm text-gray-600 border px-3 py-2 focus:ring focus:ring-cyan-200">
                 <option value="">All file types</option>
-                <option value="ministry">Ministry</option>
-                <option value="global">Global</option>
+                <option value="ministry">organisation-specific</option>
+                <option value="global">government-wide</option>
             </select>
         </div>
         <a href="{{ route('registry.file-types.create') }}"
@@ -29,7 +29,6 @@
                     <th>FILE TYPE NAME</th>
                     <th>CODE</th>
                     <th>SCOPE</th>
-                    <th>CREATED AT</th>
                     <th>UPDATED AT</th>
                     <th>STATUS</th>
                     <th class="w-28">Actions</th>
@@ -49,7 +48,7 @@
             border-collapse: separate;
             table-layout:auto;
             border: 0.5px solid #f2f2f5;
-            border-radius: 8px;
+            border-radius: 4px;
             overflow: hidden;
     }
 
@@ -65,30 +64,28 @@
     /* Cells */
     #fileTypesTable th,
     #fileTypesTable td {
-        padding: 8px 10px;
+        padding: 8px 8px;
     }
 
     /* Row divider */
     #fileTypesTable tbody tr {
         border-bottom: 0.5px solid #ffffff;
-        padding: 8px 10px;
     }
 
     /* Hover effect */
     #fileTypesTable tbody tr:hover {
         background-color: #f9fafb;
-        padding: 8px 10px;
+        
     }
 
     /* Fix long text */
     #fileTypesTable td {
         white-space: normal !important;
-        border: 1px solid #dbdbe2;
+        border: 0.5px solid #dbdbe2;
         word-break: break-word;
     }
     .dataTables_filter input {
-        border: 1px solid #d1d5db;
-        border-radius: 8px;
+        border-radius: 4px;
         padding: 6px 10px;
         outline: none;
     }
@@ -98,10 +95,9 @@
     }
 
     .dataTables_length select {
-        border-radius: 8px;
         padding: 4px 8px;
         padding-right: 30px; /* space for arrow */
-        border: 1px solid #d1d5db;
+        
     }
 
     /* Action Button Styles */ 
@@ -137,12 +133,11 @@
         background-color: #f3f4f6; 
     }
 
-
   
     .dataTables_filter input {
         padding: 0.375rem 0.75rem !important;
         border-radius: 0.375rem !important;
-        border: 1px solid #ced4da !important;
+        border: 0.5px solid #ced4da !important;
         font-size: 0.8rem !important;
         margin-top: 1rem !important; 
         font-family: 'Poppins', sans-serif !important;
@@ -162,7 +157,7 @@
 
     .dataTables_paginate .paginate_button {
         padding: 6px 10px;
-        border-radius: 6px;
+        border-radius: 2px;
         background: #f3f4f6;
         cursor: pointer;
     }
@@ -276,24 +271,15 @@ $(document).ready(function() {
                         ? `
                             <span class="inline-flex items-center rounded-full bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-700 ring-1 ring-cyan-100">
                                 <span class="mr-1.5 h-1.5 w-1.5 rounded-full bg-cyan-500"></span>
-                                Government-wide
+                                government-wide
                             </span>
                         `
                         : `
                             <span class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-100">
                                 <span class="mr-1.5 h-1.5 w-1.5 rounded-full bg-amber-500"></span>
-                                Ministry-specific
+                                organisation
                             </span>
                         `;
-                }
-            },
-            { data: 'created_at', 
-                render(data) {
-                    return new Date(data).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                    });
                 }
             },
             { data: 'updated_at', 
@@ -331,7 +317,7 @@ $(document).ready(function() {
                 render: function (data, type, row) {
                     let buttons = `
                         <a href="/registry/file-types/${row.id}"
-                            class="inline-flex items-center justify-center rounded-md p-2 transition hover:bg-purple-50 hover:text-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                            class="inline-flex items-center justify-center rounded-md p-2 transition"
                             title="View"
                             aria-label="View file type">
                             <i class="fa fa-eye text-sm"></i>
@@ -346,7 +332,7 @@ $(document).ready(function() {
                             <button
                                 type="button"
                                 data-id="${row.id}"
-                                class="deactivate-action inline-flex items-center justify-center rounded-md p-2 text-orange-600 transition hover:bg-orange-50 hover:text-orange-800 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                                class="deactivate-action inline-flex items-center justify-center rounded-md p-2 transition"
                                 title="Deactivate"
                                 aria-label="Deactivate file type">
                                 <i class="fa fa-ban text-sm"></i>
@@ -357,7 +343,7 @@ $(document).ready(function() {
                             <button
                                 type="button"
                                 data-id="${row.id}"
-                                class="activate-action inline-flex items-center justify-center rounded-md p-2 text-green-600 transition hover:bg-green-50 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                                class="activate-action inline-flex items-center justify-center rounded-md p-2 transition"
                                 title="Activate"
                                 aria-label="Activate file type">
                                 <i class="fa fa-check-circle text-sm"></i>
@@ -370,7 +356,7 @@ $(document).ready(function() {
                             <button
                                 type="button"
                                 data-id="${row.id}"
-                                class="delete-action inline-flex items-center justify-center rounded-md p-2 text-red-600 transition hover:bg-red-50 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                                class="delete-action inline-flex items-center justify-center rounded-md p-2 transition"
                                 title="Delete"
                                 aria-label="Delete file type">
                                 <i class="fa fa-trash text-sm"></i>
@@ -389,7 +375,7 @@ $(document).ready(function() {
         dom:   "<'row mb-3'<'col-md-6 d-flex align-items-center'B><'col-12 col-md-6 text-md-end text-start'f>>" +
                         "<'row'<'col-sm-12'tr>>" +
                         "<'row mt-3'<'col-sm-5'i><'col-sm-7'p>>",
-
+    
         language: {
                         paginate: {
                             previous: "←",

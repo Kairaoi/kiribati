@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\National\Eregistry;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\National\Eregistry\FolderStoreRequest;
+use App\Http\Requests\National\Eregistry\FolderUpdateRequest;
 use Illuminate\Http\Request;
 use App\Repositories\National\Eregistry\FolderRepository;
 use App\Repositories\National\Eregistry\OrganisationRepository;
@@ -69,18 +70,60 @@ class FolderController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    // public function index()
+    // {
+    //     $folders = $this->folders->getTopFolders(auth()->user()->organisation_id)
+    //                              ->get(['id', 'uuid', 'name']);
+
+    //     return view('national.eregistry.folders.index', compact('folders'));
+    // }
+
+    public function index(Request $request)
     {
-        $folders = $this->folders->getTopFolders(auth()->user()->organisation_id)
-                                 ->get(['id', 
-                                        'uuid', 
-                                        'name']);
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+        ]);
 
-        // dd($folders);
+        $search = trim($validated['search'] ?? '');
 
-        return view('national.eregistry.folders.index', compact('folders'));
+        $organisationId = $request->user()->organisation_id;
+        $pattern = '%' . $search . '%';
+
+        $folders = Folder::query()
+            ->where('organisation_id', $organisationId)
+            ->when(
+                $search === '',
+                fn ($query) => $query->whereNull('parent_id'),
+                fn ($query) => $query->where('name', 'like', $pattern)
+            )
+            ->withCount('fileAssignments')
+            ->orderBy('name')
+            ->paginate(20, ['*'], 'folders_page')
+            ->withQueryString();
+
+        $fileResults = null;
+
+        if ($search !== '') {
+            $fileResults = FileFolderAssignment::query()
+                ->where('organisation_id', $organisationId)
+                ->whereHas('folder', fn ($folders) =>
+                    $folders->where('organisation_id', $organisationId)
+                )
+                ->whereHas('file', function ($files) use ($pattern) {
+                    $files->where(function ($files) use ($pattern) {
+                        $files->where('subject', 'like', $pattern)
+                            ->orWhere('reference_no', 'like', $pattern);
+                    });
+                })
+                ->with(['file', 'folder'])
+                ->orderByDesc('filed_at')
+                ->orderByDesc('id')
+                ->paginate(20, ['*'], 'files_page')
+                ->withQueryString();
+        }
+
+        return view('national.eregistry.folders.index', compact('folders', 'fileResults'));
     }
-
     
 
     /**
@@ -118,9 +161,9 @@ class FolderController extends Controller
 
         $isSystemAdmin = $user->hasRole('system-admin');
 
-        $ministries = $isSystemAdmin ? $this->organisations->listMinistries() : collect();
+        $organisations = $isSystemAdmin ? $this->organisations->listMinistries() : collect();
 
-        return view('national.eregistry.folders.create', compact('ministries', 
+        return view('national.eregistry.folders.create', compact('organisations', 
                                                                  'user', 
                                                                  'isSystemAdmin',
                                                                  'parent',
@@ -171,7 +214,7 @@ class FolderController extends Controller
             'updated_by' => $user->id,
         ]);
 
-        return response()->json(['message' => 'File moved successfully.',]);
+        return response()->json(['message' => 'File moved.',]);
     }
 
 
@@ -185,21 +228,6 @@ class FolderController extends Controller
         $subfolders = $folder->children()->where('is_active', true)
                                          ->orderBy('name')
                                         ->get();
-
-        // dd([
-        //     'opened_folder' => [
-        //         'id' => $folder->id,
-        //         'uuid' => $folder->uuid,
-        //         'name' => $folder->name,
-        //     ],
-        //     'subfolders' => $subfolders->map(function ($child) {
-        //         return [
-        //             'id' => $child->id,
-        //             'name' => $child->name,
-        //             'parent_id' => $child->parent_id,
-        //         ];
-        //     })->toArray(),
-        // ]);
 
         $breadcrumbs = collect();
         $currentFolder = $folder;
@@ -218,8 +246,18 @@ class FolderController extends Controller
             $currentFolder = $currentFolder->parent;
         }
 
-         $folders = $this->folders->getTopFolders(auth()->user()->organisation_id)
-                                 ->get(['id', 'uuid', 'name']);
+        $folders = $this->folders->getTopFolders(auth()->user()->organisation_id);
+
+        // $countFiles = function ($folder) use (&$countFiles) {
+        //     return ($folder->file_assignments_count ?? 0)
+        //         + $folder->childrenRecursive->sum(
+        //             fn ($child) => $countFiles($child)
+        //         );
+        // };
+
+        // foreach ($folders as $folder) {
+        //     $folder->total_files_count = $countFiles($folder);
+        // }
 
         return view('national.eregistry.folders.show', compact('folder', 
                                                                 'subfolders',
@@ -279,7 +317,7 @@ class FolderController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-      public function edit(Request $request, Folder $folder)
+    public function edit(Request $request, Folder $folder)
     {
         $parent = null;
 
@@ -313,7 +351,8 @@ class FolderController extends Controller
 
         $ministries = $isSystemAdmin ? $this->organisations->listMinistries() : collect();
 
-        return view('national.eregistry.folders.create', compact('ministries', 
+        return view('national.eregistry.folders.edit', compact('ministries', 
+                                                                 'folder',
                                                                  'user', 
                                                                  'isSystemAdmin',
                                                                  'parent',
@@ -324,7 +363,7 @@ class FolderController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(FolderUpdateRequest $request, string $id)
     {
         //
     }

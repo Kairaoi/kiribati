@@ -241,6 +241,22 @@
                     Signed Electronically
                 </div>
             </div>
+    @elseif($file->status === "Pending finalisation")
+            <div class="signature-section">
+                <img
+                    src="{{ public_path('storage/' . $file->signedBy->signature_path) }}"
+                    alt="Signature"
+                    class="signature-image">
+                <div class="signatory-name">
+                    {{ $file->signedBy?->name }}
+                </div>
+                <div>
+                    {{ $file->signedBy?->designation ?? '' }}
+                </div>
+                <div style="font-size: 12px; color: #666;">
+                    Signed Electronically
+                </div>
+            </div>
     @endif
             
     {{-- Distribution List --}}

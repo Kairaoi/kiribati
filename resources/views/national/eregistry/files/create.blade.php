@@ -92,10 +92,9 @@
                                 Division <span class="text-red-600">*</span>
                             </label>
                         </div>
-                        <select id="division" name="division" class="mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-700 shadow-sm transition duration-200 hover:border-cyan-400 focus:border-cyan-500 focus:outline-none focus:ring-4 focus:ring-cyan-100">
+                        <select id="division" name="from_division_id" class="mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-700 shadow-sm transition duration-200 hover:border-cyan-400 focus:border-cyan-500 focus:outline-none focus:ring-4 focus:ring-cyan-100">
                             {{-- Options will be populated dynamically via JavaScript --}}
                         </select>
-                      
                     </div>
 
                     <div id="org-select-container">
@@ -140,14 +139,13 @@
 
                     <div class="mt-3">
                         <label for="division">Division<span class="text-red-600">*</span></label>
-                        <select id="division" name="division"
+                        <select id="division" name="from_division_id"
                             class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm">
                             <option value="{{ Auth::user()->division_id }}">
                                 {{ Auth::user()->division->name }}
                             </option>                        
                         </select>
                     </div>
-
                 @endif
                 
                 <div class="mt-3">
@@ -171,20 +169,22 @@
                                 </option>
                             @endforeach
                     </select>
-                    <div class="mt-2">
-                        <div class="flex items-center justify-between text-xs text-cyan-600">
-                            <span>No suitable file type?</span>
-                            <a href="{{ route('registry.file-types.create') }}" 
-                                class="inline-flex items-center gap-1 font-medium text-cyan-600 hover:text-cyan-800 transition">
-                                <svg xmlns="http://www.w3.org/2000/svg" 
-                                    class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                        d="M12 4v16m8-8H4" />
-                                </svg>
-                                Add file type
-                            </a>
+                    @if($isRegistry)
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between text-xs text-cyan-600">
+                                <span>No suitable file type?</span>
+                                <a href="{{ route('registry.file-types.create') }}" 
+                                    class="inline-flex items-center gap-1 font-medium text-cyan-600 hover:text-cyan-800 transition">
+                                    <svg xmlns="http://www.w3.org/2000/svg" 
+                                        class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                            d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    Add file type
+                                </a>
+                            </div>
                         </div>
-                    </div>
+                    @endif
                 </div>
                 
                 <!-- File Category -->
@@ -230,9 +230,8 @@
                                 <div class="text-xs text-gray-500">Upload an existing PDF file</div>
                             </div>
                         </label>
-                        <label id="online-option"
+                        {{-- <label id="online-option"
                             class="flex items-center gap-3 border border-gray-300 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition">
-                            
                             <input type="radio" 
                                 name="document_source" 
                                 value="online"
@@ -243,7 +242,7 @@
                                     Create memorandum using editor
                                 </div>
                             </div>
-                        </label>
+                        </label> --}}
                     </div>
                 </div>
 
@@ -577,7 +576,7 @@
         </div>
 
         <div class="border-t border-gray-200 pt-4 mt-8 flex justify-left gap-3">
-            <button type="submit" class="mt-4 mb-10 justify-left bg-cyan-600 text-white py-3 px-10 rounded-md hover:bg-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:ring-offset-2">
+            <button type="submit" class="mt-2 mb-2 justify-left bg-cyan-600 text-white py-3 px-10 rounded-md hover:bg-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:ring-offset-2">
                 Create File
             </button>
         </div>

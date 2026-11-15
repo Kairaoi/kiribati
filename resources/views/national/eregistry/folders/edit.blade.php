@@ -15,16 +15,43 @@
         </div>
     @endif
 
-    <form action="{{ route('registry.folders.update') }}" method="POST" enctype="multipart/form-data">
+<div class="bg-white shadow rounded-2xl p-6 max-w-2xl mx-auto mt-4 mb-4">
+    <nav aria-label="Folder breadcrumb" class="mb-4">
+            <ol class="flex flex-wrap items-center gap-2 text-sm">
+                <li>
+                    <a href="{{ route('registry.folders.index') }}" class="text-cyan-700 hover:underline">
+                        E-Filing
+                    </a>
+                </li>
+
+                @foreach ($breadcrumbs as $breadcrumb)
+                    <li class="flex items-center gap-2">
+                        <span class="text-gray-400" aria-hidden="true">/</span>
+
+                        <a
+                            href="{{ route('registry.folders.show', $breadcrumb->uuid) }}"
+                            class="text-cyan-700 hover:underline"
+                        >
+                            {{ $breadcrumb->name }}
+                        </a>
+                    </li>
+                @endforeach
+
+                <li class="flex items-center gap-2">
+                    <span class="text-gray-400" aria-hidden="true">/</span>
+
+                    <span class="text-gray-800" aria-current="page">
+                        Edit {{ $folder->name ?? '' }}
+                    </span>
+                </li>
+            </ol>
+        </nav>
+
+    <form action="{{ route('registry.folders.update', $folder->uuid) }}" method="POST" enctype="multipart/form-data">
         @csrf
         @method('PUT')
-        <input type="hidden" name="parent_id" value="{{ $parent?->id }}">
-        
-        <div class="bg-white shadow font-poppins rounded-2xl p-6 max-w-2xl mx-auto mt-4 mb-4">
-        
-            <h2 class="text-m font-semibold text-gray-800 mb-6">
-                <span class="text-cyan-600">Edit Folder</span>
-            </h2>
+        <input type="hidden" name="parent_id" value="{{ $parent?->id }}">        
+           
             <div class="mb-5 relative">
                 @if ($isSystemAdmin)
                     <div>
@@ -32,7 +59,7 @@
                             for="ministry_id"
                             class="mb-1 block text-sm font-medium text-gray-700"
                         >
-                            Ministry
+                            Organisation
                         </label>
 
                         <select
@@ -43,7 +70,7 @@
                                 shadow-sm focus:border-cyan-500
                                 focus:ring-cyan-500"
                         >
-                            <option value="">Select ministry</option>
+                            <option value="">Select organisation</option>
 
                             @foreach ($ministries as $ministry)
                                 <option
@@ -65,10 +92,8 @@
                     </div>
                 @else
                     <div>
-                        <label
-                            class="mb-1 block text-sm font-medium text-gray-700"
-                        >
-                            Ministry
+                        <label class="mb-1 block text-sm font-medium text-gray-700">
+                            Organisation
                         </label>
 
                         <input
@@ -97,7 +122,7 @@
                 </label>
 
                 <input type="text" name="name" id="folder_name"
-                    value="{{ old('name') }}"
+                    value="{{ old('name', $folder->name ?? '') }}"
                     class="mt-1 w-full rounded-lg border-gray-300 shadow-sm 
                         focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 
                         text-sm px-3 py-2"
@@ -118,7 +143,7 @@
                     Description 
                 </label>
                 <input type="text" name="description" id="description"
-                    value="{{ old('description') }}"
+                    value="{{ old('description', $folder->description ?? '') }}"
                     class="mt-1 w-full rounded-lg border-gray-300 shadow-sm 
                         focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 
                         text-sm px-3 py-2"
@@ -127,12 +152,12 @@
           
 
             <!-- Divider -->
-            <div class="border-t border-gray-200 pt-5 flex justify-center gap-3">
+            <div class="border-t border-gray-200 pt-5 flex gap-3">
                 <button type="submit"
-                    class="px-5 py-2 text-sm font-medium rounded-lg 
+                    class="px-5 py-3 text-sm font-medium rounded-lg 
                         bg-cyan-600 text-white hover:bg-cyan-700 
                         focus:ring-2 focus:ring-cyan-300">
-                    Create Folder
+                    Update Folder
                 </button>
             </div>
         </div>

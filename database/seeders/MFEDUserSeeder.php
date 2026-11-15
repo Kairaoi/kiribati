@@ -48,7 +48,7 @@ class MFEDUserSeeder extends Seeder
                 'deleted_at' => null
             ]
         );
-        $user1->assignRole('ministry-admin');
+        $user1->assignRole('admin');
         // $ministry->review_officer_id = $user1->id;
         // $ministry->save();
 
@@ -64,7 +64,7 @@ class MFEDUserSeeder extends Seeder
                 'deleted_at' => null
             ]
         );
-        $user2->assignRole('ministry-admin');
+        $user2->assignRole('admin');
 
         $user3 = User::withTrashed()->updateOrCreate(
             ['email' => 'sastest@mfed.gov.ki'],
@@ -78,7 +78,7 @@ class MFEDUserSeeder extends Seeder
                 'deleted_at' => null
             ]
         );
-        $user3->assignRole('ministry-admin');
+        $user3->assignRole('admin');
 
         $user4 = User::withTrashed()->updateOrCreate(
             ['email' => 'customtest@mfed.gov.ki'],

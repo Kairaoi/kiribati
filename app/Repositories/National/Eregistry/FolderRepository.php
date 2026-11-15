@@ -29,7 +29,7 @@ class FolderRepository extends BaseRepository
     {
 
         $data = [
-            'organisation_id' => $input['ministry_id'],
+            'organisation_id' => $input['organisation_id'],
             'name' => $input['name'],
             'description' => $input['description'] ?? null,
             'parent_id' => $input['parent_id'] ?? null,
@@ -62,7 +62,7 @@ class FolderRepository extends BaseRepository
             'name' => $input['name'],
             'description' => $input['description'] ?? $model->description,
             'code' => $input['code'],
-            'ministry_id' => $input['ministry_id'] ?? $model->ministry_id,
+            'organisation_id' => $input['organisation_id'] ?? $model->ministry_id,
             'is_global' => $input['is_global'] ?? $model->is_global,
             'updated_at' => now(),
             'updated_by' => $user->id,
@@ -148,14 +148,14 @@ class FolderRepository extends BaseRepository
     }
 
 
-    public function getTopFolders($organisationId = null)
+    public function getTopFolders($organisationId)
     {
-        return $this->model->query()
-            ->orderBy('name')
+        return Folder::query()
             ->where('organisation_id', $organisationId)
-            ->where('is_active', true)
             ->whereNull('parent_id')
-            ->orderBy('name');           
+            ->select(['id', 'uuid', 'name'])
+            ->withCount('fileAssignments')
+            ->get();
     }
 
 }

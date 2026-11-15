@@ -1,6 +1,32 @@
 @extends('layouts.app')
 
 @section('content')
+   @if (session('success'))
+        <div 
+            x-data="{ show: true }"
+            x-show="show"
+            x-transition.opacity.scale.80
+            x-init="setTimeout(() => show = false, 4000)" 
+            class="fixed text-whiteright-0 bg-cyan-400 px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 z-50">
+            <!-- Icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke-width="2" 
+                stroke="currentColor" 
+                class="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+
+            <!-- Message -->
+            <span class="font-medium">{{ session('success') }}</span>
+
+            <!-- Close button -->
+            <button @click="show = false" class="ml-4 hover:text-gray-200">
+                &times;
+            </button>
+        </div>
+    @endif
 <div class="container mx-auto px-4 py-8 max-w-5xl mt-3 rounded-md min-h-screen ">
     <h1 class="text-3xl font-bold text-gray-800">Organisations</h1>
     <p class="text-gray-500 text-sm mt-2 mb-2">View all organisations registered in the DMS</p>
@@ -21,7 +47,7 @@
                 <a href="{{ route('registry.organisations.create') }}"
                     class="inline-flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white text-sm font-medium shadow-sm rounded-lg hover:bg-cyan-700 transition">
                     <i class="fas fa-plus text-xs"></i>
-                    Create Global Organisation (to be used by all ministries)
+                    Create Organisation
                 </a>
             </div>
         @endif
@@ -32,11 +58,12 @@
             <thead class="bg-gray-50 text-gray-600 text-sm uppercase tracking-wide">
                 <tr>
                     <th>#</th>
+                    <th>UUID</th>
                     <th>Name</th>
                     <th>Code</th>
                     <th>Category/Type</th>
                     <th>Status</th>
-                    <th class="w-28">Actions</th>
+                    <th class="w-28 no-export">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y stripe"></tbody> <!-- DataTable will populate this -->
@@ -264,9 +291,10 @@ $(document).ready(function() {
        },
        columns: [
            { data: 'id'},
+           { data: 'uuid', visible: false}, // Hide UUID column
            { data: 'name' },
            { data: 'code'},
-           { data: 'type_name'},
+           { data: 'type_name', name: 'organisation_types.name' },
            {
                 data: 'is_active',
                 render: function (data) {
@@ -282,14 +310,14 @@ $(document).ready(function() {
                 searchable: false,
                 render(data, type, row) {
                     let buttons = `
-                        <a href="/registry/organisations/${row.id}" 
+                        <a href="/registry/organisations/${row.uuid}" 
                             class="inline-flex items-center justify-center hover:text-gray-600 transition"
                                 title="View">
                                 <i class="fa fa-eye text-sm"></i>
                         </a>
                         `;
                     if (isSystemAdmin || isMinistryAdmin) {
-                        buttons += `<a href="/registry/organisations/${row.id}/edit" 
+                        buttons += `<a href="/registry/organisations/${row.uuid}/edit" 
                             class="inline-flex items-center justify-center hover:text-gray-600 transition ms-3"
                             title="Edit">
                             <i class="fa fa-pen text-sm"></i>
@@ -329,25 +357,25 @@ $(document).ready(function() {
             }
         },
        buttons: [
-                        {
-                            extend: 'excelHtml5',
-                            text: '<i class="fas fa-download"></i>EXCEL',
-                            className: 'excel-export-btn',
-                            title: 'File types',
-                            exportOptions: {
-                                columns: ':not(:last-child)'
-                            }
-                        },
-                        {
-                            extend: 'pdfHtml5',
-                            text: '<i class="fas fa-download"></i>PDF',
-                            className: 'pdf-export-btn',
-                            title: 'File types',
-                            exportOptions: {
-                                columns: ':not(:last-child)'
-                            }
+                    {
+                        extend: 'excelHtml5',
+                        text: '<i class="fas fa-download"></i>EXCEL',
+                        className: 'excel-export-btn',
+                        title: 'DMS Organisations',
+                        exportOptions: {
+                            columns: ':visible:not(.no-export)'
                         }
-                    ]
+                    },
+                    {
+                        extend: 'pdfHtml5',
+                        text: '<i class="fas fa-download"></i>PDF',
+                        className: 'pdf-export-btn',
+                        title: 'DMS Organisations',
+                        exportOptions: {
+                        columns: ':visible:not(.no-export)'
+                    }
+                    }
+                ]
    });
 
    // Reload table when initial type changes
@@ -361,19 +389,19 @@ $(document).ready(function() {
        e.preventDefault();
        const id = $(this).data('id');
        
-       if (confirm('Are you sure you want to delete this file type?')) {
+       if (confirm('Are you sure you want to delete this organisation?')) {
            $.ajax({
-               url : route('registry.file-types.destroy', id),
+               url : route('registry.organisations.destroy', id),
                type : 'DELETE',
                headers :{
                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') 
                },
                success(response) {
-                   $('#fileTypesTable').DataTable().ajax.reload();
-                   alert('File type deleted successfully'); 
+                   $('#organisationsTable').DataTable().ajax.reload();
+                   alert('Organisation deleted successfully'); 
                },
                error(xhr) {
-                   alert('Error deleting file type'); 
+                   alert('Error deleting organisation'); 
                } 
            });
        }

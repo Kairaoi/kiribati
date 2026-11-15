@@ -67,8 +67,4 @@ class FileType extends Model implements Auditable
             return $query;
     }
 
-
-   
-
-
 }

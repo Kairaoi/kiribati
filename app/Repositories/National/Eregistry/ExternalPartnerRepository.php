@@ -43,7 +43,7 @@ class ExternalPartnerRepository extends BaseRepository
             'email' => $input['email'] ?? null,
             'phone' => $input['phone'] ?? null,
             'organisation_type_id' => $input['organisation_type_id'] ?? null,
-            'ministry_id' => $this->auth->ministry_id,
+            'organisation_id' => $this->auth->organisation_id,
             'is_active' => $input['is_active'] ?? true,
             'created_by' => Auth::id(),
             'updated_by' => Auth::id(),
@@ -55,7 +55,7 @@ class ExternalPartnerRepository extends BaseRepository
     /**
      * Update an existing global organisation record
      * 
-     * @param Ministry $model
+     * @param ExternalPartner $model
      * @param array $input
      * @return bool
      */
@@ -81,7 +81,7 @@ class ExternalPartnerRepository extends BaseRepository
      * @param bool $trashed
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function getForDataTable($ministryId, $search = '', $order_by = 'id', $sort = 'asc', $trashed = false)
+    public function getForDataTable($organisationId, $search = '', $order_by = 'id', $sort = 'asc')
     {
         $query = $this->model()::query()->select(['external_partners.id as id',
                                                  'external_partners.name as name', 
@@ -91,19 +91,19 @@ class ExternalPartnerRepository extends BaseRepository
                                                  'external_partners.is_active as is_active',
                                                 ])              
                                                 ->withCount('files')
-                                                ->join('ministries', function ($join) use ($ministryId) {
-                                                           $join->on('ministries.id', '=', 'external_partners.ministry_id')
-                                                                ->where('external_partners.ministry_id', $ministryId);
+                                                ->join('organisations', function ($join) use ($organisationId) {
+                                                           $join->on('organisations.id', '=', 'external_partners.organisation_id')
+                                                                ->where('external_partners.organisation_id', $organisationId);
                                                 })
-                                                ->leftJoin('identity_organisations', 'external_partners.identity_organisation_id', '=', 'identity_organisations.id')
                                                 ->leftJoin('organisation_types', 'external_partners.organisation_type_id', '=', 'organisation_types.id');                                                
 
         if (!empty($search)) {
             $search = '%' . strtolower($search) . '%';
             $query->where(function ($q) use ($search) {
                 $q->whereRaw("LOWER(external_partners.name) LIKE ?", [$search])
-                  ->orWhereRaw("LOWER(external_partners.code) LIKE ?", [$search])
-                  ->orWhereRaw("LOWER(external_partners.description) LIKE ?", [$search]);
+                  ->whereRaw("LOWER(organisation_types.name) LIKE ?", [$search])
+                  ->orWhereRaw("LOWER(external_partners.email) LIKE ?", [$search])
+                  ->orWhereRaw("LOWER(external_partners.phone) LIKE ?", [$search]);
             });
         }
 

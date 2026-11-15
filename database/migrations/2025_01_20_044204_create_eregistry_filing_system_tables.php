@@ -129,12 +129,10 @@ class CreateEregistryFilingSystemTables extends Migration
             $table->string('subject');
             $table->string('main_file_path')->nullable();
             $table->json('additional_file_paths')->nullable(); 
-            $table->string('main_file_name')->nullable(); 
             $table->date('letter_date');
             $table->date('due_date')->nullable();
             $table->string('status')->nullable();
             $table->boolean('is_active')->default(true);
-            $table->boolean('is_archived')->default(false);
             $table->foreignId('created_by')->constrained('users');
             $table->foreignId('updated_by')->constrained('users');
             $table->string('memo_from_field')->nullable();
@@ -229,7 +227,6 @@ class CreateEregistryFilingSystemTables extends Migration
                                     'Pending Signature',
                                     'Pending SRO Signature',
                                     'Pending HOD Signature',
-                                    'Pending HOD Review',
                                     'Signature Cancelled',
                                     'Pending SRO Review',
                                     'Closed',
@@ -245,8 +242,8 @@ class CreateEregistryFilingSystemTables extends Migration
             $table->text('review_comment')->nullable();
             $table->foreignId('review_officer')->nullable()->constrained('users'); 
             $table->foreignId('reviewed_by')->nullable()->constrained('users'); 
-            $table->foreignId('colleague_id')->nullable()->constrained('users');
-            $table->string('colleague_comment')->nullable();
+            $table->foreignId('hod_reviewer')->nullable()->constrained('users');
+            $table->string('hod_comment')->nullable();
             $table->datetime('date_reviewed')->nullable();
             $table->boolean('requires_action')->default(false);    
             $table->text('action_taken')->nullable();          

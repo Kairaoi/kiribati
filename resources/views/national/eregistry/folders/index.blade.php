@@ -5,80 +5,121 @@
     <div class="container mx-auto px-4 py-8 max-w-full rounded-md min-h-screen">
         <div class="mb-4 flex items-center justify-between">
             <div>
-                <h1 class="text-2xl font-semibold text-gray-800">E-Filing</h1>
-                <p class="text-sm text-gray-500">Manage all filed documents</p>
+                <h1 class="text-2xl font-bold text-gray-800">Manage all filed documents</h1>
+                <form action="{{ route('registry.folders.index') }}" method="GET" class="mt-4 flex items-center gap-2">
+
+                    <input
+                        type="text"
+                        name="search"
+                        value="{{ request('search') }}"
+                        placeholder="Enter folder name or file name/reference number..."
+                        class="sm:w-96 rounded-lg border-gray-300 text-sm shadow-sm
+                            focus:border-cyan-500 focus:ring-cyan-500"
+                    >
+
+                    <button
+                        type="submit"
+                        class="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-semibold
+                            text-white hover:bg-cyan-700">
+                        Search
+                    </button>
+
+                    @if (trim(request('search', '')) !== '')
+                        <a href="{{ route('registry.folders.index') }}"
+                        class="inline-flex items-center rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            Clear search
+                        </a>
+                    @endif
+                </form>
+            </div>
+            <div >
+                
             </div>
             <div>
-                <a href="{{ route('registry.folders.create') }}"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white text-sm font-medium shadow-sm hover:bg-cyan-700 transition">
+            <a href="{{ route('registry.folders.create') }}"
+                    class="mt-4 inline-flex items-center rounded-md gap-2 px-4 py-2 bg-cyan-600 text-white text-sm font-medium shadow-sm hover:bg-cyan-700 transition">
                     <i class="fas fa-plus"></i>
-                    New Folder
+                    Create New Folder
                 </a>
             </div>
         </div>
 
-        <div class="bg-white shadow-sm border border-gray-100 p-2">        
-            <div class="space-y-6 p-2">
+        @if ($fileResults !== null)
+            <section class="mb-6">
+                <h2 class="mb-3 text-lg font-semibold text-gray-900">
+                    Filed Documents
+                </h2>
 
-                {{-- Folders --}}
-                <div>
-                    <h2 class="mb-3 text-sm font-semibold text-gray-700">
-                        All Folders
-                    </h2>
+                @forelse ($fileResults as $assignment)
+                    <div class="mb-2 rounded-lg border border-gray-200 p-3">
+                        <p class="text-xs text-gray-500">
+                            {{ $assignment->file->reference_no }}
+                        </p>
 
-                    <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
-                        @foreach($folders as $folder)
-                            <div
-                                class="folder-card group relative rounded-xl border border-gray-200
-                                    bg-white shadow-sm transition hover:border-cyan-400 hover:shadow-md"
-                                data-edit-url="{{ route('registry.folders.edit', $folder->uuid) }}"
-                                data-delete-url="{{ route('registry.folders.destroy', $folder->uuid) }}"
-                                data-folder-name="{{ $folder->name }}"
-                            >
-                                <a
-                                    href="{{ route('registry.folders.show', $folder->uuid) }}"
-                                    class="block rounded-xl p-4"
-                                >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="h-10 w-10 text-yellow-500"
-                                        viewBox="0 0 20 20"
-                                        fill="currentColor"
-                                        aria-hidden="true"
-                                    >
-                                        <path d="M2 4a2 2 0 012-2h4l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V4z" />
-                                    </svg>
+                        <p class="font-medium text-gray-900">
+                            {{ $assignment->file->subject }}
+                        </p>
 
-                                    <div class="mt-3">
-                                        <p class="truncate text-sm font-medium text-gray-900">
-                                            {{ $folder->name }}
-                                        </p>
-
-                                        <p class="mt-1 text-xs text-gray-500">
-                                            {{ $folder->file_assignments_count ?? 0 }} files
-                                        </p>
-                                    </div>
-                                </a>
-
-                                {{-- Keep the button outside the folder link --}}
-                                <button
-                                    type="button"
-                                    class="folder-menu-button absolute right-3 top-3 rounded px-2 py-1
-                                        text-gray-500 hover:bg-gray-100 focus:outline-none
-                                        focus:ring-2 focus:ring-cyan-500"
-                                    aria-label="Actions for {{ $folder->name }}"
-                                    aria-controls="folder-context-menu"
-                                    aria-expanded="false"
-                                >
-                                    ⋮
-                                </button>
-                            </div>
-                        @endforeach
+                        <a href="{{ route('registry.files.show', $assignment->file->uuid) }}"
+                        class="text-sm text-cyan-700 hover:underline">
+                            Open File
+                        </a>
                     </div>
-                </div>
+                @empty
+                    <p class="text-sm text-gray-500">No matching filed documents.</p>
+                @endforelse
 
-                {{-- Shared menu for all folders --}}
-                <div
+                {{ $fileResults->links() }}
+            </section>
+        @endif
+
+        <div class="space-y-6 p-2"> 
+            <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+                @foreach($folders as $folder)   
+                        <div class="folder-card group relative rounded-xl border border-gray-200 bg-white shadow-sm transition hover:border-gray-400 hover:shadow-md"
+                            data-edit-url="{{ route('registry.folders.edit', $folder->uuid) }}"
+                            data-delete-url="{{ route('registry.folders.destroy', $folder->uuid) }}"
+                            data-folder-name="{{ $folder->name }}"
+                        >
+                            <a href="{{ route('registry.folders.show', $folder->uuid) }}"
+                            class="block rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-gray-200">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="h-10 w-10 text-gray-400 group-hover:text-gray-500"
+                                    viewBox="0 0 20 20"
+                                    fill="currentColor"
+                                    aria-hidden="true"
+                                >
+                                    <path d="M2 4a2 2 0 012-2h4l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V4z" />
+                                </svg>
+
+                                <div class="mt-3">
+                                    <p class="truncate text-sm font-medium text-gray-900">
+                                        {{ $folder->name }}
+                                    </p>
+
+                                    <p class="mt-1 text-xs text-gray-500">
+                                        {{ $folder->file_assignments_count ?? 0 }} files
+                                    </p>
+                                </div>
+                            </a>
+
+                            <button
+                                type="button"
+                                class="folder-menu-button absolute right-3 top-3 rounded px-2 py-1
+                                    text-gray-500 hover:bg-gray-100 hover:text-gray-800
+                                    focus:outline-none focus:ring-2 focus:ring-gray-400"
+                                aria-label="Actions for {{ $folder->name }}"
+                                aria-controls="folder-context-menu"
+                                aria-expanded="false"
+                            >
+                                ⋮
+                            </button>
+                        </div>
+                @endforeach
+            </div>
+                
+            <div
                     id="folder-context-menu"
                     class="fixed z-50 hidden w-40 overflow-hidden rounded-lg border
                         border-gray-200 bg-white py-1 shadow-lg"
@@ -104,70 +145,6 @@
                         </button>
                     </form>
                 </div>
-
-                {{-- Files --}}
-                {{-- <div>
-                    <h2 class="mb-3 text-sm font-semibold text-gray-700">
-                        Files
-                    </h2>
-
-                    <div class="space-y-2">
-
-                        @forelse($files as $file)
-                            <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm">
-
-                                <div class="flex min-w-0 items-center gap-3">
-
-                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                        class="h-8 w-8 flex-shrink-0 text-gray-400"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor">
-                                        <path stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M9 12h6m-6 4h6M7 4h7l3 3v13H7V4z" />
-                                    </svg>
-
-                                    <div class="min-w-0">
-                                        <p class="truncate text-sm font-medium text-gray-900">
-                                            {{ $file->reference_no }}
-                                        </p>
-
-                                        <p class="truncate text-sm text-gray-500">
-                                            {{ $file->subject }}
-                                        </p>
-                                    </div>
-
-                                </div>
-
-                                <div class="flex items-center gap-2">
-
-                                    <a href="{{ route('registry.files.show', $file) }}"
-                                    class="rounded-md border px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">
-                                        View
-                                    </a>
-
-                                    <button
-                                        type="button"
-                                        class="rounded-md border px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">
-                                        Move
-                                    </button>
-
-                                </div>
-
-                            </div>
-
-                        @empty
-                            <div class="rounded-lg border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500">
-                                No files in this folder.
-                            </div>
-                        @endforelse
-
-                    </div>
-                </div> --}}
-
-            </div>
         </div>
     </div>
 

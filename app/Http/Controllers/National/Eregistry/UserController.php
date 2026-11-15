@@ -9,10 +9,11 @@ use App\Http\Requests\National\Eregistry\UserUpdateRequest;
 use App\Models\User;
 use App\Repositories\National\Eregistry\DivisionRepository;
 use App\Repositories\National\Eregistry\OrganisationRepository;
+use App\Repositories\National\Eregistry\FileCirculationRepository;
 use App\Repositories\National\Eregistry\UserRepository;
 use App\Repositories\National\Eregistry\UnitRepository;
 use Spatie\Permission\Models\Role;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -26,16 +27,20 @@ class UserController extends Controller
     private $divisions;
     private $organisations;
     private $units;
+    private $fileCirculations;
+
 
     public function __construct(UserRepository $users,
                                 DivisionRepository $divisions,
                                 OrganisationRepository $organisations,
-                                UnitRepository $units)
+                                UnitRepository $units,
+                                FileCirculationRepository $fileCirculations)
     {
         $this->users = $users;
         $this->divisions = $divisions;
         $this->organisations = $organisations;
         $this->units = $units;
+        $this->fileCirculations = $fileCirculations;
     }
 
     /**
@@ -86,7 +91,7 @@ class UserController extends Controller
 
         $isSystemAdmin = auth()->user()->hasRole('system-admin');
         $isRegistry = auth()->user()->hasRole('registry');
-        $isMinistryAdmin = auth()->user()->hasRole('ministry-admin');
+        $isMinistryAdmin = auth()->user()->hasRole('admin');
         $organisation = $this->organisations->getReviewerTitle(Auth::user()->organisation_id);
         
         return view('national.eregistry.users.index', compact('reviewOfficer', 
@@ -117,17 +122,20 @@ class UserController extends Controller
 
         $organisations = $isSystemAdmin ? $this->organisations->listMinistries() : collect();
 
-        $roles = Role::query()->when(
+        $roles = Role::query()
+                    ->whereNotIn('name', [
+                        'hod',
+                        'sro',
+                        'review-officer',
+                    ])
+                    ->when(
                         !$isSystemAdmin,
                         fn ($query) => $query->whereNotIn('name', [
                             'system-admin',
-                            'hod',
-                            'admin',
-                            'review-officer',
-                            'sro'
                         ])
                     )
                     ->pluck('name', 'id');
+
         
         return view('national.eregistry.users.create', compact('divisions', 
                                                                 'user',
@@ -149,20 +157,11 @@ class UserController extends Controller
         $validated = $request->validated();
         
         //ensure that the user is not creating other ministries user.
-        if (auth()->user()->hasRole('ministry-admin')) {
+        if (auth()->user()->hasRole('admin')) {
             $validated['organisation_id'] = auth()->user()->organisation_id;
         }
-        
-        $user = $this->users->create($validated);
 
-        if ($user->hasRole('hod')) {
-            $division = $this->divisions->getById($user->division_id);
-
-            app(DivisionServices::class)->updateHod($division, $user);
-        } else {
-            $user->assignRole($validated['role']);
-        }
-
+        $this->users->create($validated);
 
         return redirect()->route('registry.users.index')->with('success', 'New user created!');
     }
@@ -177,7 +176,9 @@ class UserController extends Controller
     public function show(User $user)
     {
         $this->authorize('view', $user);
+
         $user = $this->users->getById($user->id);
+
         return view('national.eregistry.users.show', compact('user'));
     }
 
@@ -193,28 +194,34 @@ class UserController extends Controller
         $this->authorize('update', $user);
 
         $isSystemAdmin = auth()->user()->hasRole('system-admin');
-        
-        $organisations = $isSystemAdmin ? $this->organisations->listMinistries() : collect();
 
         $divisions = $this->divisions->listWithOrganisation(
-                    $isSystemAdmin ? null : $user->organisation_id
-                );        
-        // dd($divisions);
-        $roles = ($isSystemAdmin 
-                ? Role::query() 
-                : Role::query()->whereNotIn('name', [
-                        'system-admin',
-                        'ministry-admin',
-                        'hod',
-                        'admin',
-                        'review-officer',
-                        'sro'
-                    ])
-                )->pluck('name', 'id');
+            $isSystemAdmin ? null : $user->organisation_id
+        );
 
-        $currentRole = $user->roles->whereIn('name', $roles->values())
-                                   ->first();
-        
+        $organisations = $isSystemAdmin ? $this->organisations->listMinistries() : collect();
+
+        $roles = Role::query()
+                    ->whereNotIn('name', [
+                        'hod',
+                        'sro',
+                        'review-officer',
+                    ])
+                    ->when(
+                        !$isSystemAdmin,
+                        fn ($query) => $query->whereNotIn('name', [
+                            'system-admin',
+                        ])
+                    )
+                    ->pluck('name', 'id');
+
+        $currentRole = $user->roles
+            ->reject(fn ($role) => in_array($role->name, [
+                'sro',
+                'hod',
+                'review-officer',
+            ], true))
+            ->first();       
         return view('national.eregistry.users.edit', compact('user', 
                                                              'isSystemAdmin',
                                                              'currentRole',
@@ -271,12 +278,20 @@ class UserController extends Controller
     {
     
         $validated = $request->validated();
+
+        // Only system-admin can change these fields 
+        // (if users insert values from the browser inspector tool)
+        if (!$request->user()->hasRole('system-admin')) {
+            unset($validated['organisation_id']);
+        }
+
         $this->users->update($user, $validated);
 
         // Handle the editable/main role separately
         $this->users->updateMainRole($user, $validated['role']);
 
-        return redirect()->route('registry.users.index')->with('success', 'User updated successfully.');
+        return redirect()->route('registry.users.index')->with('success', 
+                                                                'User updated');
     }
 
      /**
@@ -290,6 +305,7 @@ class UserController extends Controller
     {
         $organisationId = Auth::user()->organisation_id;
         $usersWithDivision = $this->users->getUsersDivision();
+
         $reviewOfficer = User::role('review-officer')
                                 ->where('organisation_id', $organisationId)
                                 ->first();
@@ -352,7 +368,7 @@ class UserController extends Controller
     {
         $organisationId = Auth::user()->organisation_id;
 
-        $request->validate([
+        $validated = $request->validate([
             'review_officer_id' => [
                 'required',
                 Rule::exists('users', 'id')->where(function ($query) use ($organisationId) {
@@ -361,18 +377,29 @@ class UserController extends Controller
             ],
         ]);
 
-        $currentReviewOfficer = User::role('review-officer')
-            ->where('organisation_id', $organisationId)
-            ->first();
+        DB::transaction(function () use ($organisationId, $validated) {
+            $newReviewOfficer = User::where('organisation_id', $organisationId)
+                ->findOrFail($validated['review_officer_id']);
 
-        if ($currentReviewOfficer) {
-            $currentReviewOfficer->removeRole('review-officer');
-        }
+            $currentReviewOfficers = User::role('review-officer')
+                ->where('organisation_id', $organisationId)
+                ->where('id', '!=', $newReviewOfficer->id)
+                ->get();
 
-        $newReviewOfficer = User::find($request->review_officer_id);
-        $newReviewOfficer->assignRole('review-officer');
+            foreach ($currentReviewOfficers as $officer) {
+                $officer->removeRole('review-officer');
+            }
+
+            $newReviewOfficer->assignRole('review-officer');
+
+            // Update the review officer for all pending file circulations of the organisation
+            $this->fileCirculations->updatePendingReviewOfficer(
+                $organisationId,
+                $newReviewOfficer->id
+            );
+        });
+
         return back()->with('success', 'Review officer updated successfully.');
-
     }
 
 

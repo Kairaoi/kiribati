@@ -6,12 +6,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-
+use App\Models\User;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class Organisation extends Model implements Auditable
 {
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
+    use HasUuids;
 
     protected $table = 'organisations';
 
@@ -33,6 +35,7 @@ class Organisation extends Model implements Auditable
         'website',
         'po_box',
         'is_active',
+        'reviewer_title',
     ];
 
 
@@ -51,6 +54,10 @@ class Organisation extends Model implements Auditable
         return $this->hasMany(Division::class);
     }
 
+    public function users()
+    {
+        return $this->hasMany(User::class, 'organisation_id');
+    }
 
     public function receivedFiles()
     {
@@ -98,26 +105,24 @@ class Organisation extends Model implements Auditable
         return $this->hasMany(File::class, 'organisation_id');
     }
 
+
     public function scopeForSelectedType($query, $selectedType)
     {
-            if ($selectedType === 'ministry') {
-                return $query->where('organisation_type_id', 1);
-                
-            }elseif ($selectedType === 'soe') {
-                return $query->where('organisation_type_id', 2);
-                
-            }elseif ($selectedType === 'diplomatic') {
-                return $query->where('organisation_type_id', 3);
-                
-            }elseif ($selectedType === 'international') {
-                return $query->where('organisation_type_id', 4);
-                
-            }elseif ($selectedType === 'religion') {
-                return $query->where('organisation_type_id', 8);
-                
-            } 
+        $types = [
+            'ministry'      => 'Ministry',
+            'soe'           => 'State Owned Enterprise',
+            'diplomatic'    => 'Diplomatic Mission',
+            'international' => 'International Organisation',
+            'religion'      => 'Religion',
+        ];
 
-            return $query;
+        if (isset($types[$selectedType])) {
+            $query->whereHas('type', function ($typeQuery) use ($types, $selectedType) {
+                $typeQuery->where('name', $types[$selectedType]);
+            });
+        }
+
+        return $query;
     }
 
 }

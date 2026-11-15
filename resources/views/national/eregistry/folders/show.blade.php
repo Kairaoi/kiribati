@@ -28,7 +28,7 @@
         </div>
     @endif
 
-    <div class="container mx-auto px-4 py-8 max-w-6xl bg-white shadow-lg mt-4 mb-4 rounded-md min-h-screen">
+    <div class="container px-4 py-8 max-w-full bg-white shadow-lg mt-4 mb-4 rounded-md min-h-screen">
         <div class="mb-1 flex items-center justify-between">
             <div>
                 <nav aria-label="Folder breadcrumb" class="mb-4">
@@ -80,24 +80,63 @@
 
         <div class="mb-2 flex items-center justify-between">
             @if($subfolders->isNotEmpty())
-                <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
-                    @foreach($subfolders as $subfolder)
-                        <a href="{{ route('registry.folders.show', $subfolder) }}" class="rounded-lg border bg-white p-3 shadow-sm hover:shadow-md">
-                            <div class="text-2xl text-cyan-600">
-                                📁
-                            </div>
+                <div class="mb-6">
+                    <h3 class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        Subfolders
+                    </h3>
 
-                            <div class="mt-1 text-sm font-medium">
-                                {{ $subfolder->name }}
-                            </div>
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        @foreach($subfolders as $subfolder)
+                            <a href="{{ route('registry.folders.show', $subfolder) }}"
+                            class="group flex items-center gap-3 rounded-lg border border-gray-200
+                                    bg-white p-4 shadow-sm transition
+                                    hover:shadow-md
+                                    focus:outline-none focus:ring-2">
 
-                        </a>
-                    @endforeach
+                                <div class="flex h-12 w-12 shrink-0 items-center justify-center
+                                            rounded-lg text-cyan-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                        class="h-7 w-7"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        stroke-width="1.5"
+                                        aria-hidden="true">
+                                        <path stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />
+                                    </svg>
+                                </div>
+
+                                <div class="min-w-0 flex-1">
+                                    <p class="break-words text-sm font-semibold text-gray-800
+                                            group-hover:text-cyan-800">
+                                        {{ $subfolder->name }}
+                                    </p>
+
+                                    <p class="mt-1 text-xs text-gray-500">
+                                        Open folder
+                                    </p>
+                                </div>
+
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                    class="h-4 w-4 shrink-0 text-gray-400 group-hover:text-cyan-600"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    aria-hidden="true">
+                                    <path stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="m9 5 7 7-7 7" />
+                                </svg>
+                            </a>
+                        @endforeach
+                    </div>
                 </div>
             @endif
         </div>
         <div class="overflow-x-auto mt-4 rounded-md border border-gray-300 p-4">
-            <span class="text-gray-800 text-sm block">Documents in this Folder:</span>
             <table id="folder-files-table" class="w-full text-sm text-left text-gray-500">
                 <thead>
                     <tr>
@@ -114,179 +153,278 @@
     </div>
 
     @push('styles')
-        <style>
-            /* Table Styles */
-            table.dataTable {
-                width: 100%;
-                border-collapse: separate;
-                border-spacing: 0;
-                border: 0.5px solid #d3d3d8;
-                border-radius: 8px;
-                overflow: hidden;
+    <style>
+        /* Filing table */
+        #folder-files-table {
+            width: 100% !important;
+            border-collapse: separate;
+            border-spacing: 0;
+            border: 1px solid #dbe3e8;
+            border-radius: 10px;
+            background: #ffffff;
+            font-size: 13px;
+            color: #334155;
+        }
+
+        /* Column headings */
+        #folder-files-table thead th {
+            padding: 13px 16px;
+            background: #f3f4f6;
+            border-bottom: 2px solid #d1d5db;
+            color: #4b5563;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            text-align: left;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        #folder-files-table thead th:first-child {
+            border-top-left-radius: 10px;
+        }
+
+        #folder-files-table thead th:last-child {
+            border-top-right-radius: 10px;
+        }
+
+        /* Document rows */
+        #folder-files-table tbody td {
+            padding: 13px 16px;
+            border-bottom: 1px solid #e5ebf0;
+            background: #ffffff;
+            vertical-align: middle;
+            line-height: 1.5;
+            white-space: normal !important;
+            overflow-wrap: anywhere;
+            box-shadow: none !important;
+        }
+
+        #folder-files-table tbody tr:nth-child(even) td {
+            background: #f8fafc;
+        }
+
+        #folder-files-table tbody tr:hover td {
+            background: #f3f4f6;
+        }
+
+        #folder-files-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        #folder-files-table tbody tr:last-child td:first-child {
+            border-bottom-left-radius: 10px;
+        }
+
+        #folder-files-table tbody tr:last-child td:last-child {
+            border-bottom-right-radius: 10px;
+        }
+
+        /* Document links */
+        #folder-files-table tbody td a:not(.dropdown-item):not(.action-btn) {
+            color: #374151;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        #folder-files-table tbody td a:not(.dropdown-item):not(.action-btn):hover {
+            color: #111827;
+            text-decoration: underline;
+        }
+
+        /* Optional column classes */
+        #folder-files-table .file-reference {
+            color: #374151;
+            font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        #folder-files-table .file-subject {
+            min-width: 220px;
+            color: #1e293b;
+            font-weight: 500;
+        }
+
+        #folder-files-table .file-date {
+            color: #64748b;
+            font-size: 12px;
+            white-space: nowrap !important;
+        }
+
+        /* Search and page-size controls */
+        #folder-files-table_wrapper .dataTables_filter,
+        #folder-files-table_wrapper .dataTables_length {
+            margin-bottom: 16px;
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        #folder-files-table_wrapper .dataTables_filter input,
+        #folder-files-table_wrapper .dataTables_length select {
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            background-color: #ffffff;
+            color: #334155;
+            font-size: 13px;
+            outline: none;
+        }
+
+        #folder-files-table_wrapper .dataTables_filter input {
+            width: 260px;
+            max-width: 100%;
+            margin-left: 8px;
+            padding: 8px 12px;
+        }
+
+        #folder-files-table_wrapper .dataTables_length select {
+            margin: 0 6px;
+            padding: 6px 30px 6px 10px;
+        }
+
+        #folder-files-table_wrapper .dataTables_filter input:focus,
+        #folder-files-table_wrapper .dataTables_length select:focus {
+            border-color: #9ca3af;
+            box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.12);
+        }
+
+        /* Record count */
+        #folder-files-table_wrapper .dataTables_info {
+            padding-top: 18px;
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        /* Pagination */
+        #folder-files-table_wrapper .dataTables_paginate {
+            padding-top: 14px;
+        }
+
+        #folder-files-table_wrapper .dataTables_paginate .paginate_button {
+            margin: 0 2px;
+            padding: 6px 11px;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 6px;
+            background: #ffffff !important;
+            color: #475569 !important;
+            font-size: 12px;
+            box-shadow: none !important;
+            cursor: pointer;
+        }
+
+        #folder-files-table_wrapper .dataTables_paginate .paginate_button:hover {
+            border-color: #d1d5db !important;
+            background: #f3f4f6 !important;
+            color: #374151 !important;
+        }
+
+        #folder-files-table_wrapper .dataTables_paginate .paginate_button.current {
+            border-color: #4b5563 !important;
+            background: #4b5563 !important;
+            color: #ffffff !important;
+        }
+
+        #folder-files-table_wrapper .dataTables_paginate .paginate_button.disabled {
+            opacity: 0.45;
+            cursor: default;
+        }
+
+        /* Row actions */
+        #folder-files-table .action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border: 1px solid #dbe3e8;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #475569;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        #folder-files-table .action-btn:hover {
+            border-color: #9ca3af;
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        /* Action dropdown */
+        #folder-files-table .dropdown-menu {
+            position: absolute;
+            min-width: 170px;
+            padding: 5px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #ffffff;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+            z-index: 1000;
+        }
+
+        #folder-files-table .dropdown-item {
+            display: block;
+            padding: 9px 12px;
+            border-radius: 5px;
+            color: #334155;
+            font-size: 12px;
+            text-decoration: none;
+        }
+
+        #folder-files-table .dropdown-item:hover {
+            background: #f3f4f6;
+            color: #111827;
+        }
+
+        /* Export buttons */
+        #folder-files-table_wrapper .excel-export-btn,
+        #folder-files-table_wrapper .pdf-export-btn {
+            display: inline-flex !important;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 12px;
+            padding: 7px 12px !important;
+            border: 1px solid #dbe3e8 !important;
+            border-radius: 6px !important;
+            background: #ffffff !important;
+            color: #475569 !important;
+            font-size: 12px !important;
+            font-weight: 500;
+            box-shadow: none !important;
+            cursor: pointer;
+        }
+
+        #folder-files-table_wrapper .excel-export-btn:hover {
+            border-color: #86efac !important;
+            background: #f0fdf4 !important;
+            color: #15803d !important;
+        }
+
+        #folder-files-table_wrapper .pdf-export-btn:hover {
+            border-color: #fca5a5 !important;
+            background: #fef2f2 !important;
+            color: #b91c1c !important;
+        }
+
+        /* Empty table */
+        #folder-files-table td.dataTables_empty {
+            padding: 40px 16px;
+            color: #94a3b8;
+            text-align: center;
+        }
+
+        @media (max-width: 640px) {
+            #folder-files-table thead th,
+            #folder-files-table tbody td {
+                padding: 10px 12px;
             }
 
-            /* Header */
-            #folder-files-table thead {
-                background-color: #e9edee;
-                color: #5c5d5f;
-                font-size: 12px;
+            #folder-files-table_wrapper .dataTables_filter input {
+                width: 180px;
             }
-
-            #folder-files-table thead th {
-                padding: 8px 10px;
-                font-weight: 600;
-                text-align: left;
-            }
-
-            /* Cells */
-            #folder-files-table td {
-                padding: 12px 14px;
-                white-space: normal !important;
-                border-bottom: 1px solid #cfd4d7;
-            }
-
-            /* Row divider */
-            #folder-files-table tbody tr {
-                border-bottom: 1.5px solid #6b6969;
-                border-top: 1.5px solid #6b6969;
-                background-color: #ffffff;
-            }
-
-            /* Hover effect */
-            #folder-files-table tbody tr:hover {
-                background-color: #f9fafb;
-            }
-
-            .dataTables_filter input {
-                border: 1px solid #d1d5db;
-                border-radius: 8px;
-                padding: 6px 10px;
-                outline: none;
-            }
-
-            .dataTables_filter input:focus {
-                ring: 2px solid #93c5fd;
-            }
-
-            .dataTables_length select {
-                border-radius: 8px;
-                padding: 4px 8px;
-                padding-right: 30px; /* space for arrow */
-                border: 1px solid #d1d5db;
-            }
-
-            /* Action Button Styles */ 
-            /* .action-btn {
-                cursor: pointer;
-                padding: 0.5rem 1rem;
-                border-radius: 9999px;
-                font-size: 0.875rem;
-                transition: background-color 0.3s, transform 0.2s;
-            }
-
-            .action-btn:hover {
-                background-color: #e5e7eb;
-            } */
-
-            /* Dropdown Menu Styles */
-            .dropdown-menu {
-                position: absolute;
-                background-color: white;
-                /* border-radius: 9999px; */
-                box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-                min-width: 160px;
-                z-index: 1000;
-            }
-
-            .dropdown-item {
-                display: block;
-                padding: 0.5rem 1rem;
-                color: #212529;
-            }
-
-            .dropdown-item:hover {
-                background-color: #f3f4f6; 
-            }
-
-
-        
-            .dataTables_filter input {
-                padding: 0.375rem 0.75rem !important;
-                border-radius: 0.375rem !important;
-                border: 1px solid #ced4da !important;
-                font-size: 0.8rem !important;
-                margin-top: 1rem !important; 
-                font-family: 'Poppins', sans-serif !important;
-            }
-
-            .dataTables_info {
-                font-size: 0.85rem !important;
-                font-family: 'Poppins', sans-serif !important;
-                color: #4b5563 !important; /* Tailwind gray-700 */
-            }
-
-            .dataTables_paginate {
-                display: flex;
-                gap: 6px;
-                align-items: center;
-            }
-
-            .dataTables_paginate .paginate_button {
-                padding: 6px 10px;
-                border-radius: 6px;
-                background: #f3f4f6;
-                cursor: pointer;
-            }
-
-            .dataTables_paginate .current {
-                background: #4f46e5 !important;
-                color: white !important;
-            }
-
-
-                    /* Force green Excel button */
-                    .excel-export-btn {
-                        border: none !important;       /* Ensures no border, overrides any border below */
-                        border-radius: 6px !important;
-                        background-color: rgba(234, 236, 241, 0.76) !important;
-                        color: #000000;
-                        padding: 0.25rem 0.75rem !important;   /* smaller padding */
-                        box-shadow: none !important;          /* removes inner or outer shadow */
-                        background-image: none !important;    /* removes gradient */
-                        /* padding: 0.5rem 2rem; */
-                        font-size: 0.7rem !important;
-                        display: inline-flex;
-                        align-items: center;
-                    }
-
-                    .excel-export-btn:hover {
-                        background-color: #f3f4f6;  
-                        transform: translateY(-1px);
-                        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-                    }
-
-                    .pdf-export-btn {
-                        border: none !important;       /* Ensures no border, overrides any border below */
-                        border-radius: 6px !important;
-                        background-color:  rgba(234, 236, 241, 0.76) !important;
-                        color: #000000;
-                        padding: 0.25rem 0.75rem !important;   /* smaller padding */
-                        box-shadow: none !important;          /* removes inner or outer shadow */
-                        background-image: none !important;    /* removes gradient */
-                        /* padding: 0.5rem 2rem; */
-                        font-size: 0.7rem !important;
-                        display: inline-flex !important;
-                        align-items: center;
-                    }
-
-                    .pdf-export-btn:hover {
-                        background-color: #f3f4f6;  
-                        transform: translateY(-1px);
-                        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-                    }
-
-
-        </style>
+        }
+    </style>
     @endpush
 
     @push('scripts')

@@ -21,28 +21,28 @@
                     {{-- Ministry --}}
                     <div class="grid grid-cols-1 gap-2 px-6 py-4 sm:grid-cols-3">
                         <dt class="text-sm font-medium text-gray-500">
-                            Ministry
+                            Organisation
                         </dt>
 
                         <dd class="sm:col-span-2">
                             @if ($isSystemAdmin)
                                 <select
-                                    name="ministry_id"
-                                    id="ministry_id"
+                                    name="organisation_id"
+                                    id="organisation_id"
                                     required
                                     class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
                                 >
-                                    <option value="">Select ministry</option>
+                                    <option value="">Select organisation</option>
 
-                                    @foreach ($ministries as $ministry)
+                                    @foreach ($organisations as $organisation)
                                         <option
-                                            value="{{ $ministry->id }}"
+                                            value="{{ $organisation->id }}"
                                             @selected(
-                                                (string) old('ministry_id', $division->ministry_id)
-                                                === (string) $ministry->id
+                                                (string) old('organisation_id', $division->organisation_id)
+                                                === (string) $organisation->id
                                             )
                                         >
-                                            {{ $ministry->name }}
+                                            {{ $organisation->name }}
                                         </option>
                                     @endforeach
                                 </select>

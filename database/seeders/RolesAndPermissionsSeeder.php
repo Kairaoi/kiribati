@@ -15,7 +15,7 @@ class RolesAndPermissionsSeeder extends Seeder
     public function run(): void
     {
         $systemadmin = Role::create(['name' => 'system-admin']);
-        $ministryAdmin = Role::create(['name' => 'ministry-admin']);
+        $admin = Role::create(['name' => 'admin']);
         $registry = Role::create(['name' => 'registry']);
         $sro = Role::create(['name' => 'sro']);
         $hod = Role::create(['name' => 'hod']);
@@ -31,12 +31,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'ministries.deactivate',
 
             // Ministry administrators
-            'ministry-admins.view-any',
-            'ministry-admins.create',
-            'ministry-admins.update',
-            'ministry-admins.activate',
-            'ministry-admins.deactivate',
-            'ministry-admins.reset-password',
+            'admins.view-any',
+            'admins.create',
+            'admins.update',
+            'admins.activate',
+            'admins.deactivate',
+            'admins.reset-password',
 
             // Users
             'users.view-any',

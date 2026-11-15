@@ -18,7 +18,7 @@ class UserStoreRequest extends FormRequest
 
         return $authenticatedUser && $authenticatedUser->hasAnyRole([
                 'system-admin',
-                'ministry-admin',
+                'admin',
             ]);
         
     }

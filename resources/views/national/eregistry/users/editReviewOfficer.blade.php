@@ -4,13 +4,10 @@
 
 {{-- <div class="container mx-auto font-roboto px-8 max-w-5xl mt-1"> --}}
 <div class="container mx-w-5xl mx-auto mt-4">
+    
     <div class="max-w-3xl mx-auto bg-white shadow-sm border border-gray-200 rounded-lg p-6">
-        <p class="text-xs mt-1 mb-4 font-medium text-blue-700">
-            Change this field when an Officer in Charge has been appointed to act during the SRO absence. Change it back to the SRO when they resume duty.
-        </p>
-        
         <h2 class="text-sm font-semibold text-gray-500 tracking-wide uppercase">
-            Review Officer Details
+            Review Officer Details 
         </h2>
 
         <div class="grid mt-3 grid-cols-1 md:grid-cols-2 gap-6">
@@ -27,6 +24,10 @@
                 </p>
             </div>
         </div>
+
+        <p class="text-sm mt-4 mb-4 font-medium text-gray-500">
+            Note: When the Review Officer is changed, all pending file circulations will be reassigned to the new Review Officer.
+        </p>
     </div>
     <div class="max-w-3xl mx-auto mt-6 mb-4 space-y-4">
         <form method="POST" action="{{ route('registry.users.update-review-officer') }}">

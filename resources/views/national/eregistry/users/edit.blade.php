@@ -27,13 +27,12 @@
                             Ministry
                         </label>
 
-                        <select
-                            name="organisation_id"
+                        <select name="organisation_id"
                             id="organisation_id"
                             required
                             class="mt-1 text-sm block w-full rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
                         >
-                            <option value="">Select ministry</option>
+                            <option value="">Select organisation</option>
 
                             @foreach ($organisations as $organisation)
                                 <option
@@ -53,24 +52,18 @@
                     </div>
                 @else
                     <div>
-                        <label
-                            class="mb-1 block text-sm font-medium text-gray-700"
-                        >
-                            Ministry
+                        <label class="mb-1 block text-sm font-medium text-gray-700">
+                            Organisation
                         </label>
 
-                        <input
-                            type="text"
+                        <input type="text"
                             value="{{ $user->organisation->name }}"
                             readonly
                             class="mt-1 block text-sm w-full rounded-md border-gray-300
                                 bg-gray-100 text-gray-600 shadow-sm"
                         >
 
-                        <input
-                            type="hidden"
-                            id="organisation_id"
-                            value="{{ $user->organisation_id }}"
+                        <input type="hidden" name="organisation_id" id="organisation_id" value="{{ $user->organisation_id }}"
                         >
                     </div>
                 @endif

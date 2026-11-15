@@ -37,16 +37,16 @@ class ExternalStoreRequest extends FormRequest
                 function ($attribute, $value, $fail) {
 
                     $name = trim(strtolower($value));
-                    $ministryId = Auth::user()->ministry_id;
+                    $organisationId = Auth::user()->organisation_id;
 
-                    // Check External Partners (scoped to ministry)
+                    // Check External Partners (scoped to organisation)
                     $existsInPartners = DB::table('external_partners')
                         ->whereRaw('LOWER(TRIM(name)) = ?', [$name])
-                        ->where('ministry_id', $ministryId)
+                        ->where('organisation_id', $organisationId)
                         ->exists();
 
                     // Check Identity Organisations (global)
-                    $existsInOrgs = DB::table('identity_organisations')
+                    $existsInOrgs = DB::table('organisations')
                         ->whereRaw('LOWER(TRIM(name)) = ?', [$name])
                         ->exists();
 

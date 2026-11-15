@@ -66,6 +66,7 @@ class DivisionController extends Controller
                     ->make(true);
     }
     
+
     /**
      * Display a listing of the resource.
      *
@@ -77,6 +78,7 @@ class DivisionController extends Controller
 
         return view('national.eregistry.divisions.index');
     }
+
 
     /**
      * Show the form for creating a new resource.
@@ -91,7 +93,7 @@ class DivisionController extends Controller
 
         $user = Auth::user();
 
-        $organisations = $isSystemAdmin ? $this->organisations->list() : collect();
+        $organisations = $isSystemAdmin ? $this->organisations->listMinistries() : collect();
 
         return view('national.eregistry.divisions.create', compact('organisations',
                                                                     'user',
@@ -109,7 +111,7 @@ class DivisionController extends Controller
         $validated = $request->validated();
 
         if (auth()->user()->hasRole('registry')) {
-            $validated['ministry_id'] = auth()->user()->ministry_id;
+            $validated['organisation_id'] = auth()->user()->organisation_id;
         }
 
         $this->divisions->create($validated);
@@ -147,14 +149,15 @@ class DivisionController extends Controller
 
         $user = Auth::user();
 
-        $ministries = $isSystemAdmin ? $this->organisations->listMinistries() : collect();
+        $organisations = $isSystemAdmin ? $this->organisations->listMinistries() : collect();
 
         return view('national.eregistry.divisions.edit', compact('division',
-                                                                 'ministries',
+                                                                 'organisations',
                                                                  'user',
                                                                  'isSystemAdmin'                                                 
                                                                 ));
     }
+
 
     /**
      * Update the specified resource in storage.
@@ -167,13 +170,18 @@ class DivisionController extends Controller
     {
 
         $validated = $request->validated();
+
+        // Only system-admin can change these fields (if users insert values from the browser inspector tool)
+        if (!$request->user()->hasRole('system-admin')) {
+            unset($validated['organisation_id']);
+        }
+
         $this->divisions->update($division, $validated);
 
         return redirect()->route('registry.divisions.index')->with('success', 'Division updated.');
     }
 
-
-
+    
     public function assignHod(Division $division)
     {
         

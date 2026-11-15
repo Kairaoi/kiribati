@@ -7,7 +7,7 @@
             x-show="show"
             x-transition.opacity.scale.80
             x-init="setTimeout(() => show = false, 4000)" 
-            class="fixed right-0 bg-cyan-400 px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 z-50">
+            class="fixed right-0 text-white bg-cyan-400 px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 z-50">
             <!-- Icon -->
             <svg xmlns="http://www.w3.org/2000/svg" 
                 fill="none" 
@@ -42,19 +42,49 @@
 
                 @role('registry|system-admin')
                     <a href="{{ route('registry.users.edit-review-officer') }}"
-                    class="inline-flex items-center mt-3 gap-2 px-4 py-2 bg-gray-200 border border-cyan-100 font-semibold text-sm text-cyan-700 hover:bg-gray-300 transition">
-                        Current Reviewer: {{ $reviewOfficer?->name ?? 'Not assigned' }}
+                    class="inline-flex items-center mt-3 gap-2 px-4 py-2 border font-semibold text-sm transition
+                        {{ $reviewOfficer
+                            ? 'bg-gray-200 border-cyan-100 text-cyan-700 hover:bg-gray-300'
+                            : 'bg-red-100 border-red-300 text-red-700 hover:bg-red-200' }}">
+
+                        @unless($reviewOfficer)
+                            <span aria-hidden="true" class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-600 text-white font-bold">!</span>
+                        @endunless
+
+                        <span>Current Reviewer: {{ $reviewOfficer?->name ?? 'Not assigned' }}</span>
                     </a>
                 @else
-                    <div class="inline-flex items-center mt-3 gap-2 px-4 py-2 bg-gray-100 border border-gray-200 font-semibold text-sm text-gray-600 cursor-default">
-                        Current Reviewer: {{ $reviewOfficer?->name ?? 'Not assigned' }}
+                    <div class="inline-flex items-center mt-3 gap-2 px-4 py-2 border font-semibold text-sm cursor-default
+                        {{ $reviewOfficer
+                            ? 'bg-gray-100 border-gray-200 text-gray-600'
+                            : 'bg-red-100 border-red-300 text-red-700' }}">
+
+                        @unless($reviewOfficer)
+                            <span aria-hidden="true" class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-600 text-white font-bold">!</span>
+                        @endunless
+
+                        <span>Current Reviewer: {{ $reviewOfficer?->name ?? 'Not assigned' }}</span>
                     </div>
                 @endrole
 
                 @role('registry|system-admin')
                     <a href="{{ route('registry.users.edit-secretary') }}"
-                        class="inline-flex items-center mt-3 gap-2 px-4 py-2 bg-gray-200 border-cyan-100 font-semibold text-sm text-cyan-700 hover:bg-gray-300 transition">
-                        {{ $organisation->reviewer_title ?? 'Reviewer title not set' }}: {{ $sro->name ?? 'SRO not set'}}
+                    class="inline-flex items-center mt-3 gap-2 px-4 py-2 border font-semibold text-sm transition
+                        {{ $sro
+                            ? 'bg-gray-200 border-cyan-100 text-cyan-700 hover:bg-gray-300'
+                            : 'bg-red-100 border-red-300 text-red-700 hover:bg-red-200' }}">
+
+                        @unless($sro)
+                            <span aria-hidden="true"
+                                class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-600 text-white font-bold">
+                                !
+                            </span>
+                        @endunless
+
+                        <span>
+                            {{ $organisation->reviewer_title ?? 'Reviewer title not set - Contact Sytem Admin' }}:
+                            {{ $sro?->name ?? 'Not assigned' }}
+                        </span>
                     </a>
                 @endrole
             </div>
@@ -72,7 +102,7 @@
                     Active Files
                 </a>
 
-                @if(Auth::user()->hasRole(['registry', 'admin', 'sro']))
+                @if(Auth::user()->hasRole(['registry', 'sro']))
                     <!-- Closed -->
                     <a href="{{ route('registry.files.index', ['type' => 'closed']) }}"
                         class="pb-3 text-sm font-semibold border-b-2 transition
@@ -85,7 +115,7 @@
             </nav>
         </div>
         
-        @if(Auth::user()->hasRole(['registry']))
+        {{-- @if(Auth::user()->hasRole(['registry']))
             @if(request('type') === 'closed')
                 <div class="bg-gray-50 p-3 mb-6 mt-4 border-gray-200 rounded-md">
                     <div class="grid grid-cols-2 md:grid-cols-6 gap-2 text-sm">
@@ -103,48 +133,48 @@
                         <div>
                             <label class="block mb-1 font-semibold">Registered Organisation</label>
                             <select id="organisationFilter"
-                                            name="organisation"
-                                            class="w-full text-md border-gray-300 focus:ring-cyan-500 focus:border-cyan-500">
-                                        <option value="">All</option>
-                                        @foreach ($organisations as $org)
-                                            <option value="{{ $org->id }}">{{ $org->name }}</option>
-                                        @endforeach
+                                    name="organisation"
+                                    class="w-full text-md border-gray-300 focus:ring-cyan-500 focus:border-cyan-500">
+                                <option value="">All</option>
+                                @foreach ($organisations as $org)
+                                    <option value="{{ $org->id }}">{{ $org->name }}</option>
+                                @endforeach
                             </select>
                         </div>
 
                         <div>
                             <label class="block mb-1 font-semibold">External Partners</label>
                             <select id="partnerFilter"
-                                            name="partner"
-                                            class="w-full text-md border-gray-300 focus:ring-cyan-500 focus:border-cyan-500">
-                                        <option value="">All</option>
-                                        @foreach ($externalPartners as $par)
-                                            <option value="{{ $par->id }}">{{ $par->name }}</option>
-                                        @endforeach
+                                    name="partner"
+                                    class="w-full text-md border-gray-300 focus:ring-cyan-500 focus:border-cyan-500">
+                                <option value="">All</option>
+                                @foreach ($externalPartners as $par)
+                                    <option value="{{ $par->id }}">{{ $par->name }}</option>
+                                @endforeach
                             </select>
                         </div>
 
                         <div>
                             <label class="block mb-1 font-semibold">File Type</label>
                             <select id="fileType"
-                                            name="organisation"
-                                            class="w-full text-md border-gray-300 focus:ring-cyan-500 focus:border-cyan-500">
-                                        <option value="">All</option>
-                                        @foreach ($file_types as $fileType)
-                                            <option value="{{ $fileType->id }}">{{ $fileType->name }}</option>
-                                        @endforeach
+                                    name="organisation"
+                                    class="w-full text-md border-gray-300 focus:ring-cyan-500 focus:border-cyan-500">
+                                <option value="">All</option>
+                                @foreach ($file_types as $fileType)
+                                    <option value="{{ $fileType->id }}">{{ $fileType->name }}</option>
+                                @endforeach
                             </select>
                         </div>
 
                         <div>
                             <label class="block mb-1 font-semibold">Category</label>
                             <select id="category"
-                                            name="organisation"
-                                            class="w-full text-md border-gray-300 focus:ring-cyan-500 focus:border-cyan-500">
-                                        <option value="">All</option>
-                                        @foreach ($categories as $cat)
-                                            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                                        @endforeach
+                                    name="organisation"
+                                    class="w-full text-md border-gray-300 focus:ring-cyan-500 focus:border-cyan-500">
+                                <option value="">All</option>
+                                @foreach ($categories as $cat)
+                                    <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                                @endforeach
                             </select>
                         </div>
 
@@ -169,7 +199,7 @@
                     </div>
                 </div>
             @endif
-        @endif
+        @endif --}}
 
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-2">        
             <table id="filesTable" class="bg-gray-50 text-gray-800 text-sm divide-y divide-gray-200 stripe">
@@ -186,7 +216,7 @@
                         <th class="uppercase">Status</th>  
                         <th class="uppercase">Circulation Status</th>
                         <th class="uppercase">Review Comment</th>
-                        <th class="w-28">ACTIONS</th>
+                        <th class="w-28 no-export">ACTIONS</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y"></tbody> <!-- DataTable will populate this -->
@@ -208,8 +238,8 @@
 
             /* Header */
             #filesTable thead {
-                background-color: #e9edee;
-                color: #5c5d5f;
+                background-color: #edf0f1;
+                color: #5f6163;
                 font-size: 12px;
             }
 
@@ -412,13 +442,6 @@
                         data: function (d) {
                             d.type = "{{ request('type', 'active') }}";
 
-                            d.selected_type = $('#initialtypeFilter').val() || '';
-                            d.partner = $('#partnerFilter').val() || '';
-                            d.organisation_id = $('#organisationFilter').val() || '';
-                            d.file_type = $('#fileType').val() || '';
-                            d.category = $('#category').val() || '';
-                            d.date_from = $('#dateFrom').val() || '';
-                            d.date_to = $('#dateTo').val() || '';
                         }
                     },
                     columns: [
@@ -429,7 +452,8 @@
                         { data: 'file_subject', name: 'files.subject' },
                         { data: 'file_type', name: 'file_types.name' },
                         {
-                            data: 'dispatch_date',name: 'dispatches.dispatch_date',
+                            data: 'dispatch_date',
+                            name: 'dispatches.dispatch_date',
                             render: function (data) {
                                 if (!data) return '-';
                                 const date = new Date(data);
@@ -480,25 +504,23 @@
                                     badgeClass = 'bg-red-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
                                 } else if (data === 'Pending Signature') {
                                     badgeClass = 'bg-red-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
+                                } else if (data === 'Pending Receipt') {
+                                    badgeClass = 'bg-red-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
                                 } else if (data === 'Dispatched') {
                                     badgeClass = 'bg-cyan-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
                                 } else if (data === 'Pending Review') {
                                     badgeClass = 'bg-yellow-200 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
-                                } else if (data === 'Pending SRO Approval') {
+                                } else if (data === 'Pending SRO Review') {
                                     badgeClass = 'bg-yellow-200 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
                                 } else if (data === 'Reviewed') {
                                     badgeClass = 'bg-green-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
                                 } else if (data === 'Received') {
                                     badgeClass = 'bg-blue-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
-                                } else if (data === 'Approved') {
-                                    badgeClass = 'bg-green-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
-                                } else if (data === 'Rejected') {
+                                } else if (data === 'Cancelled') {
                                     badgeClass = 'bg-red-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
-                                }
-                                else {
+                                } else {
                                     badgeClass = 'bg-gray-300 text-xs text-slate-700 px-2 py-1 rounded-full font-semibold';
                                 }
-
                                 return `<span class="${badgeClass}">${data}</span>`;
                             }
                         },
@@ -556,18 +578,18 @@
                             extend: 'excelHtml5',
                             text: '<i class="fas fa-download"></i> EXCEL',
                             className: 'excel-export-btn',
-                            title: 'Outward Files Registry',
+                            title: 'Document Management System (DMS) Files',
                             exportOptions: {
-                                columns: ':not(:last-child)'
+                                columns: ':visible:not(.no-export)'
                             }
                         },
                         {
                             extend: 'pdfHtml5',
                             text: '<i class="fas fa-download"></i> PDF',
                             className: 'pdf-export-btn',
-                            title: 'Outward Files Registry',
+                            title: 'Document Management System (DMS) Files',
                             exportOptions: {
-                                columns: ':not(:last-child)'
+                                columns: ':visible:not(.no-export)'
                             }
                         }
                     ]

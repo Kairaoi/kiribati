@@ -33,7 +33,7 @@ class FileTypeRepository extends BaseRepository
             'name' => $input['name'],
             'description' => $input['description'] ?? null,
             'code' => $input['code'],
-            'ministry_id' => $isSystemAdmin ? null : $user->ministry_id,
+            'organisation_id' => $isSystemAdmin ? null : $user->organisation_id,
             'is_global'   => $isSystemAdmin ? 1 : 0,
             'created_by' => $user ? $user->id : null,
             'updated_by' => $user ? $user->id : null,
@@ -77,7 +77,7 @@ class FileTypeRepository extends BaseRepository
      * @param string $sort
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function getForDataTable($selectedType, int $ministryId, $user, $search = '', $order_by = 'id', $sort = 'desc')
+    public function getForDataTable($selectedType, int $organisationId, $user, $search = '', $order_by = 'id', $sort = 'desc')
     {
         
         $query = $this->model->query()
@@ -86,29 +86,24 @@ class FileTypeRepository extends BaseRepository
                       'file_types.is_global as is_global',
                       'file_types.is_active as is_active', 
                       'file_types.code as code', 
-                      'file_types.created_at as created_at', 
                       'file_types.updated_at as updated_at'])
             ->withCount('files')
             ->leftJoin('organisations', 'file_types.organisation_id', '=', 'organisations.id')
             ->groupBy('file_types.id');
 
-            //scope in Model
+        if ($user->hasRole('system-admin')) {
 
-            if ($user->hasRole('system-admin')) {
-
-            } else {
-                $query->forType($selectedType, $ministryId);
-            }
+        } else {
+            $query->forType($selectedType, $organisationId);
+        }
 
         if (!empty($search)) {
             $search = '%' . strtolower($search) . '%';
 
             $query->where(function ($q) use ($search) {
-                $q->whereRaw('LOWER(name) LIKE ?', [$search])
-                ->orWhereRaw('LOWER(description) LIKE ?', [$search])
-                ->orWhereRaw('LOWER(code) LIKE ?', [$search])
-                ->orWhereRaw('DATE_FORMAT(created_at, "%Y-%m-%d") LIKE ?', [str_replace('%', '', $search)])
-                ->orWhereRaw('CAST(created_by AS CHAR) LIKE ?', [$search]);
+                $q->whereRaw('LOWER(file_types.name) LIKE ?', [$search])
+                ->orWhereRaw('LOWER(file_types.code) LIKE ?', [$search])
+                ->orWhereRaw('DATE_FORMAT(file_types.updated_at, "%Y-%m-%d") LIKE ?', [str_replace('%', '', $search)]);
             });
         }
 

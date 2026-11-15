@@ -32,7 +32,7 @@ class UserUpdateRequest extends FormRequest
             return true;
         }
 
-        return $authenticatedUser->hasRole('it-admin')
+        return $authenticatedUser->hasRole('admin')
             && $authenticatedUser->organisation_id === $targetUser->organisation_id;
     }
 
@@ -88,20 +88,20 @@ class UserUpdateRequest extends FormRequest
     }
 
 
-    public function messages(): array
-    {
-        return [
-            'organisation_id.required' =>
-                'Please select an organisation.',
+    // public function messages(): array
+    // {
+    //     return [
+    //         'organisation_id.required' =>
+    //             'Please select an organisation.',
 
-            'organisation_id.exists' =>
-                'The selected organisation is invalid.',
+    //         'organisation_id.exists' =>
+    //             'The selected organisation is invalid.',
 
-            'division_id.required' =>
-                'Please select a division.',
+    //         'division_id.required' =>
+    //             'Please select a division.',
 
-            'division_id.exists' =>
-                'The selected division does not belong to the selected organisation.',
-        ];
-    }
+    //         'division_id.exists' =>
+    //             'The selected division does not belong to the selected organisation.',
+    //     ];
+    // }
 }

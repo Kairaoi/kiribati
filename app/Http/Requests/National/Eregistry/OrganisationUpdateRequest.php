@@ -16,7 +16,7 @@ class OrganisationUpdateRequest extends FormRequest
     public function authorize(): bool
     {
 
-        return auth()->user()->hasRole('system-admin');
+        return auth()->user()->hasRole(['system-admin']);
     }
 
     protected function prepareForValidation(): void
@@ -26,6 +26,7 @@ class OrganisationUpdateRequest extends FormRequest
             'name' => trim((string) $this->name),
         ]);
     }
+
 
     /**
      * Get the validation rules that apply to the request.
@@ -45,7 +46,7 @@ class OrganisationUpdateRequest extends FormRequest
             'name' => [
                 'required',
                 'string',
-                function ($attribute, $value, $fail) use ($organisationId) {
+                function ($value, $fail) use ($organisationId) {
                     $name = trim(strtolower($value));
 
                     $existsInOrgs = DB::table('organisations')
@@ -54,7 +55,7 @@ class OrganisationUpdateRequest extends FormRequest
                         ->exists();
 
                     if ($existsInOrgs) {
-                        $fail('This name already exists as a registered organisation or external partner.');
+                        $fail('This name already exists as a registered organisation');
                     }
                 },
             ],
@@ -67,20 +68,50 @@ class OrganisationUpdateRequest extends FormRequest
                 Rule::unique('organisations', 'code')
                     ->ignore($organisationId),
             ],
-            'description' => [
+            'reviewer_title' => [
                 'nullable',
                 'string',
                 'max:255',
             ],
             'address' => [
-                'required',
+                'nullable',
                 'string',
+                'max:255',
+            ],
+            'phone' => [
+                'nullable',
+                'string',
+                'max:20',
+                'regex:/^\+?[0-9\s\-()]+$/',
+            ],
+            'email' => [
+                'nullable',
+                'email',
+                'unique:organisations,email,' . $organisationId,
+                'max:255',
+            ],
+            'website' => [
+                'nullable',
+                'string',
+                'max:255',  
+            ],
+            'po_box' => [
+                'nullable',
+                'integer',
                 'max:255',
             ],
             'organisation_type_id' => [
                 'required',
                 'exists:organisation_types,id'
             ],
+            'logo' => [
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:2048',
+            ],
+            
+           
         ];
     }
 }

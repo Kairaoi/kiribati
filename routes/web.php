@@ -57,15 +57,11 @@ Route::group(['as' => 'registry.',
             function () {
 
     Route::middleware('role:registry|system-admin')->group(function () {
-
         // User management for registry and system-admin roles
-        Route::match(['get', 'post'], 'users/datatables', [UserController::class, 'getDataTables'])->name('users.datatables');
         Route::get('users/edit-review-officer', [UserController::class, 'editReviewOfficer'])->name('users.edit-review-officer');
         Route::patch('users/update-review-officer', [UserController::class, 'updateReviewOfficer'])->name('users.update-review-officer');
         Route::get('users/edit-secretary', [UserController::class, 'editSecretary'])->name('users.edit-secretary');
         Route::patch('users/update-secretary', [UserController::class, 'updateSecretary'])->name('users.update-secretary');
-        Route::get('users/', [UserController::class, 'index'])->name('users.index');
-        Route::get('users/{user}', [UserController::class, 'show'])->name('users.show');
 
         // Ministry and Organisation Routes
         Route::match(['get', 'post'], 'organisations/datatables', [OrganisationController::class, 'getDataTables'])->name('organisations.datatables');
@@ -97,20 +93,23 @@ Route::group(['as' => 'registry.',
         Route::get('divisions/{division}/assign-hod', [DivisionController::class, 'assignHod'])->name('divisions.assign-hod');
         Route::put('divisions/{division}/update-hod', [DivisionController::class, 'updateHod'])->name('divisions.update-hod');
         Route::resource('divisions', DivisionController::class);
-
     });
 
 
-     // User management
-    Route::middleware('role:ministry-admin|system-admin')->group(function () {
+    Route::middleware('role:admin|system-admin')->group(function () {
         Route::patch('/users/{user}/activate', [UserController::class, 'activate'])->name('users.activate');
         Route::patch('/users/{user}/deactivate', [UserController::class, 'deactivate'])->name('users.deactivate');
         Route::resource('users', UserController::class)->except(['index', 'show']);
-
     });
 
 
-    // User Routes   
+    Route::middleware('role:registry|admin|system-admin')->group(function () {
+        Route::match(['get', 'post'], 'users/datatables', [UserController::class, 'getDataTables'])->name('users.datatables');
+        Route::get('users/{user}', [UserController::class, 'show'])->name('users.show'); 
+        Route::get('users/', [UserController::class, 'index'])->name('users.index');
+    });
+
+
     Route::get('users/edit/signature', [UserController::class, 'editSignature'])->name('users.signature.edit');
     Route::patch('users/update/signature', [UserController::class, 'updateSignature'])->name('users.signature.update');
     
@@ -132,12 +131,19 @@ Route::group(['as' => 'registry.',
 
 
     Route::post('files/{file}/ufs', [FileController::class, 'ufsCirculate'])->name('files.ufsCirculate');
+    Route::post('files/{file}/finalise', [FileController::class, 'finalisePdf'])->name('files.finalise');
     Route::post('files/{file}/sign', [FileController::class, 'signFile'])->name('files.sign');
     Route::post('files/{file}/cancel-signature', [FileController::class, 'cancelSignature'])->name('files.cancel-signature');
     Route::post('files/{file}/archive', [FileController::class, 'archive'])->name('files.archive');
     Route::post('files/{file}/close', [FileController::class, 'close'])->name('files.close');
     Route::post('files/{file}/file-to-folder', [FileController::class, 'fileToFolder'])->name('files.file-to-folder');
+    
+
+    // Submit for SRO Signature & Review Routes
     Route::post('files/{file}/submit-for-sro-signature', [FileController::class, 'submitForSroSignature'])->name('files.submitForSroSignature');
+    Route::post('files/{file}/submit-for-sro-review', [FileController::class, 'submitForSroReview'])->name('files.submitForSroReview');
+    Route::post('files/{file}/submit-for-hod-signature', [FileController::class, 'submitForHodSignature'])->name('files.submitForHodSignature');
+
 
     // File Access Routes
     Route::match(['get', 'post'], 'file-access/datatables', [FileAccessController::class, 'getDataTables'])->name('file-access.datatables');

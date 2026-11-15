@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mt-6 mx-auto shadow rounded-lg px-4 py-6 max-w-5xl">
+<div class="container mt-6 mb-6 mx-auto shadow rounded-lg px-4 py-6 max-w-5xl">
     <h1 class="flex mt-2 text-xl font-bold mb-6">Create User</h1>
 
     @if ($errors->any())
@@ -22,9 +22,8 @@
             <div>
                 @if ($isSystemAdmin)
                     <div>
-                        <label for="ministry_id" class="mb-1 block text-sm font-medium text-gray-700"
-                        >
-                            Ministry
+                        <label for="ministry_id" class="mb-1 block text-sm font-medium text-gray-700">
+                            Organisation
                         </label>
 
                         <select
@@ -35,7 +34,7 @@
                                 shadow-sm focus:border-cyan-500
                                 focus:ring-cyan-500"
                         >
-                            <option value="">Select ministry</option>
+                            <option value="">Select organisation</option>
 
                             @foreach ($organisations as $organisation)
                                 <option
@@ -57,14 +56,11 @@
                     </div>
                 @else
                     <div>
-                        <label
-                            class="mb-1 block text-sm font-medium text-gray-700"
-                        >
-                            Ministry
+                        <label class="mb-1 block text-sm font-medium text-gray-700">
+                            Organisation
                         </label>
 
-                        <input
-                            type="text"
+                        <input type="text"
                             value="{{ $user->organisation->name }}"
                             readonly
                             class="mt-1 block text-sm w-full rounded-md border-gray-300
@@ -133,7 +129,7 @@
 
             <!-- Role -->
             <div>
-                <label for="role" class="block text-sm font-medium text-gray-700">Select Role: <span class="text-red-600">*</span></label>
+                <label for="role" class="block text-sm font-medium text-gray-700">Select Role: <span class="text-red-700 text-sm"> (NOTE: "admin" role refers to IT admin) </span> <span class="text-red-600">*</span></label> 
                 <select name="role" id="role" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm">
                     <option value=""> Roles</option>
                     @foreach ($roles as $id => $name)

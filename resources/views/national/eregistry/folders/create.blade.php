@@ -15,14 +15,11 @@
         </div>
     @endif
 
-    <div class="bg-white shadow font-poppins rounded-2xl p-6 max-w-2xl mx-auto mt-4 mb-4">
-        <nav aria-label="Folder breadcrumb" class="mb-5">
+    <div class="bg-white shadow rounded-2xl p-6 max-w-2xl mx-auto mt-4 mb-4">
+        <nav aria-label="Folder breadcrumb" class="mb-4">
             <ol class="flex flex-wrap items-center gap-2 text-sm">
                 <li>
-                    <a
-                        href="{{ route('registry.folders.index') }}"
-                        class="text-cyan-700 hover:underline"
-                    >
+                    <a href="{{ route('registry.folders.index') }}" class="text-cyan-700 hover:underline">
                         E-Filing
                     </a>
                 </li>
@@ -43,7 +40,7 @@
                 <li class="flex items-center gap-2">
                     <span class="text-gray-400" aria-hidden="true">/</span>
 
-                    <span class="font-medium text-gray-800" aria-current="page">
+                    <span class="text-gray-800" aria-current="page">
                         Create new folder
                     </span>
                 </li>
@@ -53,44 +50,36 @@
         <form action="{{ route('registry.folders.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             <input type="hidden" name="parent_id" value="{{ $parent?->id }}">
-            
-            
-                <h2 class="text-m font-semibold text-gray-800 mb-6">
-                    <span class="text-cyan-600">Create Folder</span>
-                </h2>
                 <div class="mb-5 relative">
                     @if ($isSystemAdmin)
                         <div>
-                            <label
-                                for="ministry_id"
-                                class="mb-1 block text-sm font-medium text-gray-700"
-                            >
-                                Ministry
+                            <label for="ministry_id" class="mb-1 block text-xs font-medium text-gray-700">
+                                Organisation
                             </label>
 
                             <select
-                                name="ministry_id"
-                                id="ministry_id"
+                                name="organisation_id"
+                                id="organisation_id"
                                 required
                                 class="mt-1 text-sm block w-full rounded-md border-gray-300
                                     shadow-sm focus:border-cyan-500
                                     focus:ring-cyan-500"
                             >
-                                <option value="">Select ministry</option>
+                                <option value="">Select organisation</option>
 
-                                @foreach ($ministries as $ministry)
+                                @foreach ($organisations as $organisation)
                                     <option
-                                        value="{{ $ministry->id }}"
+                                        value="{{ $organisation->id }}"
                                         @selected(
-                                            old('ministry_id') == $ministry->id
+                                            old('organisation_id') == $organisation->id
                                         )
                                     >
-                                        {{ $ministry->name }}
+                                        {{ $organisation->name }}
                                     </option>
                                 @endforeach
                             </select>
 
-                            @error('ministry_id')
+                            @error('organisation_id')
                                 <p class="mt-1 text-sm text-red-600">
                                     {{ $message }}
                                 </p>
@@ -98,10 +87,8 @@
                         </div>
                     @else
                         <div>
-                            <label
-                                class="mb-1 block text-sm font-medium text-gray-700"
-                            >
-                                Ministry
+                            <label class="mb-1 block text-sm font-medium text-gray-700">
+                                Organisation
                             </label>
 
                             <input
@@ -115,8 +102,8 @@
 
                             <input
                                 type="hidden"
-                                id="ministry_id"
-                                name="ministry_id"
+                                id="organisation_id"
+                                name="organisation_id"
                                 value="{{ $user->organisation_id }}"
                             >
                         </div>
@@ -160,9 +147,9 @@
             
 
                 <!-- Divider -->
-                <div class="border-t border-gray-200 pt-5 flex justify-center gap-3">
+                <div class="border-t border-gray-200 pt-5 flex gap-3">
                     <button type="submit"
-                        class="px-5 py-2 text-sm font-medium rounded-lg 
+                        class="px-5 py-3 text-sm font-medium rounded-lg 
                             bg-cyan-600 text-white hover:bg-cyan-700 
                             focus:ring-2 focus:ring-cyan-300">
                         Create Folder

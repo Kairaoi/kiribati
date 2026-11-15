@@ -7,7 +7,6 @@ use App\Models\National\Eregistry\ExternalPartner;
 use App\Models\National\Eregistry\File;
 use App\Models\National\Eregistry\FileCirculation;
 use App\Models\National\Eregistry\Organisation;
-use App\Models\National\Eregistry\MinistryArchivedFile;
 use App\Models\National\Eregistry\OrganisationClosedFile;
 use App\Models\User;
 use App\Repositories\National\Eregistry\CategoryRepository;
@@ -88,49 +87,41 @@ class FileController extends Controller
     public function getDataTables(Request $request)
     {
         Log::info('DataTables request', $request->all());
-        $selectedType = $request->get('selected_type');
-        $type = empty($selectedType)
-                ? 'active'
-                : $request->get('type', 'active');
-
-        $fileType = $request->get('file_type');
-        $category = $request->get('category');
-        $partner = $request->get('partner');
-        $organisationId = $request->get('organisation_id');
-
-        $fromDate = $request->get('date_from');
-        $toDate = $request->get('date_to');
-
-        // $query = $this->files->getForDataTable(Auth::user()->ministry_id, $type, $selectedType, $organisationId, $fromDate, $toDate);
+    
+        $type = $request->input('type', 'active');
 
         $search = $request->get('search', '');
         if (is_array($search)) {
             $search = $search['value'];
         }
-        $query = $this->files->getForDataTable($search, Auth::user()->organisation_id, 
-                                                $type, 
-                                                $selectedType,
-                                                $fileType,
-                                                $category,
-                                                $organisationId,
-                                                $partner,
-                                                $fromDate,
-                                                $toDate
+        $query = $this->files->getForDataTable($search, 
+                                               Auth::user(), 
+                                               Auth::user()->organisation_id, 
+                                               $type, 
                                             );
 
         return DataTables::of($query)
             ->editColumn('file_status', function ($row) {
                 $userOrgId = Auth::user()->organisation_id;
-
-                if ($row->organisation_id == $userOrgId && $row->circulation_organisation_id && $row->circulation_organisation_id == $userOrgId) {
+                
+                //display the circulation status
+                //if the row is an internal circulation
+                if ($row->organisation_id == $userOrgId && 
+                    $row->circulation_organisation_id && 
+                    $row->circulation_organisation_id == $userOrgId) 
+                {
                     return $row->circulation_status;
                 }
 
+                //display the file status if the user organisation is equal the file organisation
                 if ($row->organisation_id == $userOrgId) {
                     return $row->file_status;
                 }
 
+                //if the user organisation is not equal to the file organisation
+                //in this case - the dispatched organisations file circulation status is displayed
                 return $row->circulation_status ?? 'Pending';
+
             })->make(true);
     }
 
@@ -148,8 +139,7 @@ class FileController extends Controller
                                 ->where('organisation_id', $organisationId)
                                 ->first();
 
-        $folders = $this->folders->getTopFolders($organisationId)
-                                 ->get(['id', 'uuid', 'name']);
+        $folders = $this->folders->getTopFolders($organisationId);
         
         $sro = User::role('sro')
                     ->where('organisation_id', Auth::user()->organisation_id)
@@ -169,25 +159,25 @@ class FileController extends Controller
     }
 
 
-    public function getArchiveFiles(Request $request)
-    {
+    // public function getArchiveFiles(Request $request)
+    // {
 
-        $organisationId = Auth::user()->organisation_id;
-        $selectedType = $request->get('selected_type');
-        $filterOrgIds = $request->get('organisation_ids', []); // Get array of selected organisation IDs
-        $fromDate = $request->get('date_from');
-        $toDate = $request->get('date_to');
+    //     $organisationId = Auth::user()->organisation_id;
+    //     $selectedType = $request->get('selected_type');
+    //     $filterOrgIds = $request->get('organisation_ids', []); // Get array of selected organisation IDs
+    //     $fromDate = $request->get('date_from');
+    //     $toDate = $request->get('date_to');
 
-        $query = $this->files->getForFilteredTable($selectedType, 
-                                                   $organisationId, 
-                                                   $filterOrgIds, 
-                                                   $fromDate, $toDate);
+    //     $query = $this->files->getForFilteredTable($selectedType, 
+    //                                                $organisationId, 
+    //                                                $filterOrgIds, 
+    //                                                $fromDate, $toDate);
         
-        // Log::info('Archive query: '.$query->toSql(), $query->getBindings());
+    //     // Log::info('Archive query: '.$query->toSql(), $query->getBindings());
         
-        return Datatables::of($query)->make(true);
+    //     return Datatables::of($query)->make(true);
 
-    }
+    // }
        
 
     /**
@@ -230,9 +220,8 @@ class FileController extends Controller
             ->first();
 
         $officerInCharge = $currentReviewOfficer?->id !== $sro?->id;
-        // dd($officerInCharge);
+    
         $isRegistry = auth()->user()->hasRole('registry');
-        // dd($isRegistry);
     
         return view('national.eregistry.files.create', compact('organisations',
                                                                 'externalPartners',  
@@ -374,15 +363,15 @@ class FileController extends Controller
     }
 
 
-    public function download(File $file)
-    {
-        abort_unless($file->main_file_path, 404);
+    // public function download(File $file)
+    // {
+    //     abort_unless($file->main_file_path, 404);
 
-        return Storage::disk('public')->download(
-            $file->main_file_path,
-            basename($file->main_file_path)
-        );
-    }
+    //     return Storage::disk('public')->download(
+    //         $file->main_file_path,
+    //         basename($file->main_file_path)
+    //     );
+    // }
 
     
     /**
@@ -394,6 +383,9 @@ class FileController extends Controller
     public function show(File $file)
     {
         $this->authorize('view', $file);
+
+        //to display who dispatch the files
+        $file->load('dispatches.dispatchedBy');
 
         $organisationId = Auth::user()->organisation_id;
         $closedRecord = DB::table('organisation_closed_files')
@@ -413,13 +405,24 @@ class FileController extends Controller
     
         //get dispatch ministries circulations, not internal circulation
         $fileCirculations = $this->fileCirculations
-                                    ->organisationCirculations($file->id, $organisationId)
-                                    ->with([
-                                        'toOrganisation:id,name',
-                                        'dispatch:id,dispatch_date',
-                                    ])
-                                    ->latest()
-                                    ->get();
+                                ->organisationCirculations($file->id, $organisationId)
+                                ->with([
+                                    'toOrganisation:id,name',
+                                    'dispatch:id,dispatch_date,dispatched_by',
+                                    'dispatch.dispatchedBy:id,first_name,last_name',
+                                ])
+                                ->latest()
+                                ->get();
+
+        $dispatchedMinistries = $fileCirculations
+                                ->filter(fn ($circulation) =>
+                                    $circulation->dispatch !== null && $circulation->toOrganisation !== null
+                                )
+                                ->pluck('toOrganisation')
+                                ->unique('id')
+                                ->values();
+
+        // dd($dispatchedMinistries);
 
         //get internal circulation 
         $circulation = $this->fileCirculations
@@ -441,6 +444,10 @@ class FileController extends Controller
 
         $officers = $this->users->pluck();
 
+        $hods = User::role('hod')
+                    ->where('organisation_id', $organisationId)
+                    ->get('id', 'name', 'designation');
+
         $reviewOfficer = User::role('review-officer')
                                 ->where('organisation_id', $organisationId)
                                 ->first();
@@ -458,7 +465,8 @@ class FileController extends Controller
 
         $memoRecipients = $file->getMemoRecipients();
         $hod = Auth::user()->division?->hod;
-        return view('national.eregistry.files.show', compact('file', 
+        return view('national.eregistry.files.show', compact('file',
+                                                             'hods', 
                                                              'isClosed', 
                                                              'closedBy',
                                                              'closedDate', 
@@ -473,7 +481,8 @@ class FileController extends Controller
                                                              'notAssignedOfficers',
                                                              'divisionUsers',
                                                              'memoRecipients',
-                                                             'hod'));
+                                                             'hod',
+                                                             'dispatchedMinistries'));
     }
 
 
@@ -583,12 +592,12 @@ class FileController extends Controller
             'internal_ufs_id.exists' => 'The selected UFS officer must belong to your division.',
         ]);
 
-        $ministryId = Auth::user()->ministry_id;
+        $organisationId = Auth::user()->organisation_id;
 
         FileCirculation::updateOrCreate(
             [
                 'file_id'        => $file->id,
-                'to_ministry_id' => $ministryId,
+                'to_organisation_id' => $organisationId,
             ],
             [
                 'circulated_by'  => auth()->id(),
@@ -607,18 +616,29 @@ class FileController extends Controller
         return redirect()->route('registry.files.index')->with('success', 'File circulated for UFS');
     }
 
-    //sign and create final pdf 
-    public function signFile(Request $request, File $file) 
-    {
 
-        //if file is internal memo - set status to Pending UFS Circulation otherwise status is Pending Dispatch
+    //sign and create final pdf 
+    public function signFile(File $file) 
+    {
+        $file->update([
+            'status'          => 'Pending finalisation',
+            'signed_at' => now(),
+            'signed_by' => Auth::user()->id,
+        ]);
+       
+        return redirect()->route('registry.files.show', $file)->with('success', 'File signed');
+    }
+
+    public function finalisePdf(File $file) 
+    {
+         //if file is internal memo - set status to Pending UFS Circulation otherwise status is Pending Dispatch
         $status = $file->correspondence_type === 'internal' ? 'Pending UFS Circulation' : 'Pending Dispatch';
 
         $file->update([
             'signature_path' => Auth::user()->signature_path,
-            'signed_at'       => now(),
-            'signed_by'       => Auth::user()->id,
-            'status'          => $status,
+            'status' => $status,
+            'signed_at' => now(),
+            'signed_by' => Auth::user()->id,
         ]);
 
         $file->refresh();
@@ -712,7 +732,9 @@ class FileController extends Controller
             'final_pdf_hash'        => hash('sha256', $pdfContent),
         ]);
 
-        return redirect()->route('registry.files.index')->with('success', 'File is signed and final PDF generated.');
+        return redirect()->route('registry.files.show', $file)->with('success', 'File is signed and final PDF generated.');
+
+
     }
 
 
@@ -754,31 +776,31 @@ class FileController extends Controller
 
 
 
-    public function storeInternalReviewer(Request $request, File $file) 
-    {
+    // public function storeInternalReviewer(Request $request, File $file) 
+    // {
     
-        $validated = $request->validate([
-            'review_officer' => 'required|exists:users,id'
-        ]);
+    //     $validated = $request->validate([
+    //         'review_officer' => 'required|exists:users,id'
+    //     ]);
 
-        $ministryId = Auth::user()->ministry_id;
+    //     $ministryId = Auth::user()->ministry_id;
         
-        $fileCirculation = FileCirculation::updateOrCreate(
-            [
-                'file_id'        => $file->id,
-                'to_ministry_id' => $ministryId,
-            ],
-            [
-                'circulated_by'  => Auth::user()->id,
-                'circulated_at'  => now(),
-                'updated_by'     => Auth::user()->id,
-                'status'         => 'Pending Review',
-                'review_officer' => $validated['review_officer']
-            ]
-        );
+    //     $fileCirculation = FileCirculation::updateOrCreate(
+    //         [
+    //             'file_id'        => $file->id,
+    //             'to_ministry_id' => $ministryId,
+    //         ],
+    //         [
+    //             'circulated_by'  => Auth::user()->id,
+    //             'circulated_at'  => now(),
+    //             'updated_by'     => Auth::user()->id,
+    //             'status'         => 'Pending Review',
+    //             'review_officer' => $validated['review_officer']
+    //         ]
+    //     );
         
-        return redirect()->route('registry.files.index')->with('success', 'File circulated ');
-    }
+    //     return redirect()->route('registry.files.index')->with('success', 'File circulated ');
+    // }
 
 
     
@@ -786,32 +808,55 @@ class FileController extends Controller
     {
         $this->authorize('update', $file);
 
-        $ministryId = Auth::user()->ministry_id;
+        $organisationId = Auth::user()->organisation_id;
 
-        $identityOrganisations = Organisation::with('type')->orderBy('name')->get(); 
-        // dd($identityOrganisations);       
-        $externalPartners = $this->externalPartners->list($ministryId);
-        $ministryId = Auth::user()->ministry_id;
-        $file_types = $this->file_types->listWithMinistryTypes($ministryId); 
+        $ownOrganisationId = Auth::user()->organisation_id;
+
+        $organisations = $this->organisations
+            ->listAll()
+            ->reject(function ($organisation) use ($ownOrganisationId) {
+                return $ownOrganisationId !== null
+                    && (string) $organisation->id === (string) $ownOrganisationId;
+            })
+            ->values();
+            
+        $externalPartners = $this->externalPartners->list($organisationId);
+        $organisationId = Auth::user()->organisation_id;
+        $file_types = $this->file_types->listWithOrganisationTypes($organisationId);
+
         $categories = $this->categories->listWithDescriptions();
-        $divisions = $this->divisions->listWithOrganisation($ministryId);
+        $divisions = $this->divisions->listWithOrganisation($ownOrganisationId); // Get divisions for the user's organisation
         $ministries = $this->organisations->listMinistries();
-        $usersWithDivision = $this->users->getUsersDivision();
-
-        $notMinistriesOrgs = $identityOrganisations->filter(function($org) {
+        $usersWithDivision = $this->users->getDivisionUsers(Auth::user()->division_id);
+       
+        $notMinistriesOrgs = $organisations->filter(function($org) {
             return $org->type->name !== 'Ministry';
         });
-        
+
+        $currentReviewOfficer = User::role('review-officer')
+            ->where('organisation_id', $organisationId)
+            ->first();
+
+        $sro = User::role('sro')
+            ->where('organisation_id', $organisationId)
+            ->first();
+
+        $officerInCharge = $currentReviewOfficer?->id !== $sro?->id;
+    
+        $isRegistry = auth()->user()->hasRole('registry');
+    
         return view('national.eregistry.files.edit', compact('file',
-                                                             'identityOrganisations',
-                                                             'externalPartners',    
-                                                             'divisions',
-                                                             'categories',
-                                                             'file_types',
-                                                             'ministries',
-                                                             'notMinistriesOrgs',
-                                                             'usersWithDivision'
-        ));
+                                                            'organisations',
+                                                            'externalPartners',  
+                                                            'ministries',  
+                                                            'divisions',
+                                                            'categories',
+                                                            'file_types',
+                                                            'notMinistriesOrgs',
+                                                            'usersWithDivision',
+                                                            'officerInCharge',
+                                                            'organisationId',
+                                                            'isRegistry'));
 
     }
 
@@ -1068,7 +1113,7 @@ class FileController extends Controller
         FileCirculation::updateOrCreate(
             [
                 'file_id'        => $file->id,
-                'to_ministry_id' => auth()->user()->ministry_id,
+                'to_organisation_id' => auth()->user()->organisation_id,
             ],
             [
                 'updated_by'     => auth()->id(),
@@ -1079,8 +1124,6 @@ class FileController extends Controller
 
         return response()->json(['message' => 'Document filed successfully.',]);
     }
-
-
 
 
     public function viewAudit(File $file)
@@ -1094,10 +1137,8 @@ class FileController extends Controller
 
         return view('national.eregistry.files.audit', compact('file', 'dispatch', 'fileCirculations'));
     }
-
-
-
    
+
     public function submitForSroSignature(Request $request, File $file) 
     {
         $validated = $request->validate([
@@ -1136,7 +1177,86 @@ class FileController extends Controller
             'status' => 'Pending SRO Signature',
         ]);
 
+        return redirect()->route('registry.files.index')->with('success', 'File submitted for SRO review.');
+    }
 
+
+    public function submitForHodSignature(File $file) 
+    {
+        $divisionId = Auth::user()->division_id;
+
+        $hod = User::role('hod')
+                ->where('division_id', $divisionId)
+                ->first();
+        
+        if (!$hod) {
+            return back()
+                ->withInput()
+                ->with('error','No Head of Division (HOD) has been assigned to your division. Please contact your administrator.',
+            );
+        }
+
+        $fileCirculation = FileCirculation::updateOrCreate(
+            [
+                'file_id' => $file->id,
+                'to_organisation_id' => auth()->user()->organisation_id,
+            ],
+            [
+                'circulated_by' => auth()->id(),
+                'circulated_at' => now(),
+                'updated_by' => auth()->id(),
+                'status' => 'Pending HOD Signature',
+                'hod_reviewer' => $hod->id
+            ]
+        );
+
+
+        $fileCirculation->file->update([
+            'status' => 'Pending HOD Signature',
+        ]);
+
+
+        return redirect()->route('registry.files.index')->with('success', 'File submitted for HOD signature.');
+    }
+
+    public function submitForSroReview(Request $request, File $file) 
+    {
+        $validated = $request->validate([
+            'review_officer_id' => ['required', 'integer', 'exists:users,id'],
+        ]);
+
+        $organisationId = Auth::user()->organisation_id;
+
+        $reviewOfficer = User::role('review-officer')
+            ->where('organisation_id', $organisationId)
+            ->where('is_active', true)
+            ->whereNotNull('email')
+            ->find($validated['review_officer_id']);
+
+        if (! $reviewOfficer) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'review_officer_id' => 'The selected user is not an eligible review officer for your organisation.',
+            ]);
+        }
+
+        $fileCirculation = FileCirculation::updateOrCreate(
+            [
+                'file_id' => $file->id,
+                'to_organisation_id' => $organisationId,
+            ],
+            [
+                'circulated_by' => auth()->id(),
+                'circulated_at' => now(),
+                'updated_by' => auth()->id(),
+                'status' => 'Pending SRO Review',
+                'final_review_status' => 'Pending SRO Review',
+                'review_officer' => $reviewOfficer?->id,
+            ]
+        );
+
+        $fileCirculation->file->update([
+            'status' => 'Pending SRO Review',
+        ]);
 
         return redirect()->route('registry.files.index')->with('success', 'File submitted for SRO review.');
     }

@@ -62,7 +62,7 @@ class MICTUserSeeder extends Seeder
                 'deleted_at' => null
             ]
         );
-        $user1->assignRole('sro');
+        $user1->assignRole('user');
         // $user1->assignRole('review-officer');
         // $user1->assignRole('organisation-admin');
         $organisation->save();

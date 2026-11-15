@@ -119,25 +119,14 @@ class FileRepository extends BaseRepository
         return false;
     }
 
-    // public function getForFilteredTable($selectedType, int $userMinistryId, array $filterOrgIds = [], $fromDate = null, $toDate = null)
-    // {
-    //     return $this->model->query()
-    //         ->forType($selectedType, $userMinistryId) //scope in Model
-    //         ->forOrganisation($filterOrgIds)  //scope in Model
-    //         ->forDateRange($fromDate, $toDate) //scope in Model
-    //         ->join('organisations as from_org', 'files.organisation_id', '=', 'from_org.id')
-          
-    //         ->select([
-    //             'files.id',
-    //             'files.subject as file_subject',
-    //             'files.letter_date as letter_date',
-    //             'from_org.code as organisation_code',
-    //         ]);
-    // } 
 
-    public function getForDataTable($search, int $userOrgId, string $type = 'active', $selectedType = null, $fileType = null, $category = null,? int $organisationId = null, $partner = null, $fromDate = null, $toDate = null)
+    public function getForDataTable($search, $user, int $userOrgId, string $type)
     {
-        $user = Auth::user();
+        
+        $latestDispatches = DB::table('dispatches')
+        ->select('file_id')
+        ->selectRaw('MAX(dispatch_date) AS dispatch_date')
+        ->groupBy('file_id');
 
         $query = $this->model->query()
                             ->select([
@@ -149,7 +138,7 @@ class FileRepository extends BaseRepository
                                 'fc.status as circulation_status',
                                 'fc.review_comment as review_comment',
                                 'fc.reviewed_by as circulation_reviewed_by',
-                                'fc.to_organisation_id as circulation_organisation_id',
+                                'fc.to_organisation_id as circulation_organisation_id', //used in getDataTables in FileController
                                 'files.reference_no as reference_no',
                                 'files.letter_date as letter_date',
                                 'files.organisation_id as organisation_id',
@@ -176,45 +165,51 @@ class FileRepository extends BaseRepository
                             ->leftJoin('file_assignments as fa', function ($join) use ($user) {
                                 $join->on('fa.file_circulation_id', '=', 'fc.id')
                                     ->where('fa.officer_id', $user->id);
-        
+    
                             })
-                            ->leftJoin('dispatches', function ($join) {
+                            ->leftJoinSub($latestDispatches, 'dispatches', function ($join) {
                                 $join->on('dispatches.file_id', '=', 'files.id');
                             });
-
-
-        if ($this->userHasRole($user, ['system-admin', 'ministry-admin']) && 
-            !$this->userHasRole($user, ['registry', 'user', 'review-officer', 'ufs'])) {
-                $query->whereRaw('1 = 0');
-
-                return $query;
-        }
-
-
-        if ($this->userHasRole($user, 'registry')) {
-            $query->where(function ($query) use ($userOrgId, $user) {
-                $query->where('files.organisation_id', $userOrgId)
-                    ->orWhere('fc.to_organisation_id', $userOrgId)
-                    ->orWhere(function ($ufs) use ($user) {
-                        $ufs->where('files.internal_ufs_id', $user->id)
-                            ->where('files.status', 'Pending UFS');
-                    });
-            });
-        }
-
-        
+                            
+                            
         if ($this->userHasRole($user, 'sro')) {
             $query->where(function ($q) use ($user) {
-                $q->where('fc.status', 'Pending SRO Approval')
-                  ->orWhere('fc.status', 'Pending SRO Review')
+                $q->where('fc.status', 'Pending SRO Review')
+                  ->orWhere('files.status', 'Pending SRO Review')
                   ->orWhere('fc.status', 'Reviewed')
                   ->orWhere('fc.reviewed_by', $user->id)
                   ->orWhere('fc.review_officer', $user->id)
                   ->orWhere('files.created_by', $user->id);
             });
-        }
 
-        if ($this->userHasRole($user, ['user'])) {
+        } else if ($this->userHasRole($user, ['system-admin', 'admin']) && 
+            !$this->userHasRole($user, ['registry', 'user', 'review-officer', 'ufs'])) {
+                $query->whereRaw('1 = 0');
+
+        } else if ($this->userHasRole($user, 'registry')) {
+            $query->where(function ($query) use ($userOrgId, $user) {
+                $query->where(function ($organisationFiles) use ($userOrgId) {
+                    $organisationFiles
+                        ->where(function ($scope) use ($userOrgId) {
+                            $scope->where('files.organisation_id', $userOrgId)
+                                ->orWhere('fc.to_organisation_id', $userOrgId);
+                        })
+                        ->whereIn('files.status', [
+                            'Pending Dispatch',
+                            'Pending SRO Review',
+                            'Pending SRO Signature',
+                            'Reviewed',
+                            'Dispatched',
+                        ]);
+                })
+                ->orWhere('files.created_by', $user->id)
+                ->orWhere(function ($ufs) use ($user) {
+                    $ufs->where('files.internal_ufs_id', $user->id)
+                        ->where('files.status', 'Pending UFS');
+                });
+            });
+
+        } else if ($this->userHasRole($user, ['user'])) {
             $query->where(function ($q) use ($user) {
                 $q->where(function ($assigned) use ($user) {
                     $assigned->where('fa.officer_id', $user->id);
@@ -227,18 +222,16 @@ class FileRepository extends BaseRepository
                 })
                 ->orWhere(function ($review) use ($user) {
                     $review->where('fc.review_officer', $user->id);
-                         
                 })
                 ->orWhere(function ($reviewedBy) use ($user) {
                     $reviewedBy->where('fc.reviewed_by', $user->id)
                                ->orWhere('files.signed_by', $user->id);
                 })      
-                ->orWhere(function ($colleagueReview) use ($user) {
-                    $colleagueReview->where('fc.colleague_id', $user->id);
+                ->orWhere(function ($hodReview) use ($user) {
+                    $hodReview->where('fc.hod_reviewer', $user->id);
                 });
             });
         }
-
 
         if ($type === 'active') {
             $query->whereNotExists(function ($query) use ($userOrgId) {
@@ -249,32 +242,30 @@ class FileRepository extends BaseRepository
                     });
         } 
         
-
-        //Filter closed files
         if ($type === 'closed') {
-                $query->forType($selectedType, $userOrgId)
-                      ->forFileType($fileType, $userOrgId)
-                      ->forCategory($category, $userOrgId)
-                      ->forPartner($partner, $userOrgId)
-                      ->forOrganisation($organisationId, $userOrgId)
-                      ->forDateRange($fromDate, $toDate, $userOrgId);
+            $query->whereExists(function ($query) use ($userOrgId) {
+                    $query->selectRaw(1)
+                        ->from('organisation_closed_files as mcf')
+                        ->whereColumn('mcf.file_id', 'files.id')
+                        ->where('mcf.organisation_id', $userOrgId);
+                    });
+        
         }
 
            
         if (!empty(trim($search))) {
-        $search = '%' . strtolower(trim($search)) . '%';
+            $search = '%' . strtolower(trim($search)) . '%';
 
-        $query->where(function ($q) use ($search) {
-            $q->whereRaw('LOWER(files.subject) LIKE ?', [$search])
-                ->orWhereRaw('LOWER(files.reference_no) LIKE ?', [$search])
-                ->orWhereRaw('LOWER(file_types.name) LIKE ?', [$search])
-                ->orWhereRaw('LOWER(files.due_date) LIKE ?', [$search])
-                ->orWhereRaw('LOWER(files.status) LIKE ?', [$search])
-                ->orWhereRaw('LOWER(dispatches.dispatch_date) LIKE ?', [$search])
-                ->orWhereRaw('LOWER(files.correspondence_type) LIKE ?', [$search])
-                ->orWhereRaw('LOWER(fc.received_at) LIKE ?', [$search]);
-        });
-        
+            $query->where(function ($q) use ($search) {
+                $q->whereRaw('LOWER(files.subject) LIKE ?', [$search])
+                    ->orWhereRaw('LOWER(files.reference_no) LIKE ?', [$search])
+                    ->orWhereRaw('LOWER(file_types.name) LIKE ?', [$search])
+                    ->orWhereRaw('LOWER(files.due_date) LIKE ?', [$search])
+                    ->orWhereRaw('LOWER(files.status) LIKE ?', [$search])
+                    ->orWhereRaw('LOWER(dispatches.dispatch_date) LIKE ?', [$search])
+                    ->orWhereRaw('LOWER(files.correspondence_type) LIKE ?', [$search])
+                    ->orWhereRaw('LOWER(fc.received_at) LIKE ?', [$search]);
+            });
         }
      
         return $query;                

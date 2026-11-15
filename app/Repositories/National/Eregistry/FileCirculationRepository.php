@@ -110,7 +110,20 @@ class FileCirculationRepository extends BaseRepository
             ->where('to_organisation_id', $organisationId)
             ->latest();
     }
-    
+
+    public function updatePendingReviewOfficer($organisationId, $reviewOfficerId)
+    {
+        return $this->model
+            ->where('to_organisation_id', $organisationId)
+            ->whereIn('status', [
+                'Pending SRO Signature',
+                'Pending SRO Review',
+            ])
+            ->update([
+                'review_officer' => $reviewOfficerId,
+            ]);
+    }
+        
 
 }
 

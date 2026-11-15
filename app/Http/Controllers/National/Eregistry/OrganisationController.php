@@ -5,10 +5,8 @@ namespace App\Http\Controllers\National\Eregistry;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\National\Eregistry\OrganisationStoreRequest;
 use App\Http\Requests\National\Eregistry\OrganisationUpdateRequest;
-use App\Models\National\Eregistry\IdentityOrganisation;
 use App\Repositories\National\Eregistry\OrganisationRepository;
 use App\Repositories\National\Eregistry\OrganisationTypeRepository;
-use App\Repositories\National\Eregistry\MinistryRepository;
 use App\Repositories\National\Eregistry\FileRepository;
 use App\Models\National\Eregistry\Organisation;
 use Illuminate\Support\Facades\Auth;
@@ -61,7 +59,7 @@ class OrganisationController extends Controller
     {
         $isSystemAdmin = auth()->user()->hasRole('system-admin');
         $isRegistry = auth()->user()->hasRole('registry');
-        $isMinistryAdmin = auth()->user()->hasRole('ministry-admin');
+        $isMinistryAdmin = auth()->user()->hasRole('admin');
         $organisations = $this->organisations->listAll();
         return view('national.eregistry.organisations.index', compact('organisations',
                                                                      'isSystemAdmin',
@@ -76,62 +74,54 @@ class OrganisationController extends Controller
      */
     public function create()
     {
+        $this->authorize('create', Organisation::class);
+
         $organisationTypes = $this->organisation_types->listAll();
 
         return view('national.eregistry.organisations.create', compact('organisationTypes'));
     }
 
+
     /**
      * Store a newly created resource in storage.
      */
-    public function store(IdentityOrganisationStoreRequest $request)
+    public function store(OrganisationStoreRequest $request)
     {
+        $this->authorize('create', Organisation::class);
+
         $validated = $request->validated();
 
-        $organisation = $this->organisations->create($validated);
-        
-        $ministryTypeId = $this->organisation_types->getIdByName('Ministry');
-        
-        if($validated['organisation_type_id'] == $ministryTypeId) {
-            Ministry::create([
-                'identity_organisation_id' => $organisation->id,
-                'organisation_type_id' => $validated['organisation_type_id'],
-                'created_by' => auth()->id(),
-                'updated_by' => auth()->id(),
-            ]);
-        }
-        
+        $validated['logo'] = $request->hasFile('logo')
+            ? $request->file('logo')->store('organisation-logos', 'public')
+            : null;
+
+        $this->organisations->create($validated);
+                
         return redirect()->route('registry.organisations.index')->with('success', 'Organisation created successfully.');
         
     }
 
+
     /**
      * Display the specified resource.
      */
-    public function show(IdentityOrganisation $organisation)
+    public function show(Organisation $organisation)
     {
         $isMinistry = $organisation->type->name === 'Ministry';
+
         $isSystemAdmin = auth()->user()->hasRole('system-admin');
-        $ministryLogoPath = $organisation->ministry?->logo_path ?? '';
 
-        $ministryEmail =  $organisation->ministry?->email?? '-';
-        $ministryPhone =  $organisation->ministry?->phone?? '-';
-        $organisation->load([
-            'ministry' => function ($query) {
-                $query->withCount('users');
-            },
-        ]);
+        $ministryLogoPath = $organisation->logo_path ?? '';
 
-        $totalUsers = $organisation->ministry?->users_count ?? 0;
+        $ministryEmail =  $organisation->email?? '-';
+        $ministryPhone =  $organisation->phone?? '-';
 
-        $organisation->load([
-            'ministry' => function ($query) {
-                $query->withCount('files');
-            },
-        ]);
+        $organisation->loadCount('users');
+        $organisation->loadCount('files');
 
-        $totalFiles = $organisation->ministry?->files_count ?? 0;
-        $ministry = $organisation->ministry;
+        $totalUsers = $organisation->users_count ?? 0;
+        $totalFiles = $organisation->files_count ?? 0;
+
         return view('national.eregistry.organisations.show', compact('organisation',
                                                                      'isMinistry',
                                                                      'isSystemAdmin',
@@ -140,7 +130,7 @@ class OrganisationController extends Controller
                                                                      'ministryPhone',
                                                                      'totalUsers',
                                                                      'totalFiles',
-                                                                     'ministry'));
+                                                                     ));
 
     }
 
@@ -148,8 +138,11 @@ class OrganisationController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(IdentityOrganisation $organisation)
+    public function edit(Organisation $organisation)
     {
+
+        $this->authorize('update', $organisation);
+
         $organisationTypes = $this->organisation_types->listAll();
 
         return view('national.eregistry.organisations.edit', compact('organisation',
@@ -160,31 +153,32 @@ class OrganisationController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(IdentityOrganisationUpdateRequest $request, IdentityOrganisation $organisation)
+    public function update(OrganisationUpdateRequest $request, Organisation $organisation)
     {
+
+        $this->authorize('update', $organisation);
+
         $validated = $request->validated();
 
-        
-        $organisation = $this->organisations->update($organisation, $validated);
+        $validated['logo'] = $request->hasFile('logo')
+            ? $request->file('logo')->store('organisation-logos', 'public')
+            : null;
 
-        $ministryTypeId = $this->organisation_types->getIdByName('Ministry');
-        
-         if ((int) $validated['organisation_type_id'] === (int) $ministryTypeId) {
-            Ministry::updateOrCreate(
-                [
-                    'identity_organisation_id' => $organisation->id,
-                ],
-                [
-                    'organisation_type_id' => $ministryTypeId,
-                    'updated_by'           => auth()->id(),
-                    'created_by'           => auth()->id(),
-                ]
-            );
+        // Only system-admin can change these fields (if users insert values from the browser inspector tool)
+        if (!$request->user()->hasRole('system-admin')) {
+            unset($validated['name'],
+                  $validated['code'],
+                  $validated['organisation_type_id'],
+                  $validated['reviewer_title'],
+                );
         }
 
-        return redirect()->route('registry.organisations.index')->with('success', 'Organisation updated.');
+        $this->organisations->update($organisation, $validated);
+    
+        return redirect()->route('registry.organisations.edit', $organisation)->with('success', 'Organisation updated');
 
     }
+
 
     /**
      * Remove the specified resource from storage.

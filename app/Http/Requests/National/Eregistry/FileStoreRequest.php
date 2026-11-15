@@ -7,6 +7,13 @@ use Illuminate\Validation\Rule;
 
 class FileStoreRequest extends FormRequest
 {
+
+    // protected function prepareForValidation(): void
+    // {
+    //     dd($this->all());
+    // }
+
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -14,6 +21,7 @@ class FileStoreRequest extends FormRequest
     {
         return true;
     }
+
 
     /**
      * Get the validation rules that apply to the request.
@@ -44,8 +52,8 @@ class FileStoreRequest extends FormRequest
                         : ['upload']
                 ),
             ],
-            'division' => [
-                'required_if:source_type,own_ministry',
+            'from_division_id' => [
+                'required_unless:source_type,external_partner',
                 'nullable',
                 'exists:divisions,id'
             ],
