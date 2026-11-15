@@ -5,7 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\National\Eregistry\Division;
 use App\Models\National\Eregistry\FileCirculation;
-use App\Models\National\Eregistry\Ministry;
+use App\Models\National\Eregistry\Organisation;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -35,7 +35,7 @@ class User extends Authenticatable implements Auditable
      * @var array<int, string>
      */
     protected $fillable = [
-        'ministry_id',
+        'organisation_id',
         'division_id',
         'designation',
         'first_name',
@@ -86,9 +86,9 @@ class User extends Authenticatable implements Auditable
         ];
     }
 
-    public function ministry()
+    public function organisation()
     {
-        return $this->belongsTo(Ministry::class);
+        return $this->belongsTo(Organisation::class, 'organisation_id');
     }
 
     

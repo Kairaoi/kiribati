@@ -6,7 +6,7 @@
 <div class="container mx-w-5xl mx-auto mt-4">
     <div class="max-w-3xl mx-auto bg-white shadow-sm border border-gray-200 rounded-lg p-6">
         <h2 class="text-sm font-semibold text-gray-500 tracking-wide uppercase mb-4">
-            {{ $ministry->reviewer_title ?? ''}} Details
+            {{ $organisation->reviewer_title ?? ''}} Details
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -30,7 +30,7 @@
             @csrf
             @method('PATCH')
             <select name="secretary_id" class="border border-gray-300 text-sm px-4 py-2 focus:ring focus:ring-cyan-200">
-                <option value="">Select New {{ $ministry->reviewer_title ?? ''}}</option>
+                <option value="">Select New {{ $organisation->reviewer_title ?? ''}}</option>
                     @foreach ($usersWithDivision as $user)
                         @if ($user->id !== optional($sro)->id)
                             <option value="{{ $user->id }}">

@@ -7,13 +7,21 @@ use Illuminate\Validation\Rule;
 
 class FileTypeStoreRequest extends FormRequest
 {
+
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return true;
+        $authenticatedUser = auth()->user();
+
+        return $authenticatedUser
+            && $authenticatedUser->hasAnyRole([
+                'system-admin',
+                'registry',
+            ]);
     }
+
 
     /**
      * Get the validation rules that apply to the request.
@@ -22,6 +30,7 @@ class FileTypeStoreRequest extends FormRequest
      */
     public function rules(): array
     {
+
         return [
             'name' => [
                 'required',

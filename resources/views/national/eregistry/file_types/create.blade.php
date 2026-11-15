@@ -18,11 +18,17 @@
     <form action="{{ route('registry.file-types.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
  
-        <div class="bg-white shadow-sm font-poppins rounded-2xl p-6 max-w-2xl mx-auto mt-4 mb-4">
+        <div class="bg-white shadow rounded-2xl p-6 max-w-2xl mx-auto mt-4 mb-4">
 
-            <h2 class="text-m font-semibold text-gray-800 mb-6">
-                <span class="text-cyan-600">Create your Ministry File Type</span>
-            </h2>
+            @if($isSystemAdmin)
+                <h2 class="text-m font-semibold text-gray-800 mb-6">
+                    <span class="text-cyan-600">Create Global File Type</span>
+                </h2>
+            @else
+                <h2 class="text-sm font-semibold text-gray-800 mb-6">
+                    <span class="text-cyan-600">Create your organisation file type</span>
+                </h2>
+            @endif
 
             <!-- File Type Name -->
             <div class="mb-5 relative">
@@ -106,203 +112,203 @@
         </div>
     </form>
 
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
 
-    const input = document.getElementById('file_type_name');
-    const box = document.getElementById('name-suggestions');
-    const warning = document.getElementById('name-warning');
+            const input = document.getElementById('file_type_name');
+            const box = document.getElementById('name-suggestions');
+            const warning = document.getElementById('name-warning');
 
-    const suggestionUrl = "{{ route('registry.file-types.name.suggestions') }}";
+            const suggestionUrl = "{{ route('registry.file-types.name.suggestions') }}";
 
-    let currentSuggestions = [];
+            let currentSuggestions = [];
 
-    if (!input || !box || !warning) return;
+            if (!input || !box || !warning) return;
 
-    function checkDuplicate(value) {
-        const exists = currentSuggestions.some(
-            name => name.toLowerCase() === value.toLowerCase()
-        );
+            function checkDuplicate(value) {
+                const exists = currentSuggestions.some(
+                    name => name.toLowerCase() === value.toLowerCase()
+                );
 
-        if (exists) {
-            warning.classList.remove('hidden');
-        } else {
-            warning.classList.add('hidden');
-        }
-    }
-
-    input.addEventListener('input', function () {
-
-        let query = this.value.trim();
-
-        checkDuplicate(query);
-
-        if (query.length < 2) {
-            box.classList.add('hidden');
-            warning.classList.add('hidden');
-            return;
-        }
-
-        fetch(`${suggestionUrl}?q=${encodeURIComponent(query)}`, {
-            method: 'GET',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json',
-            },
-            credentials: 'same-origin'
-        })
-        .then(res => res.json())
-        .then(data => {
-
-            currentSuggestions = data; // store for duplicate check
-
-            box.innerHTML = '';
-
-            if (!data.length) {
-                box.classList.add('hidden');
-                return;
+                if (exists) {
+                    warning.classList.remove('hidden');
+                } else {
+                    warning.classList.add('hidden');
+                }
             }
 
-            box.classList.remove('hidden');
+            input.addEventListener('input', function () {
 
-            // Header
-            const header = document.createElement('div');
-            header.className = "px-2 py-1 text-xs text-gray-500 border-b";
-            header.textContent = "Existing file-types:";
-            box.appendChild(header);
+                let query = this.value.trim();
 
-            data.forEach(name => {
+                checkDuplicate(query);
 
-                const isExact = name.toLowerCase() === query.toLowerCase();
-
-                const item = document.createElement('div');
-                item.className = `
-                    p-2 cursor-pointer text-sm
-                    ${isExact ? 'bg-red-50 text-red-600 font-medium' : 'hover:bg-gray-100'}
-                `;
-                item.textContent = name;
-
-                item.addEventListener('click', () => {
-                    input.value = name;
+                if (query.length < 2) {
                     box.classList.add('hidden');
+                    warning.classList.add('hidden');
+                    return;
+                }
 
-                    // show warning immediately
-                    warning.classList.remove('hidden');
+                fetch(`${suggestionUrl}?q=${encodeURIComponent(query)}`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(res => res.json())
+                .then(data => {
+
+                    currentSuggestions = data; // store for duplicate check
+
+                    box.innerHTML = '';
+
+                    if (!data.length) {
+                        box.classList.add('hidden');
+                        return;
+                    }
+
+                    box.classList.remove('hidden');
+
+                    // Header
+                    const header = document.createElement('div');
+                    header.className = "px-2 py-1 text-xs text-gray-500 border-b";
+                    header.textContent = "Existing file-types:";
+                    box.appendChild(header);
+
+                    data.forEach(name => {
+
+                        const isExact = name.toLowerCase() === query.toLowerCase();
+
+                        const item = document.createElement('div');
+                        item.className = `
+                            p-2 cursor-pointer text-sm
+                            ${isExact ? 'bg-red-50 text-red-600 font-medium' : 'hover:bg-gray-100'}
+                        `;
+                        item.textContent = name;
+
+                        item.addEventListener('click', () => {
+                            input.value = name;
+                            box.classList.add('hidden');
+
+                            // show warning immediately
+                            warning.classList.remove('hidden');
+                        });
+
+                        box.appendChild(item);
+                    });
+
+                    // re-check after fetch
+                    checkDuplicate(query);
+                })
+                .catch(() => {
+                    box.classList.add('hidden');
                 });
-
-                box.appendChild(item);
             });
 
-            // re-check after fetch
-            checkDuplicate(query);
-        })
-        .catch(() => {
-            box.classList.add('hidden');
         });
-    });
+    </script>
 
-});
-</script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
+            const input = document.getElementById('code');
+            const box = document.getElementById('code-suggestions');
+            const warning = document.getElementById('code-warning');
 
-    const input = document.getElementById('code');
-    const box = document.getElementById('code-suggestions');
-    const warning = document.getElementById('code-warning');
+            const suggestionUrl = "{{ route('registry.file-types.code.suggestions') }}";
 
-    const suggestionUrl = "{{ route('registry.file-types.code.suggestions') }}";
+            let currentSuggestions = [];
 
-    let currentSuggestions = [];
+            if (!input || !box || !warning) return;
 
-    if (!input || !box || !warning) return;
+            function checkDuplicate(value) {
+                const exists = currentSuggestions.some(
+                    name => name.toLowerCase() === value.toLowerCase()
+                );
 
-    function checkDuplicate(value) {
-        const exists = currentSuggestions.some(
-            name => name.toLowerCase() === value.toLowerCase()
-        );
-
-        if (exists) {
-            warning.classList.remove('hidden');
-        } else {
-            warning.classList.add('hidden');
-        }
-    }
-
-    input.addEventListener('input', function () {
-
-        let query = this.value.trim();
-
-        checkDuplicate(query);
-
-        if (query.length < 2) {
-            box.classList.add('hidden');
-            warning.classList.add('hidden');
-            return;
-        }
-
-        fetch(`${suggestionUrl}?q=${encodeURIComponent(query)}`, {
-            method: 'GET',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json',
-            },
-            credentials: 'same-origin'
-        })
-        .then(res => res.json())
-        .then(data => {
-
-            currentSuggestions = data; // store for duplicate check
-
-            box.innerHTML = '';
-
-            if (!data.length) {
-                box.classList.add('hidden');
-                return;
+                if (exists) {
+                    warning.classList.remove('hidden');
+                } else {
+                    warning.classList.add('hidden');
+                }
             }
 
-            box.classList.remove('hidden');
+            input.addEventListener('input', function () {
 
-            // Header
-            const header = document.createElement('div');
-            header.className = "px-2 py-1 text-xs text-gray-500 border-b";
-            header.textContent = "Existing file-types:";
-            box.appendChild(header);
+                let query = this.value.trim();
 
-            data.forEach(name => {
+                checkDuplicate(query);
 
-                const isExact = name.toLowerCase() === query.toLowerCase();
-
-                const item = document.createElement('div');
-                item.className = `
-                    p-2 cursor-pointer text-sm
-                    ${isExact ? 'bg-red-50 text-red-600 font-medium' : 'hover:bg-gray-100'}
-                `;
-                item.textContent = name;
-
-                item.addEventListener('click', () => {
-                    input.value = name;
+                if (query.length < 2) {
                     box.classList.add('hidden');
+                    warning.classList.add('hidden');
+                    return;
+                }
 
-                    // show warning immediately
-                    warning.classList.remove('hidden');
+                fetch(`${suggestionUrl}?q=${encodeURIComponent(query)}`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(res => res.json())
+                .then(data => {
+
+                    currentSuggestions = data; // store for duplicate check
+
+                    box.innerHTML = '';
+
+                    if (!data.length) {
+                        box.classList.add('hidden');
+                        return;
+                    }
+
+                    box.classList.remove('hidden');
+
+                    // Header
+                    const header = document.createElement('div');
+                    header.className = "px-2 py-1 text-xs text-gray-500 border-b";
+                    header.textContent = "Existing file-types:";
+                    box.appendChild(header);
+
+                    data.forEach(name => {
+
+                        const isExact = name.toLowerCase() === query.toLowerCase();
+
+                        const item = document.createElement('div');
+                        item.className = `
+                            p-2 cursor-pointer text-sm
+                            ${isExact ? 'bg-red-50 text-red-600 font-medium' : 'hover:bg-gray-100'}
+                        `;
+                        item.textContent = name;
+
+                        item.addEventListener('click', () => {
+                            input.value = name;
+                            box.classList.add('hidden');
+
+                            // show warning immediately
+                            warning.classList.remove('hidden');
+                        });
+
+                        box.appendChild(item);
+                    });
+
+                    // re-check after fetch
+                    checkDuplicate(query);
+                })
+                .catch(() => {
+                    box.classList.add('hidden');
                 });
-
-                box.appendChild(item);
             });
 
-            // re-check after fetch
-            checkDuplicate(query);
-        })
-        .catch(() => {
-            box.classList.add('hidden');
         });
-    });
-
-});
-</script>
-@endpush
+    </script>
+    @endpush
 @endsection
 
 

@@ -4,10 +4,11 @@ namespace App\Notifications;
 
 use App\Models\National\Eregistry\FileCirculation;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class ReviewOfficerPendingReviewNotification extends Notification
+class ReviewOfficerPendingReviewNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 

@@ -98,11 +98,12 @@ class OrganisationTypeRepository extends BaseRepository
     public function pluck($column = 'name', $key = 'id')
     {
         return $this->model->query()
-            ->orderBy($column)
-            ->pluck($column, $key);
+            ->orderBy($key)
+            ->pluck($column, $key, 'name');
     }
 
 
+    //used by the external partner create
     public function list()  
     {
         return $this->model->query()
@@ -111,6 +112,21 @@ class OrganisationTypeRepository extends BaseRepository
             ->where('name', '!=', 'State Owned Enterprise') 
             ->get(['id', 'name']);
 
+    }
+
+    public function listAll()  
+    {
+        return $this->model->query()
+            ->orderBy('id', 'asc')
+            ->get(['id', 'name']);
+
+    }
+
+    public function getIdByName(string $name): ?int
+    {
+        return $this->model()::query()
+            ->where('name', $name)
+            ->value('id');
     }
 
 }

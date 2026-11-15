@@ -27,27 +27,29 @@ class UserRepository extends BaseRepository
      * @param array $input
      * @return User
      */
-    public function create(array $input)
+    public function create(array $validated): User
     {
-        $data = [
-            'first_name' => $input['first_name'],
-            'last_name' => $input['last_name'],
-            'division_id' => $input['division_id'] ?? null,
-            'organisation_id' => $input['organisation_id'] ?? null,
-            'role' => $input['role'] ?? null,
-            'email' => $input['email'],
-            'password'=> Hash::make($input['password']),// Only here
-            'current_team_id' => $input['current_team_id'] ?? null,
-            'profile_photo_path' => $input['profile_photo_path'] ?? null,
-            'created_by' => Auth::id(),
-            'updated_by' => Auth::id(),
-        ];
+        return DB::transaction(function () use ($validated) {
+            $user = $this->model()::create([
+                'organisation_id' => $validated['organisation_id'],
+                'division_id' => $validated['division_id'],
+                'first_name'  => $validated['first_name'],
+                'last_name'   => $validated['last_name'],
+                'email'       => $validated['email'],
+                'designation' => $validated['designation'] ?? null,
+                'password'    => isset($validated['password'])
+                    ? Hash::make($validated['password'])
+                    : null,
+                'is_active'   => true,
+                'updated_by'  => auth()->id(),
+            ]);
 
-        $user = $this->model();
-        $user = new $user($data);
-        $user->save();
+            $role = Role::findOrFail($validated['role']);
 
-        return $user;
+            $user->assignRole($role);
+
+            return $user;
+        });
     }
 
     /**
@@ -60,11 +62,13 @@ class UserRepository extends BaseRepository
     public function update(User $user, array $data): User
     {
         $user->update([
-            'first_name'  => $data['first_name'],
-            'last_name'   => $data['last_name'],
-            'email'       => $data['email'],
-            'division_id' => $data['division_id'],
-            'designation' => $data['designation'],
+            'organisation_id' => $data['organisation_id'] ?? $user->organisation_id ,
+            'division_id' => $data['division_id'] ?? $user->division_id,
+            'first_name'  => $data['first_name'] ?? $user->first_name,
+            'last_name'   => $data['last_name'] ?? $user->last_name,
+            'email'       => $data['email'] ?? $user->email,
+            'designation' => $data['designation'] ?? $user->designation,
+            'is_active'   => true,
             'updated_by'  => auth()->id(),
         ]);
 
@@ -91,14 +95,12 @@ class UserRepository extends BaseRepository
             'users.designation',
             'users.created_at',
             'users.updated_at',
-            'users.profile_photo_path',
             'divisions.name as division_name',
-            'ministries.code as ministry_code',
             'users.is_active as is_active',
             DB::raw('GROUP_CONCAT(roles.name SEPARATOR ", ") as role_names')
         ])
         ->leftJoin('divisions', 'users.division_id', '=', 'divisions.id')
-        ->join('ministries', 'users.ministry_id', '=', 'ministries.id')
+        ->leftJoin('organisations', 'users.organisation_id', '=', 'organisations.id')
         ->leftJoin('model_has_roles', function ($join) {
             $join->on('users.id', '=', 'model_has_roles.model_id')
                  ->where('model_has_roles.model_type', '=', User::class);
@@ -106,14 +108,13 @@ class UserRepository extends BaseRepository
         ->leftJoin('roles', 'model_has_roles.role_id', '=', 'roles.id')
         ->groupBy(
             'users.id',
-        
         );
 
         if ($user->hasRole('system-admin')) {
              // System admin sees all users
-        } else if ($user->hasRole('ministry-admin') || $user->hasRole('registry')) {
+        } else if ($user->hasRole('admin') || $user->hasRole('registry')) {
             // Ministry admin only sees users from their ministry
-            $query->where('users.ministry_id', $user->ministry_id)
+            $query->where('users.organisation_id', $user->organisation_id)
                 ->whereDoesntHave('roles', function ($q) {
                     $q->where('name', 'system-admin');
                 });
@@ -133,7 +134,6 @@ class UserRepository extends BaseRepository
                 ->orWhereRaw('LOWER(users.email) LIKE ?', [$search])
                 ->orWhereRaw('LOWER(users.designation) LIKE ?', [$search])
                 ->orWhereRaw('LOWER(divisions.name) LIKE ?', [$search])
-                ->orWhereRaw('LOWER(ministries.code) LIKE ?', [$search])
                 ->orWhereRaw('LOWER(roles.name) LIKE ?', [$search]);
         });
     }
@@ -149,12 +149,12 @@ class UserRepository extends BaseRepository
      */
     public function pluck($column = 'first_name', $key = 'id')
     {
-        $ministry_id = Auth::user()->ministry_id;
+        $organisation_id = Auth::user()->organisation_id;
 
         //return users name and id for the logged in organisation 
         //and with the role of 'admin'
         return $this->model->query()
-            ->where('ministry_id', $ministry_id)
+            ->where('organisation_id', $organisation_id)
             ->orderBy($column)
             ->pluck($column, $key);
     }
@@ -169,7 +169,7 @@ class UserRepository extends BaseRepository
     public function list($column = 'name', $key = 'id')
     {
         return $this->model()::query()
-            ->orderBy('id')
+            ->orderBy('name')
             ->orderBy($column)
             ->get(['id', 'first_name', 'last_name']);
     }
@@ -186,7 +186,7 @@ class UserRepository extends BaseRepository
         return $this->model->query()
             ->select('users.id', 'users.division_id', 'users.first_name', 'users.last_name', 'divisions.name as division_name', 'users.designation')
             ->join('divisions', 'users.division_id', '=', 'divisions.id')
-            ->where('users.ministry_id', Auth::user()->ministry_id)->where('users.email', '!=', 'admin@system.gov.ki')
+            ->where('users.organisation_id', Auth::user()->organisation_id)->where('users.email', '!=', 'admin@system.gov.ki')
             ->where('users.id', '!=', Auth::user()->id)
             ->where('users.is_active', true)
             ->orderBy('divisions.name')
@@ -216,7 +216,7 @@ class UserRepository extends BaseRepository
             ->join('divisions', 'users.division_id', '=', 'divisions.id')
             ->where('users.id', '!=', Auth::user()->id)
             ->where('users.is_active', true)
-            ->where('users.ministry_id', Auth::user()->ministry_id)->where('users.email', '!=', 'admin@system.gov.ki')
+            ->where('users.organisation_id', Auth::user()->organisation_id)->where('users.email', '!=', 'admin@system.gov.ki')
             ->where('users.division_id', $userDivisionId)
             ->orderBy('divisions.name')
             ->orderBy('users.first_name')
@@ -231,7 +231,7 @@ class UserRepository extends BaseRepository
         $editableRoles = [
             'user',
             'registry',
-            'ministry-admin',
+            'admin',
         ];
 
         foreach ($editableRoles as $editableRole) {

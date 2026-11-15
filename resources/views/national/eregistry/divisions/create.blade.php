@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mx-auto font-montserrat px-4 py-6 max-w-3xl">
+<div class="container mx-auto shadow mt-6 mb-10 rounded-lg px-4 py-6 max-w-3xl">
     <h1 class="flex mt-4 text-xl font-bold mb-6">Create New Division</h1>
 
     @if ($errors->any())
@@ -18,45 +18,80 @@
         
         <div class="grid grid-cols-1 md:grid-cols-1 gap-3">
 
-              <!-- Ministry -->
-            <div>
-                <label for="ministry_id" class="block text-sm font-medium text-gray-700">
-                    Ministry <span class="text-red-600">*</span>
-                </label>
+             <div>
+                @if ($isSystemAdmin)
+                    <div>
+                        <label
+                            for="ministry_id"
+                            class="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                            Organisation
+                        </label>
 
-                @unless(Auth::user()->hasRole('system-admin'))
-                    {{-- Display ministry name --}}
-                    <input
-                        type="text"
-                        value="{{ $ministryName }}"
-                        class="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 text-gray-700 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
-                        readonly
-                    >
+                        <select
+                            name="organisation_id"
+                            id="organisation_id"
+                            required
+                            class="mt-1 text-sm block w-full rounded-md border-gray-300
+                                shadow-sm focus:border-cyan-500
+                                focus:ring-cyan-500"
+                        >
+                            <option value="">Select organisation</option>
+
+                            @foreach ($organisations as $organisation)
+                                <option
+                                    value="{{ $organisation->id }}"
+                                    @selected(
+                                        old('organisation_id') == $organisation->id
+                                    )
+                                >
+                                    {{ $organisation->name }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        @error('organisation_id')
+                            <p class="mt-1 text-sm text-red-600">
+                                {{ $message }}
+                            </p>
+                        @enderror
+                    </div>
                 @else
-                    <select
-                        name="ministry_id"
-                        id="ministry_id"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
-                        required
-                    >
-                        <option value="">-- Select Ministry --</option>
+                    <div>
+                        <label
+                            class="mb-1 block text-sm font-medium text-gray-700"
+                        >
+                            Organisation
+                        </label>
 
-                        @foreach($ministries as $ministry)
-                            <option
-                                value="{{ $ministry->id }}"
-                                {{ old('ministry_id', $ministryId) == $ministry->id ? 'selected' : '' }}
-                            >
-                                {{ $ministry->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                @endunless
+                        <input
+                            type="text"
+                            value="{{ $user->organisation->name }}"
+                            readonly
+                            class="mt-1 block text-sm w-full rounded-md border-gray-300
+                                bg-gray-100 text-gray-600 shadow-sm"
+                        >
+
+                        <input
+                            type="hidden"
+                            id="organisation_id"
+                            name="organisation_id"
+                            value="{{ $user->organisation_id }}"
+                        >
+                    </div>
+                @endif
             </div>
+
 
             <!-- Division Name -->
             <div>
                 <label for="name" class="block text-sm font-medium text-gray-700">Division Name: <span class="text-red-600">*</span></label>
                 <input type="text" name="name" id="name" value="{{ old('name') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm" required>
+            </div>
+
+            <div>
+                <label for="description" class="block text-sm font-medium text-gray-700">Description:</label>
+                <textarea name="description" id="description" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm">{{ old('description') }}</textarea>
             </div>
 
             <div>
@@ -73,10 +108,14 @@
                 <label for="phone" class="block text-sm font-medium text-gray-700">Phone:</label>
                 <input type="text" name="phone" id="phone" value="{{ old('phone') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm">
                           
+            </div>
+
+            <div>
+                <button type="submit" class="mt-4 mb-4 bg-cyan-600 text-white py-2 px-4 rounded-md hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
+                    Create Division
+                </button>
+            </div>
         </div>
-            <button type="submit" class="w-full bg-cyan-600 text-white py-2 px-4 rounded-md hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
-                Create Division
-            </button>
     </form>
 
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />

@@ -4,11 +4,13 @@ namespace App\Http\Controllers\National\Eregistry;
 
 use App\Http\Controllers\Controller;
 use App\Repositories\National\Eregistry\DivisionRepository;
-use App\Repositories\National\Eregistry\MinistryRepository;
+use App\Repositories\National\Eregistry\OrganisationRepository;
 use App\Repositories\National\Eregistry\UserRepository;
 use App\Repositories\National\Eregistry\UnitRepository;
 use DB;
 use Illuminate\Http\Request;
+use App\Http\Requests\National\Eregistry\DivisionStoreRequest;
+use App\Http\Requests\National\Eregistry\DivisionUpdateRequest;
 use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\Facades\DataTables;
 use App\Models\National\Eregistry\Division;
@@ -17,17 +19,17 @@ use App\Models\User;
 class DivisionController extends Controller
 {
     private $divisions;
-    private $ministries;
+    private $organisations;
     private $users;
     private $units;
 
     public function __construct(DivisionRepository $divisions, 
-                                MinistryRepository $ministries,
+                                OrganisationRepository $organisations,
                                 UserRepository $users,
                                 UnitRepository $units)
     {
         $this->divisions = $divisions;
-        $this->ministries = $ministries;
+        $this->organisations = $organisations;
         $this->users = $users;
         $this->units = $units;
     }
@@ -48,8 +50,8 @@ class DivisionController extends Controller
         }
     
         $user = Auth::user();
-        $ministryId = Auth::user()->ministry_id;
-        $query = $this->divisions->getForDataTable($search, 'id', 'asc', $ministryId, $user);
+        $organisationId = Auth::user()->organisation_id;
+        $query = $this->divisions->getForDataTable($search, 'id', 'asc', $organisationId, $user);
     
         return DataTables::of($query)
                     ->addColumn('can_delete', function ($row) {
@@ -58,9 +60,13 @@ class DivisionController extends Controller
                     ->addColumn('can_edit', function ($row) {
                         return Auth::user()->hasRole('system-admin');
                     })
+                    ->addColumn('hod_name', function ($row) {
+                        return $row->hod_name;
+                    })
                     ->make(true);
     }
     
+
     /**
      * Display a listing of the resource.
      *
@@ -73,6 +79,7 @@ class DivisionController extends Controller
         return view('national.eregistry.divisions.index');
     }
 
+
     /**
      * Show the form for creating a new resource.
      *
@@ -82,12 +89,15 @@ class DivisionController extends Controller
     {
         $this->authorize('create', Division::class);
         
-        $ministries = $this->ministries->pluck();
+        $isSystemAdmin = auth()->user()->hasRole('system-admin');
 
-        $ministryId = Auth::user()->ministry_id;
-        $ministryName = $this->ministries->getById($ministryId)->name ?? 'Unknown Ministry';
+        $user = Auth::user();
 
-        return view('national.eregistry.divisions.create', compact('ministries', 'ministryName', 'ministryId'));
+        $organisations = $isSystemAdmin ? $this->organisations->listMinistries() : collect();
+
+        return view('national.eregistry.divisions.create', compact('organisations',
+                                                                    'user',
+                                                                    'isSystemAdmin'                                                    ));
     }
 
     /**
@@ -96,28 +106,17 @@ class DivisionController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(DivisionStoreRequest $request)
     {
-        $this->authorize('create', Division::class);
+        $validated = $request->validated();
 
-        $ministryId = Auth::user()->ministry_id;
-        $request->validate([
-            'name' => 'required|string',
-            'description' => 'nullable|string',
-            'location' => 'nullable|string',
-            'email' => 'nullable|email',
-            'phone' => 'nullable|string',
-        ]);
+        if (auth()->user()->hasRole('registry')) {
+            $validated['organisation_id'] = auth()->user()->organisation_id;
+        }
 
-        Division::create([
-            'name' => $request->name,
-            'description' => $request->description,
-            'location' => $request->location,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'ministry_id' => $ministryId,
-        ]);
-        return redirect()->route('registry.divisions.index')->with('message', 'Division created successfully.');
+        $this->divisions->create($validated);
+    
+        return redirect()->route('registry.divisions.index')->with('success', 'Division created.');
     }
 
     /**
@@ -126,17 +125,13 @@ class DivisionController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Division $division)
     {
-        
-        $division = $this->divisions->getById($id);
 
-        $this->authorize('view', $division);
-
-        $users = $this->users->getDivisionUsers($id);
-        // $units = $this->units->listWithDivision($division->id);
-
-        return view('national.eregistry.divisions.show', compact('division', 'users'));
+        // $this->authorize('view', $division);
+        $isRegistry = auth()->user()->hasRole('registry');
+        $isSystemAdmin = auth()->user()->hasRole('system-admin');
+        return view('national.eregistry.divisions.show', compact('division', 'isRegistry', 'isSystemAdmin'));
     }
 
     /**
@@ -145,22 +140,24 @@ class DivisionController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit(Division $division)
     {
 
-        $division = $this->divisions->getById($id);
+        $this->authorize('create', Division::class);
+        
+        $isSystemAdmin = auth()->user()->hasRole('system-admin');
 
-        $this->authorize('update', $division);
+        $user = Auth::user();
 
-        $users = $this->users->getDivisionUsers(Auth::user()->division_id);
-        $ministries = $this->ministries->pluck();
+        $organisations = $isSystemAdmin ? $this->organisations->listMinistries() : collect();
 
-        return view('national.eregistry.divisions.edit', [
-            'division' => $division,
-            'ministries' => $ministries,
-            'users' => $users
-        ]);
+        return view('national.eregistry.divisions.edit', compact('division',
+                                                                 'organisations',
+                                                                 'user',
+                                                                 'isSystemAdmin'                                                 
+                                                                ));
     }
+
 
     /**
      * Update the specified resource in storage.
@@ -169,23 +166,22 @@ class DivisionController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Division $division)
+    public function update(DivisionUpdateRequest $request, Division $division)
     {
-        $this->authorize('update', Division::class);
-        
-        $validated = $request->validate([
-            'name' => ['required', 'string'],
-        ]);
 
-        $division->update([
-            'name' => $validated['name'],
-        ]);
+        $validated = $request->validated();
 
-        return redirect()->route('registry.divisions.index')->with('message', 'Division updated successfully.');
+        // Only system-admin can change these fields (if users insert values from the browser inspector tool)
+        if (!$request->user()->hasRole('system-admin')) {
+            unset($validated['organisation_id']);
+        }
+
+        $this->divisions->update($division, $validated);
+
+        return redirect()->route('registry.divisions.index')->with('success', 'Division updated.');
     }
 
-
-
+    
     public function assignHod(Division $division)
     {
         

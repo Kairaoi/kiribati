@@ -3,7 +3,7 @@
 namespace App\Policies;
 
 use App\Models\National\Eregistry\File;
-use App\Models\National\Eregistry\IdentityOrganisation;
+use App\Models\National\Eregistry\Organisation;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
 
@@ -25,11 +25,13 @@ class FilePolicy
     public function view(User $user, File $file): bool
     {
         if ($file->created_by === $user->id || 
-           ($file->ministry_id === $user->ministry_id && $user->hasRole(['registry', 'ministry-admin', 'review-officer']))) {
+           ($file->organisation_id === $user->organisation_id && 
+           $user->hasRole(['registry', 'admin', 'review-officer', 'sro'])) ) {
             return true;
         }
 
-        // Assigned officer of the file circulation (recipient ministry)
+
+        // Assigned officer of the file circulation (recipient organisation)
         if ($file->circulations()->whereHas('assignments', function ($query) use ($user) {
                     $query->where('officer_id', $user->id);
             })->exists()) {
@@ -41,19 +43,20 @@ class FilePolicy
             return true;
         }
 
-        if ($file->circulations()->where('colleague_id', $user->id)->exists()) {
+        
+        if ($file->circulations()->where('hod_reviewer', $user->id)->exists()) {
             return true;
         }
 
         
-        // Review officer of the recipient ministry
+        // Review officer of the recipient organisation
         if ($file->circulations()->where('review_officer', $user->id)->exists()) {
             return true;
         }
 
-        // Registry officers of the recipient ministry
+        // Registry officers of the recipient organisation
         if ($user->hasRole('registry') &&
-            $file->circulations()->where('to_ministry_id', $user->ministry_id)->exists()
+            $file->circulations()->where('to_organisation_id', $user->organisation_id)->exists()
         ) {
             return true;
         }
@@ -68,20 +71,27 @@ class FilePolicy
      */
     public function close(User $user, File $file): bool
     {
-        $loggedInMinistryId = $user->ministry_id;
+        $loggedInOrganisationId = $user->organisation_id;
 
         if($user->hasRole('registry') && 
-           $file->ministry_id === $loggedInMinistryId && 
-           ($file->status === 'Dispatched' || $file->status === 'Pending Dispatch') )
+           $file->organisation_id === $loggedInOrganisationId && 
+           ($file->status === 'Dispatched' || 
+            $file->status === 'Pending Dispatch' || 
+            $file->status === 'Pending Action' ||
+            $file->status === 'Cancelled') 
+            )
         {
            return true;
         }
 
         if ($user->hasRole('registry') &&
-            $file->circulations()
-                ->where('to_ministry_id', $user->ministry_id)
-                ->whereIn('status', ['Reviewed', 'Pending SRO Approval', 'Approved', 'Rejected'])
-                ->exists()
+            $file->circulations()->where('to_organisation_id', $user->organisation_id)
+                                 ->whereIn('status', ['Reviewed', 
+                                                      'Pending SRO Review', 
+                                                      'Approved', 
+                                                      'Cancelled',
+                                                      'Signature Cancelled',
+                                ])->exists()
         ) {
             return true;
         }
@@ -105,22 +115,22 @@ class FilePolicy
     */
     public function dispatch(User $user, File $file): bool
     {
-        $ministryId = $user->ministry_id;
+        $organisationId = $user->organisation_id;
 
-        $isOwnMinistryIdentityOrganisation =
-            $file->source_type === IdentityOrganisation::class
-            && (int) $file->source_id === (int) $ministryId;
+        $ownedFile =
+            $file->source_type === Organisation::class
+            && (int) $file->source_id === (int) $organisationId;
 
         if ($file->document_source === 'upload' && 
-            $file->status === 'Pending Action' && 
-            $user->hasRole('registry') && $isOwnMinistryIdentityOrganisation) {
+            ($file->status === 'Pending Action' ||$file->status === 'Dispatched') && 
+            $user->hasRole('registry') && $ownedFile) {
             return true;
         }
 
         if ($file->correspondence_type === 'memo' &&
             ($file->status === "Approved" || $file->status === "Pending Dispatch") &&
             $user->hasRole('registry') &&
-            $isOwnMinistryIdentityOrganisation)
+            $ownedFile)
         {
             return true;
         }
@@ -137,6 +147,22 @@ class FilePolicy
 
         if ($file->created_by === $user->id &&
            ($file->status === "Pending Signature" || $file->status === "Pending Action" || $file->status === "Returned for Amendment" )) {
+            return true;
+        }
+
+        return false;
+    
+    }
+
+
+    /**
+     * Determine whether the user can delete the model.
+     */
+    public function delete(User $user, File $file): bool
+    {
+
+        if ($file->created_by === $user->id &&
+           ($file->status === "Pending Signature" || $file->status === "Pending Action")) {
             return true;
         }
 
@@ -171,63 +197,96 @@ class FilePolicy
         $fileCirculation = $file->circulations()
                                 ->where(function ($query) use ($user) {
                                     $query->where('review_officer', $user->id)
-                                        ->orWhere('colleague_id', $user->id);
+                                        ->orWhere('hod_reviewer', $user->id);
                                 })
                                 ->first();
         
         
-        if ($file->ministry_id === $user->ministry_id &&
+        if ($file->organisation_id === $user->organisation_id &&
             ($file->created_by === $user->id || ($fileCirculation && $fileCirculation->review_officer === $user->id)) &&
-            ($file->status === "Pending Signature" || $file->status === "Pending SRO Approval" || $file->status === "Returned for Amendment") && 
+            ($file->status === "Pending Signature" || 
+            $file->status === "Pending SRO Signature" || $file->status === "Returned for Amendment") && 
             $file->document_source === 'online') {
 
             return true;
         }
 
-        if ($file->ministry_id === $user->ministry_id && 
+        if ($file->organisation_id === $user->organisation_id && 
             $fileCirculation && 
-            $fileCirculation->status === "Pending HOD Review" && 
-            $fileCirculation->colleague_id === $user->id)
-            {
-                return true;
-            }
+            $fileCirculation->status === "Pending HOD Signature" && 
+            $fileCirculation->hod_reviewer === $user->id) {
+            
+            return true;
+        }
 
         return false;
-    
+    }
+
+    public function finalise(User $user, File $file): bool
+    {
+        
+        if ($file->signedBy?->id === $user->id &&
+            ($file->status === "Pending finalisation"))
+           {
+            return true;
+        }
+        return false;
+    }
+
+    public function editSignature(User $user, File $file): bool
+    {
+        
+        if ($file->signedBy?->id === $user->id &&
+            ($file->status === "Pending finalisation"))
+           {
+            return true;
+        }
+        return false;
     }
 
 
     /**
     * Determine whether the user can reject the model
     */
-    public function reject(User $user, File $file): bool
+    public function cancelSignature(User $user, File $file): bool
     {
         $fileCirculation = $file->circulations()->where('review_officer', $user->id)->first();
         
-        if (($file->ministry_id === $user->ministry_id &&
+        if (($file->organisation_id === $user->organisation_id &&
             $fileCirculation && 
             $fileCirculation->review_officer &&$fileCirculation && 
             $fileCirculation->review_officer === $user->id) &&
-            ($file->status === "Pending SRO Approval") && 
+            ($file->status === "Pending SRO Signature") && 
             $file->document_source === 'online') {
 
             return true;
         }
 
+        if ($file->organisation_id === $user->organisation_id && 
+            $fileCirculation && 
+            $fileCirculation->status === "Pending HOD Signature" && 
+            $fileCirculation->hod_reviewer === $user->id) {
+            
+            return true;
+        }
+
         return false;
-    
     }
 
 
     /**
     * Determine whether the user can circulate the model to be reviewed
+    * Only for users, registry, etc, not Secretaries and HODs 
     */
     public function circulateToHod(User $user, File $file): bool
     {
-        if ((($file->document_source === 'upload' && ($file->status === "Pending Signature" || $file->status === "Pending Action" || $file->status === "Returned for Amendment" )) ||
+        
+        if ((($file->document_source === 'upload' && ($file->status === "Pending Signature" || $file->status === "Returned for Amendment" )) ||
             ($file->correspondence_type === 'letter' && ($file->status === "Pending Signature" || $file->status === "Pending Action" || $file->status === "Returned for Amendment" )) || 
             ($file->correspondence_type === 'memo' &&  ($file->status === "Pending Signature" || $file->status === "Pending Action" || $file->status === "Returned for Amendment" )) ) && 
-            ($file->created_by === $user->id)
+            $file->created_by === $user->id && 
+            !$user->hasRole('sro') &&
+            !$user->hasRole('hod')
         ) {
 
             return true;
@@ -239,20 +298,14 @@ class FilePolicy
 
     /**
     * Determine whether the user can circulate the model to review officer
+    * Does not work for secretaries as they are the SRO themselves
     */
-    public function circulateToReviewOfficer(User $user, File $file): bool
+    public function submitForSroReview(User $user, File $file): bool
     {
+
         if (($file->document_source === 'upload' && 
             $file->status === "Pending Action") &&
             $user->hasRole('registry') 
-        ) {
-            
-            return true;
-        } 
-
-        if ( ($file->correspondence_type === 'memo' || $file->correspondence_type === 'letter') && 
-            ($file->status === "Pending Action" || $file->status === "Pending Signature") &&
-            $file->created_by === $user->id
         ) {
             
             return true;
@@ -262,13 +315,38 @@ class FilePolicy
     
     }
 
-    
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user, File $file): bool
+    public function submitForSroSignature(User $user, File $file): bool
     {
+
+        if ( ($file->correspondence_type === 'memo' || 
+            $file->correspondence_type === 'letter') && 
+            $file->status === "Pending Signature" &&
+            $file->created_by === $user->id &&
+            !$user->hasRole('sro')
+        ) {
+            
+            return true;
+        } 
+
         return false;
+    
+    }
+
+    public function submitForHodSignature(User $user, File $file): bool
+    {
+
+        if ( ($file->correspondence_type === 'memo' || 
+            $file->correspondence_type === 'letter') && 
+            $file->status === "Pending Signature" &&
+            $file->created_by === $user->id &&
+            (!$user->hasRole('sro') || !$user->hasRole('hod'))
+        ) {
+            
+            return true;
+        } 
+
+        return false;
+    
     }
 
     /**
@@ -284,6 +362,18 @@ class FilePolicy
      */
     public function forceDelete(User $user, File $file): bool
     {
+        return false;
+    }
+
+
+
+    public function viewSignatureDetails(User $user, File $file): bool
+    {
+        if ($file->organisation_id === $user->organisation_id && 
+            $file->final_pdf_path) {
+            return true;
+        }
+
         return false;
     }
 }

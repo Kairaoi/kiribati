@@ -3,10 +3,10 @@
 namespace App\Repositories\National\Eregistry;
 
 use App\Repositories\BaseRepository;
-use App\Models\National\Eregistry\IdentityOrganisation;
+use App\Models\National\Eregistry\Organisation;
 use Illuminate\Support\Facades\Auth;
 
-class IdentityOrganisationRepository extends BaseRepository
+class OrganisationRepository extends BaseRepository
 {
     protected $auth;
 
@@ -26,7 +26,7 @@ class IdentityOrganisationRepository extends BaseRepository
      */
     public function model()
     {
-        return IdentityOrganisation::class;
+        return Organisation::class;
     }
 
     /**
@@ -40,7 +40,14 @@ class IdentityOrganisationRepository extends BaseRepository
         $data = [
             'name' => $input['name'],
             'code' => $input['code'],
-            'description' => $input['description'],
+            'reviewer_title' => $input['reviewer_title'] ?? null,
+            'address' => $input['address'] ?? null,
+            'phone' => $input['phone'] ?? null,
+            'email' => $input['email'] ?? null,
+            'website' => $input['website'] ?? null,
+            'po_box' => $input['po_box'] ?? null,
+            'organisation_type_id' => $input['organisation_type_id'] ?? null,
+            'logo_path' => $input['logo'] ?? null,
             'is_active' => $input['is_active'] ?? true,
             'created_by' => Auth::id(),
             'updated_by' => Auth::id(),
@@ -49,25 +56,35 @@ class IdentityOrganisationRepository extends BaseRepository
         return $this->model()::create($data);
     }
 
+
     /**
      * Update an existing global organisation record
      * 
-     * @param IdentityOrganisation $model
+     * @param Organisation $model
      * @param array $input
      * @return bool
      */
-    public function update(IdentityOrganisation $model, array $input)
+    public function update(Organisation $model, array $input)
     {
         $data = [
-            'name' => $input['name'],
-            'code' => $input['code'],
-            'description' => $input['description'],
+            'name' => $input['name'] ?? $model->name,
+            'code' => $input['code'] ?? $model->code,
+            'reviewer_title' => $input['reviewer_title'] ?? $model->reviewer_title,
+            'address' => $input['address'] ?? $model->address,
+            'phone' => $input['phone'] ?? $model->phone,
+            'email' => $input['email'] ?? $model->email,
+            'website' => $input['website'] ?? $model->website,
+            'po_box' => $input['po_box'] ?? $model->po_box,
+            'organisation_type_id' => $input['organisation_type_id'] ?? $model->organisation_type_id,
+            'logo_path' => $input['logo'] ?? $model->logo_path,
             'is_active' => $input['is_active'] ?? $model->is_active,
             'updated_by' => Auth::id(),
         ];
 
+        // return $this->model()::update($data);
         return $model->update($data);
     }
+
 
     /**
      * Get organisations for data table with search and sorting
@@ -78,25 +95,27 @@ class IdentityOrganisationRepository extends BaseRepository
      * @param bool $trashed
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function getForDataTable($selectedType, $search = '', $order_by = 'id', $sort = 'asc', $trashed = false)
+    public function getForDataTable($selectedType = null, $order_by = 'id', $sort = 'asc', $search)
     {
-        $query = $this->model()::query()->select(['identity_organisations.id as id', 
-                                                  'identity_organisations.name as name', 
-                                                  'identity_organisations.code as code', 
-                                                  'organisation_types.name as type_name'])
-                                        ->join('organisation_types', 'identity_organisations.organisation_type_id', '=', 'organisation_types.id')
-                                        ->forSelectedType($selectedType);
+        $query = $this->model()::query()->select(['organisations.name as name',
+                                                'organisations.id as id', 
+                                                'organisations.uuid as uuid',
+                                                'organisations.code as code',
+                                                'organisations.is_active as is_active',
+                                                'organisation_types.name as type_name',
+                                                'organisations.created_at as created_at',
+                                                'organisations.updated_at as updated_at'])
+                                                ->join('organisation_types', 'organisations.organisation_type_id', '=', 'organisation_types.id');
+        
+        $query->forSelectedType($selectedType);
+                                        
         if (!empty($search)) {
             $search = '%' . strtolower($search) . '%';
             $query->where(function ($q) use ($search) {
-                $q->whereRaw("LOWER(name) LIKE ?", [$search])
-                  ->orWhereRaw("LOWER(code) LIKE ?", [$search])
-                  ->orWhereRaw("LOWER(description) LIKE ?", [$search]);
+                $q->whereRaw("LOWER(organisations.name) LIKE ?", [$search])
+                  ->orWhereRaw("LOWER(organisations.code) LIKE ?", [$search])
+                  ->orWhereRaw("LOWER(organisations.description) LIKE ?", [$search]);
             });
-        }
-
-        if ($trashed) {
-            $query->onlyTrashed();
         }
 
         return $query->orderBy($order_by, $sort);
@@ -112,27 +131,10 @@ class IdentityOrganisationRepository extends BaseRepository
     public function pluck($column = 'name', $key = 'id')
     {
         return $this->model()::query()
-
             ->orderBy($column)
-            ->pluck($column, $key);
+            ->pluck($column, $key, 'code');
     }
 
-    /**
-     * Get a full list of organisations for dropdowns
-     * 
-     * @param string $column
-     * @param string $key
-     * @return \Illuminate\Support\Collection
-     */
-    public function list($column = 'name', $key = 'id')
-    {
-        return $this->model()::query()
-            ->orderBy('id')
-            ->orderBy($column)
-            ->where('organisation_type_id', '!=', 1)
-            ->where('organisation_type_id', '!=', 2)
-            ->get(['id', 'name', 'code', 'organisation_type_id']);
-    }
 
     public function listAll($column = 'name')
     {
@@ -167,7 +169,14 @@ class IdentityOrganisationRepository extends BaseRepository
         return $this->model()::query()
             ->where('organisation_type_id', 1) // '1' is the ID for ministries
             ->orderBy($column)
-            ->pluck($column, $key);
+            ->get([
+                'id',
+                'name',
+                'code',
+                'organisation_type_id',
+                'reviewer_title',
+                'is_active'
+            ]);
     }
 
 
@@ -200,4 +209,11 @@ class IdentityOrganisationRepository extends BaseRepository
             ->pluck($column, $key);
     }
 
+    public function getReviewerTitle($OrganisationId = null) {
+        return $this->model()::query()
+              ->where('id', $OrganisationId)
+              ->first(['reviewer_title']);
+    }
+
+    
 }

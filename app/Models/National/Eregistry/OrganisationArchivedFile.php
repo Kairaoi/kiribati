@@ -5,20 +5,20 @@ namespace App\Models\National\Eregistry;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\User;
-use App\Models\National\Eregistry\Ministry;
+use App\Models\National\Eregistry\Organisation;
 use App\Models\National\Eregistry\File;
 use OwenIt\Auditing\Contracts\Auditable;
 
-class MinistryArchivedFile extends Model implements Auditable
+class OrganisationArchivedFile extends Model implements Auditable
 {
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
     
-    protected $table = 'ministry_archived_files';
+    protected $table = 'organisation_archived_files';
 
     protected $fillable = [
         'file_id',
-        'ministry_id',
+        'organisation_id',
         'archived_by',
         'archived_at',
         'remarks',
@@ -39,9 +39,9 @@ class MinistryArchivedFile extends Model implements Auditable
         return $this->belongsTo(File::class);
     }
 
-    public function ministry()
+    public function organisation()
     {
-        return $this->belongsTo(Ministry::class);
+        return $this->belongsTo(Organisation::class);
     }
 
     public function archivedBy()

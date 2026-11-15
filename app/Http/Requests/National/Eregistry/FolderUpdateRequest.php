@@ -5,16 +5,25 @@ namespace App\Http\Requests\National\Eregistry;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class OrganisationStoreRequest extends FormRequest
+class FolderUpdateRequest extends FormRequest
 {
+
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return true;
+
+        $authenticatedUser = auth()->user();
+
+        return $authenticatedUser
+            && $authenticatedUser->hasAnyRole([
+                'system-admin',
+                'registry',
+            ]);
     }
 
+    
     /**
      * Get the validation rules that apply to the request.
      *
@@ -22,26 +31,27 @@ class OrganisationStoreRequest extends FormRequest
      */
     public function rules(): array
     {
+
         return [
+            'organisation_id' => [
+                'required',
+                'exists:organisations,id', // Validates that the organisation_id exists in the organisations table
+            ],
             'name' => [
                 'required',
                 'string',
                 'max:255',
             ],
-            'code' => [
-                'required',
+            'description' => [
+                'nullable',
                 'string',
                 'max:255',
-                Rule::unique('organisations')->whereNull('deleted_at'), // Ensure the code is unique
             ],
-            'description' => [
-                'required',
-                'string',
-            ],
-            'is_active' => [
+            'parent_id' => [
                 'nullable',
-                'boolean',
+                'exists:folders,id', // Validates that the parent_id exists in the folders table
             ],
+
         ];
     }
 }

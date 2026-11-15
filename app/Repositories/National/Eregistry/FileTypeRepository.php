@@ -25,14 +25,18 @@ class FileTypeRepository extends BaseRepository
      * @param array $input
      * @return FileType
      */
-    public function create(array $input)
+    public function createFileType(array $input, $user = null)
     {
+        $isSystemAdmin = $user->hasRole('system-admin');
+
         $data = [
             'name' => $input['name'],
             'description' => $input['description'] ?? null,
             'code' => $input['code'],
-            'created_at' => now(),
-            'updated_at' => now(),
+            'organisation_id' => $isSystemAdmin ? null : $user->organisation_id,
+            'is_global'   => $isSystemAdmin ? 1 : 0,
+            'created_by' => $user ? $user->id : null,
+            'updated_by' => $user ? $user->id : null,
         ];
 
         $fileType = $this->model();
@@ -49,15 +53,17 @@ class FileTypeRepository extends BaseRepository
      * @param array $input
      * @return bool
      */
-    public function update(FileType $model, array $input)
+    public function update(FileType $model, array $input, $user = null)
     {
-
+        
         $data = [
             'name' => $input['name'],
             'description' => $input['description'] ?? $model->description,
             'code' => $input['code'],
-            'created_at' => now(),
+            'ministry_id' => $input['ministry_id'] ?? $model->ministry_id,
+            'is_global' => $input['is_global'] ?? $model->is_global,
             'updated_at' => now(),
+            'updated_by' => $user->id,
         ];
 
         return $model->update($data);
@@ -71,37 +77,33 @@ class FileTypeRepository extends BaseRepository
      * @param string $sort
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function getForDataTable($selectedType, int $ministryId, $user, $search = '', $order_by = 'id', $sort = 'desc')
+    public function getForDataTable($selectedType, int $organisationId, $user, $search = '', $order_by = 'id', $sort = 'desc')
     {
         
         $query = $this->model->query()
             ->select(['file_types.id as id', 
                       'file_types.name as file_type_name', 
-                      'file_types.is_global as is_global', 
+                      'file_types.is_global as is_global',
                       'file_types.is_active as is_active', 
                       'file_types.code as code', 
-                      'file_types.created_at as created_at', 
                       'file_types.updated_at as updated_at'])
-            ->leftJoin('ministries', 'file_types.ministry_id', '=', 'ministries.id')
+            ->withCount('files')
+            ->leftJoin('organisations', 'file_types.organisation_id', '=', 'organisations.id')
             ->groupBy('file_types.id');
 
-            //scope in Model
+        if ($user->hasRole('system-admin')) {
 
-            if ($user->hasRole('system-admin')) {
-
-            } else {
-                $query->forType($selectedType, $ministryId);
-            }
+        } else {
+            $query->forType($selectedType, $organisationId);
+        }
 
         if (!empty($search)) {
             $search = '%' . strtolower($search) . '%';
 
             $query->where(function ($q) use ($search) {
-                $q->whereRaw('LOWER(name) LIKE ?', [$search])
-                ->orWhereRaw('LOWER(description) LIKE ?', [$search])
-                ->orWhereRaw('LOWER(code) LIKE ?', [$search])
-                ->orWhereRaw('DATE_FORMAT(created_at, "%Y-%m-%d") LIKE ?', [str_replace('%', '', $search)])
-                ->orWhereRaw('CAST(created_by AS CHAR) LIKE ?', [$search]);
+                $q->whereRaw('LOWER(file_types.name) LIKE ?', [$search])
+                ->orWhereRaw('LOWER(file_types.code) LIKE ?', [$search])
+                ->orWhereRaw('DATE_FORMAT(file_types.updated_at, "%Y-%m-%d") LIKE ?', [str_replace('%', '', $search)]);
             });
         }
 
@@ -131,16 +133,16 @@ class FileTypeRepository extends BaseRepository
     }
 
 
-    public function listWithMinistryTypes($ministryId)
+    public function listWithOrganisationTypes($organisationId)
     {
         return $this->model->query()
-            ->where(function ($query) use ($ministryId) {
+            ->where(function ($query) use ($organisationId) {
                 $query->where('is_global', 1)
-                    ->orWhere('ministry_id', $ministryId)
+                    ->orWhere('organisation_id', $organisationId)
                     ->where('is_active', '1');
             })
             ->orderBy('name')
-            ->get(['id', 'name', 'is_global']);
+            ->get(['id', 'name', 'code', 'is_global']);
     }
 
     public function getFileTypes()

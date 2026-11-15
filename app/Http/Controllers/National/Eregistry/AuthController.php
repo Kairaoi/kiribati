@@ -65,6 +65,13 @@ class AuthController extends Controller
             ]);
         }
 
+        // If user is deactivated, log them out and redirect to login with error
+        if (! $user->is_active) {
+            return redirect('/login')->withErrors([
+                'email' => 'Your account is inactive. Contact your administrator.',
+            ]);
+        }
+
         Auth::login($user, true);
         request()->session()->regenerate();
 

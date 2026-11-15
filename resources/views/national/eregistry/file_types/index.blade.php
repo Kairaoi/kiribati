@@ -1,26 +1,23 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mx-auto px-4 py-8 max-w-5xl mt-3 rounded-md min-h-screen ">
+<div class="container mx-auto px-4 py-8 max-w-7xl mt-3 rounded-md min-h-screen ">
     <div class="mb-4 flex items-start justify-between">
         <div>
             <h1 class="text-3xl font-bold text-gray-800">File Types</h1>
-            <p class="text-gray-500 text-sm mb-2">Manage file types used in file reference numbers:</p>
+            <p class="text-gray-500 text-sm mt-2 mb-2">Manage file types used in file reference numbers:</p>
             
             {{-- <label class="block text-m text-slate-900"></label> --}}
             <select id="fileTypeFilter" class="filter-input w-full text-sm text-gray-600 border px-3 py-2 focus:ring focus:ring-cyan-200">
                 <option value="">All file types</option>
-                <option value="ministry">Ministry</option>
-                <option value="global">Global</option>
+                <option value="ministry">organisation-specific</option>
+                <option value="global">government-wide</option>
             </select>
-        </div>
-        <div>
-            
         </div>
         <a href="{{ route('registry.file-types.create') }}"
                 class="inline-flex items-center mt-5 gap-2 px-4 py-2 bg-cyan-600 text-white text-sm rounded-md hover:bg-cyan-700 transition">
                 <i class="fas fa-plus"></i>
-                Add ministry file type
+                Add file type
         </a>
     </div>
 
@@ -32,6 +29,7 @@
                     <th>FILE TYPE NAME</th>
                     <th>CODE</th>
                     <th>SCOPE</th>
+                    <th>UPDATED AT</th>
                     <th>STATUS</th>
                     <th class="w-28">Actions</th>
                 </tr>
@@ -50,7 +48,7 @@
             border-collapse: separate;
             table-layout:auto;
             border: 0.5px solid #f2f2f5;
-            border-radius: 8px;
+            border-radius: 4px;
             overflow: hidden;
     }
 
@@ -66,30 +64,28 @@
     /* Cells */
     #fileTypesTable th,
     #fileTypesTable td {
-        padding: 8px 10px;
+        padding: 8px 8px;
     }
 
     /* Row divider */
     #fileTypesTable tbody tr {
         border-bottom: 0.5px solid #ffffff;
-        padding: 8px 10px;
     }
 
     /* Hover effect */
     #fileTypesTable tbody tr:hover {
         background-color: #f9fafb;
-        padding: 8px 10px;
+        
     }
 
     /* Fix long text */
     #fileTypesTable td {
         white-space: normal !important;
-        border: 1px solid #dbdbe2;
+        border: 0.5px solid #dbdbe2;
         word-break: break-word;
     }
     .dataTables_filter input {
-        border: 1px solid #d1d5db;
-        border-radius: 8px;
+        border-radius: 4px;
         padding: 6px 10px;
         outline: none;
     }
@@ -99,10 +95,9 @@
     }
 
     .dataTables_length select {
-        border-radius: 8px;
         padding: 4px 8px;
         padding-right: 30px; /* space for arrow */
-        border: 1px solid #d1d5db;
+        
     }
 
     /* Action Button Styles */ 
@@ -138,12 +133,11 @@
         background-color: #f3f4f6; 
     }
 
-
   
     .dataTables_filter input {
         padding: 0.375rem 0.75rem !important;
         border-radius: 0.375rem !important;
-        border: 1px solid #ced4da !important;
+        border: 0.5px solid #ced4da !important;
         font-size: 0.8rem !important;
         margin-top: 1rem !important; 
         font-family: 'Poppins', sans-serif !important;
@@ -163,7 +157,7 @@
 
     .dataTables_paginate .paginate_button {
         padding: 6px 10px;
-        border-radius: 6px;
+        border-radius: 2px;
         background: #f3f4f6;
         cursor: pointer;
     }
@@ -277,18 +271,26 @@ $(document).ready(function() {
                         ? `
                             <span class="inline-flex items-center rounded-full bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-700 ring-1 ring-cyan-100">
                                 <span class="mr-1.5 h-1.5 w-1.5 rounded-full bg-cyan-500"></span>
-                                Government-wide
+                                government-wide
                             </span>
                         `
                         : `
                             <span class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-100">
                                 <span class="mr-1.5 h-1.5 w-1.5 rounded-full bg-amber-500"></span>
-                                Ministry-specific
+                                organisation
                             </span>
                         `;
                 }
             },
-
+            { data: 'updated_at', 
+                render(data) {
+                    return new Date(data).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                }
+            },
             {
                 data: 'is_active',
                 render: function (data, type, row) {
@@ -315,61 +317,65 @@ $(document).ready(function() {
                 render: function (data, type, row) {
                     let buttons = `
                         <a href="/registry/file-types/${row.id}"
-                            class="inline-flex items-center border justify-center gap-2 rounded-md px-4 py-2 text-xs font-medium shadow-sm transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
-                            title="Show">
-                            View
+                            class="inline-flex items-center justify-center rounded-md p-2 transition"
+                            title="View"
+                            aria-label="View file type">
+                            <i class="fa fa-eye text-sm"></i>
                         </a>
                     `;
+
                     const isActive = Number(row.is_active);
-                    if ((!row.is_global || row.can_edit) && isActive === 1) {
+                    const canManage = !Number(row.is_global) || Boolean(row.can_edit);
+
+                    if (canManage && isActive === 1) {
                         buttons += `
                             <button
+                                type="button"
                                 data-id="${row.id}"
-                                class="inline-flex items-center mt-1 border justify-center gap-2 rounded-md px-4 py-2 text-xs font-medium shadow-sm transition hover:bg-gray-100 deactivate-action"
-                                title="Deactivate">
-                                Deactivate
+                                class="deactivate-action inline-flex items-center justify-center rounded-md p-2 transition"
+                                title="Deactivate"
+                                aria-label="Deactivate file type">
+                                <i class="fa fa-ban text-sm"></i>
                             </button>
                         `;
-                    } else if ((!row.is_global || row.can_edit) && isActive === 0) {
+                    } else if (canManage && isActive === 0) {
                         buttons += `
                             <button
+                                type="button"
                                 data-id="${row.id}"
-                                class="inline-flex items-center mt-1 border justify-center gap-2 rounded-md px-4 py-2 text-xs font-medium shadow-sm transition hover:bg-gray-100 activate-action"
-                                title="Activate">
-                                Activate
+                                class="activate-action inline-flex items-center justify-center rounded-md p-2 transition"
+                                title="Activate"
+                                aria-label="Activate file type">
+                                <i class="fa fa-check-circle text-sm"></i>
                             </button>
                         `;
                     }
-                    return buttons;
+
+                    if (Number(row.files_count) === 0 && canManage) {
+                        buttons += `
+                            <button
+                                type="button"
+                                data-id="${row.id}"
+                                class="delete-action inline-flex items-center justify-center rounded-md p-2 transition"
+                                title="Delete"
+                                aria-label="Delete file type">
+                                <i class="fa fa-trash text-sm"></i>
+                            </button>
+                        `;
+                    }
+
+                    return `
+                        <div class="flex items-center gap-1">
+                            ${buttons}
+                        </div>
+                    `;
                 }
             }
        ],
-
-        columnDefs: [
-            
-            {
-                targets: 2, // Code
-                width: 'auto'
-            },
-            {
-                targets: 3, // Scope
-                width: 'auto'
-            },
-             {
-                targets: 4, // Scope
-                width: 'auto'
-            },
-            {
-                targets: 5, // Actions
-                width: 'auto',
-                orderable: false,
-                searchable: false
-            }
-        ],
-         dom:   "<'row mb-3'<'col-md-6 d-flex align-items-center'B><'col-12 col-md-6 text-md-end text-start'f>>" +
+        dom:   "<'row mb-3'<'col-md-6 d-flex align-items-center'B><'col-12 col-md-6 text-md-end text-start'f>>" +
                         "<'row'<'col-sm-12'tr>>" +
                         "<'row mt-3'<'col-sm-5'i><'col-sm-7'p>>",
-
+    
         language: {
                         paginate: {
                             previous: "←",

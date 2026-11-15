@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->uuid('uuid')->unique();
             $table->string('keycloak_id')->nullable()->unique();
-            $table->unsignedBigInteger('ministry_id')->nullable();
+            $table->unsignedBigInteger('organisation_id')->nullable();
             $table->unsignedBigInteger('division_id')->nullable(); 
             $table->unsignedBigInteger('unit_id')->nullable(); 
             $table->string('designation')->nullable(); 

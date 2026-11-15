@@ -9,7 +9,7 @@ use App\Models\User;
 use App\Repositories\National\Eregistry\DivisionRepository;
 use App\Repositories\National\Eregistry\FileCirculationRepository;
 use App\Repositories\National\Eregistry\FileRepository;
-use App\Repositories\National\Eregistry\MinistryRepository;
+use App\Repositories\National\Eregistry\OrganisationRepository;
 use App\Repositories\National\Eregistry\UserRepository;
 use DB;
 use Illuminate\Http\Request;
@@ -29,18 +29,18 @@ class FileCirculationController extends Controller
 {
     private $fileCirculations;
     private $divisions;
-    private $ministries;
+    private $organisations;
     private $users;
     private $files;
 
     public function __construct(DivisionRepository $divisions, 
-                                MinistryRepository $ministries, 
+                                OrganisationRepository $organisations, 
                                 UserRepository $users,
                                 FileRepository $files,
                                 FileCirculationRepository $fileCirculations)
     {
         $this->divisions = $divisions;
-        $this->ministries = $ministries;
+        $this->organisations = $organisations;
         $this->users = $users;
         $this->files = $files;
         $this->fileCirculations = $fileCirculations;    
@@ -52,49 +52,49 @@ class FileCirculationController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\Response
      */
-    public function getDataTables(Request $request)
-    {
-        $userOrgId = Auth::user()->organisation_id;
+    // public function getDataTables(Request $request)
+    // {
+    //     $userOrgId = Auth::user()->organisation_id;
 
-        $search = $request->get('search', '');
-        if (is_array($search)) {
-            $search = $search['value'];
-        }
+    //     $search = $request->get('search', '');
+    //     if (is_array($search)) {
+    //         $search = $search['value'];
+    //     }
 
-        $query = $this->fileCirculations->getForDataTable($search, $userOrgId);
+    //     $query = $this->fileCirculations->getForDataTable($search, $userOrgId);
 
-        $datatables = DataTables::of($query)->make(true);
+    //     $datatables = DataTables::of($query)->make(true);
 
-        return DataTables::of($query)
-                ->addColumn('status', function ($row) {
-                            if ($row->initial_status === 'internal') {
-                                return $row->circulation_status ?? '-'; // file_circulations.status
-                            }
+    //     return DataTables::of($query)
+    //             ->addColumn('status', function ($row) {
+    //                         if ($row->initial_status === 'internal') {
+    //                             return $row->circulation_status ?? '-'; // file_circulations.status
+    //                         }
 
-                            if ($row->initial_status === 'dispatch') {
-                                return $row->file_recipient_status ?? '-';
-                            }
+    //                         if ($row->initial_status === 'dispatch') {
+    //                             return $row->file_recipient_status ?? '-';
+    //                         }
 
-                            return '-';
-                        })
-                        ->make(true);
+    //                         return '-';
+    //                     })
+    //                     ->make(true);
 
-    }
+    // }
 
 
-    public function getReviewDataTables(Request $request)
-    {
-        $search = $request->get('search', '');
-        if (is_array($search)) {
-            $search = $search['value'];
-        }  
+    // public function getReviewDataTables(Request $request)
+    // {
+    //     $search = $request->get('search', '');
+    //     if (is_array($search)) {
+    //         $search = $search['value'];
+    //     }  
 
-        $query = $this->fileCirculations->getForReviewDataTable($search);
+    //     $query = $this->fileCirculations->getForReviewDataTable($search);
 
-        $datatables = DataTables::of($query)->make(true);
+    //     $datatables = DataTables::of($query)->make(true);
                     
-        return $datatables;
-    }
+    //     return $datatables;
+    // }
  
 
     /**
@@ -102,15 +102,15 @@ class FileCirculationController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
-    {   
+    // public function index()
+    // {   
 
-        if (Auth::user()->hasRole('registry')) {
-            return view('national.eregistry.circulations.index');         
-        }   
+    //     if (Auth::user()->hasRole('registry')) {
+    //         return view('national.eregistry.circulations.index');         
+    //     }   
 
-        abort(403, 'Unauthorized action.'); 
-    }
+    //     abort(403, 'Unauthorized action.'); 
+    // }
 
 
     /**
@@ -118,49 +118,49 @@ class FileCirculationController extends Controller
      * 
      * @return \Illuminate\Http\Response
      */
-    public function show(FileCirculation $fileCirculation)  
-    {
+    // public function show(FileCirculation $fileCirculation)  
+    // {
 
-        $usersWithDivision = $this->users->getUsersDivision(); // Fetch all admin users using the listAdmins method from UserRepository  
-        $file = $this->files->getById($fileCirculation->file_id); // Fetch the file using the file ID from the FileCirculation model
-        $fileCirculation->load(['activeAssignments.officer','activeAssignments.assignedBy']); // Eager load the assigned officers and the users who assigned them
-        $fileRecipientOrganisations = $file->recipientMinistries()->pluck('organisations.id')->toArray();
-        $loggedInOrganisation = $this->organisations->getById(Auth()->user()->organisation_id); // Get the logged-in user's organisation
+    //     $usersWithDivision = $this->users->getUsersDivision(); // Fetch all admin users using the listAdmins method from UserRepository  
+    //     $file = $this->files->getById($fileCirculation->file_id); // Fetch the file using the file ID from the FileCirculation model
+    //     $fileCirculation->load(['activeAssignments.officer','activeAssignments.assignedBy']); // Eager load the assigned officers and the users who assigned them
+    //     $fileRecipientOrganisations = $file->recipientMinistries()->pluck('organisations.id')->toArray();
+    //     $loggedInOrganisation = $this->organisations->getById(Auth()->user()->organisation_id); // Get the logged-in user's organisation
 
-        $fileAssignment = $fileCirculation->activeAssignments()->where('officer_id', Auth::id())->first(); // Get the file assignment for the logged-in user, if it exists
+    //     $fileAssignment = $fileCirculation->activeAssignments()->where('officer_id', Auth::id())->first(); // Get the file assignment for the logged-in user, if it exists
 
-        // Check if the user's organisation is a recipient of the file
-        if ($file->initial_type === 'internal') {
-            // Only check circulation
-            if ($fileCirculation->to_organisation_id != $loggedInOrganisation->id) {
-                abort(403, 'Unauthorized access to this file circulation');
-            }
-        } elseif ($file->initial_type === 'dispatch') {
-            // Only check recipients
-            if (!in_array($loggedInOrganisation->id, $fileRecipientOrganisations)) {
-                abort(403, 'Unauthorized access to this file');
-            }
-        }
+    //     // Check if the user's organisation is a recipient of the file
+    //     if ($file->initial_type === 'internal') {
+    //         // Only check circulation
+    //         if ($fileCirculation->to_organisation_id != $loggedInOrganisation->id) {
+    //             abort(403, 'Unauthorized access to this file circulation');
+    //         }
+    //     } elseif ($file->initial_type === 'dispatch') {
+    //         // Only check recipients
+    //         if (!in_array($loggedInOrganisation->id, $fileRecipientOrganisations)) {
+    //             abort(403, 'Unauthorized access to this file');
+    //         }
+    //     }
 
-        if (!$fileCirculation) {
-            return redirect()->back()->withErrors(['error' => 'File circulation not found.']);
-        }
+    //     if (!$fileCirculation) {
+    //         return redirect()->back()->withErrors(['error' => 'File circulation not found.']);
+    //     }
 
-        $status = null;
-        if ($file->initial_type == 'internal') {
-            $status = $fileCirculation->status;
-        } elseif ($file->initial_type == 'dispatch') {
-            $recipient = $file->recipients()->where('organisations.id', $loggedInOrganisation->id)->first();
-            $status = $recipient ? $recipient->pivot->status : null;
-        }
+    //     $status = null;
+    //     if ($file->initial_type == 'internal') {
+    //         $status = $fileCirculation->status;
+    //     } elseif ($file->initial_type == 'dispatch') {
+    //         $recipient = $file->recipients()->where('organisations.id', $loggedInOrganisation->id)->first();
+    //         $status = $recipient ? $recipient->pivot->status : null;
+    //     }
    
-        return view('national.eregistry.circulations.show', compact('usersWithDivision', 
-                                                                    'loggedInOrganisation', 
-                                                                    'status',
-                                                                    'file',
-                                                                    'fileCirculation',
-                                                                    'fileAssignment'));
-    }
+    //     return view('national.eregistry.circulations.show', compact('usersWithDivision', 
+    //                                                                 'loggedInOrganisation', 
+    //                                                                 'status',
+    //                                                                 'file',
+    //                                                                 'fileCirculation',
+    //                                                                 'fileAssignment'));
+    // }
 
 
 
@@ -174,34 +174,31 @@ class FileCirculationController extends Controller
         // dd($request);
         $validated = $request->validate([
             'file_id' => 'required|exists:files,id',
-
+            'review_officer_id' => 'required|exists:users,id',
         ]);
 
-        $ministryId = Auth::user()->ministry_id;
+        $organisationId = Auth::user()->organisation_id;
 
         $reviewOfficer = User::role('review-officer')
-            ->where('ministry_id', $ministryId)
+            ->where('organisation_id', $organisationId)
             ->where('is_active', true)
             ->whereNotNull('email')
             ->first();
 
         $fileCirculation = FileCirculation::updateOrCreate(
             [
-                'file_id'        => $validated['file_id'],
-                'to_ministry_id' => $ministryId,
+                'file_id' => $validated['file_id'],
+                'to_organisation_id' => $organisationId,
             ],
             [
-                'circulated_by'  => auth()->id(),
-                'circulated_at'  => now(),
-                'updated_by'     => auth()->id(),
-                'status'         => 'Pending SRO Approval',
-                'review_officer' => $reviewOfficer ? $reviewOfficer->id : null,
+                'circulated_by' => auth()->id(),
+                'circulated_at' => now(),
+                'updated_by' => auth()->id(),
+                'status' => 'Pending SRO Review',
+                'review_officer' => $reviewOfficer?->id,
             ]
         );
 
-        $fileCirculation->file()->update([
-            'status' => 'Pending SRO Approval',
-        ]);
 
         if ($reviewOfficer) {
             $reviewOfficer->notify(
@@ -213,42 +210,48 @@ class FileCirculationController extends Controller
     }
 
 
-
+    // When the file is dispatched to the ministry, 
+    // the recipient ministry can circulate the file to their review officer
     public function update(Request $request, FileCirculation $fileCirculation) 
     {
-        $previousStatus = $fileCirculation->status;
+        $validated = $request->validate([
+            'review_officer_id' => 'required|exists:users,id',
+        ]);
+
+        $organisationId = Auth::user()->organisation_id;
+
+        $reviewOfficer = User::role('review-officer')
+            ->where('organisation_id', $organisationId)
+            ->where('is_active', true)
+            ->whereNotNull('email')
+            ->find($validated['review_officer_id']);
+
+        if (! $reviewOfficer) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'review_officer_id' => 'The selected user is not an eligible review officer for your organisation.',
+            ]);
+        }
         
         $fileCirculation->update(
             [
+                'circulated_by' => auth()->id(),
+                'circulated_at' => now(),
                 'updated_by' => auth()->id(),
                 'updated_at' => now(),
-                'status'     => 'Pending SRO Approval',
+                'status'     => 'Pending SRO Review',
+                'final_review_status' => 'Pending SRO Review', //this is added to track the final review status of the file circulation
+                'review_officer' => $reviewOfficer->id,
             ]
         );
 
-        if ($previousStatus !== 'Pending SRO Approval') {
-            $reviewOfficer = User::role('review-officer')
-                ->where('ministry_id', $fileCirculation->to_ministry_id)
-                ->where('is_active', true)
-                ->whereNotNull('email')
-                ->first();
-
-            $fileCirculation->update(
-            [
-                'review_officer' => $reviewOfficer ? $reviewOfficer->id : null,
-            ]
-        );
-
-
-            if ($reviewOfficer) {
-                $reviewOfficer->notify(
-                    new ReviewOfficerPendingReviewNotification($fileCirculation)
-                );
-            }
-
+        if ($reviewOfficer) {
+            $reviewOfficer->notify(
+                new ReviewOfficerPendingReviewNotification($fileCirculation)
+            );
         }
 
         return redirect()->route('registry.files.index')->with('success', 'File circulated ');
+    
     }
 
 
@@ -273,12 +276,12 @@ class FileCirculationController extends Controller
             'colleague' => 'required|exists:users,id'
         ]);
 
-        $ministryId = Auth::user()->ministry_id;
+        $organisationId = Auth::user()->organisation_id;
 
         $fileCirculation = FileCirculation::updateOrCreate(
             [
                 'file_id'        => $validated['file_id'],
-                'to_ministry_id' => $ministryId,
+                'to_organisation_id' => $organisationId,
             ],
             [
                 'circulated_by'  => auth()->id(),
@@ -366,4 +369,6 @@ class FileCirculationController extends Controller
         return response()->json(['message' => 'Circulation and file deleted successfully.']);
     
     }
+
+
 }

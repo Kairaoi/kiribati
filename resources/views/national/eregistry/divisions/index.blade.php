@@ -34,7 +34,7 @@
         <div>
             <h1 class="text-3xl font-bold tracking-wide">Divisions</h1>
             <p class="text-base text-gray-500 mt-1">
-                View and manage all divisions in your ministry.
+                View and manage all divisions in your organisation.
             </p>
         </div>
 
@@ -43,23 +43,18 @@
             <i class="fas fa-plus"></i>
             Create New Division
         </a>
-{{-- 
-        <a href="{{ route('registry.divisions.create') }}"
-            class="inline-flex items-center mt-5 gap-2 px-4 py-2 bg-cyan-600 text-white text-sm rounded-md hover:bg-cyan-700 transition">
-            <i class="fas fa-plus-officer"></i>
-            Assign HOD
-        </a> --}}
     </div>
 
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-2">
-        <table id="divisionsTable" class="bg-gray-50 text-gray-800 text-sm divide-y divide-gray-200 stripe">
+        <table id="divisionsTable" class="bg-gray-50 text-gray-800 divide-y text-sm divide-gray-200 stripe">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Head of Division</th>
-                    <th>Created At</th>
-                    <th>Updated At</th>
-                    <th>Actions</th>
+                    <th class="uppercase">Organisation</th>
+                    <th class="uppercase">Name</th>
+                    <th class="uppercase">Head of Division</th>
+                    {{-- <th class="uppercase">Created At</th> --}}
+                    <th class="uppercase">Updated At</th>
+                    <th class="uppercase">Actions</th>
                 </tr>
             </thead>
             <tbody></tbody> <!-- DataTable will populate this -->
@@ -285,17 +280,9 @@ $(document).ready(function() {
             }
         },
         columns: [
+            { data: 'org.name', name: 'organisations.name' },
             { data: 'division_name', name: 'divisions.name' },
-            { data: 'hod_name', name: 'users.name', defaultContent: 'not assigned' },
-            { data: 'created_at', 
-                render(data) {
-                    return new Date(data).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                    });
-                }
-            },
+            { data: 'hod_name', defaultContent: '-' },
             { data: 'updated_at', 
                 render(data) {
                     return new Date(data).toLocaleDateString('en-US', {
@@ -305,7 +292,6 @@ $(document).ready(function() {
                     });
                 }
             },
-
             {
                 data: null,
                 name: 'actions',
@@ -314,6 +300,10 @@ $(document).ready(function() {
                 render(data, type, row) {
 
                     let actions = `
+                        <a href="/registry/divisions/${row.id}" 
+                            class="text-purple-600 hover:text-purple-800 transition ms-3">
+                            View
+                        </a>
 
                         <a href="/registry/divisions/${row.id}/edit" 
                             class="text-blue-600 hover:text-blue-800 transition ms-3">
@@ -408,7 +398,6 @@ $(document).ready(function() {
             'registry.divisions.destroy': "{{ route('registry.divisions.destroy', ':id') }}".replace(':id', id)
         }[name];
     }
-
 
     // Open PDF Viewer Modal
     $(document).on('click', '.view-btn', function(e) {

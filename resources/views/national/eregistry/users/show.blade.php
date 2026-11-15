@@ -2,7 +2,7 @@
 
 @section('content')
 
-<div class="container mx-auto px-4 py-6 max-w-5xl">
+<div class="container mx-auto px-4 py-6 shadow max-w-5xl">
     {{-- <div class="flex items-center justify-between mt-6 mb-2">
         <h1 class="text-center text-xl font-bold text-gray-600 text-centre">View User</h1>
     </div> --}}
@@ -34,6 +34,13 @@
                             Inactive
                         </span>
                     @endif
+                </dd>
+            </div>
+
+            <div class="col-span-2 sm:grid sm:grid-cols-3 sm:gap-4 py-2 border-b">
+                <dt class="font-semibold text-gray-700">Organisation:</dt>
+                <dd class="sm:col-span-2 text-gray-900">
+                    {{ $user->organisation->name ?? 'No organisation specified' }}
                 </dd>
             </div>
 
@@ -83,7 +90,7 @@
             </div>
         </dl>
     </div>
-    <a href="{{ route('registry.users.edit', $user) }}"
+    {{-- <a href="{{ route('registry.users.edit', $user) }}"
         class="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-6 py-3 text-sm font-medium text-amber-700 shadow-sm transition-all duration-200 hover:bg-amber-100 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-amber-400">
         <svg xmlns="http://www.w3.org/2000/svg" 
                 class="h-4 w-4" 
@@ -93,7 +100,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.586-9.414a2 2 0 112.828 2.828L12 20l-4 1 1-4 10.414-10.414z" />
         </svg>
         Edit User
-    </a>
+    </a> --}}
 </div>
 
 @endsection

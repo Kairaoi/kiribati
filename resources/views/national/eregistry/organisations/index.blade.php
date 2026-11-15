@@ -1,12 +1,38 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mx-auto px-4 py-8 max-w-5xl mt-3 rounded-md min-h-screen ">
-    <div class="mb-4 flex items-start justify-between">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-800">Organisations</h1>
-            <p class="text-gray-500 text-sm mt-2 mb-2">View all organsiations registered in the E-Registry System</p>
+   @if (session('success'))
+        <div 
+            x-data="{ show: true }"
+            x-show="show"
+            x-transition.opacity.scale.80
+            x-init="setTimeout(() => show = false, 4000)" 
+            class="fixed text-whiteright-0 bg-cyan-400 px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 z-50">
+            <!-- Icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke-width="2" 
+                stroke="currentColor" 
+                class="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
 
+            <!-- Message -->
+            <span class="font-medium">{{ session('success') }}</span>
+
+            <!-- Close button -->
+            <button @click="show = false" class="ml-4 hover:text-gray-200">
+                &times;
+            </button>
+        </div>
+    @endif
+<div class="container mx-auto px-4 py-8 max-w-5xl mt-3 rounded-md min-h-screen ">
+    <h1 class="text-3xl font-bold text-gray-800">Organisations</h1>
+    <p class="text-gray-500 text-sm mt-2 mb-2">View all organisations registered in the DMS</p>
+
+    <div class="mb-4 flex justify-between">
+        <div>
             <select id="typeFilter" class="filter-input w-full border border-gray-600 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-sm transition duration-200 focus:border-cyan-500 focus:outline-none focus:ring-4 focus:ring-cyan-100 hover:border-cyan-400">                
                 <option value="">All Organisation</option>
                 <option value="ministry">Ministry</option>
@@ -16,6 +42,15 @@
                 <option value="religion">Religious Organisation</option>
             </select>
         </div>
+        @if($isSystemAdmin)
+            <div>
+                <a href="{{ route('registry.organisations.create') }}"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white text-sm font-medium shadow-sm rounded-lg hover:bg-cyan-700 transition">
+                    <i class="fas fa-plus text-xs"></i>
+                    Create Organisation
+                </a>
+            </div>
+        @endif
     </div>
 
     <div class="bg-white shadow-sm border border-gray-100 p-4">        
@@ -23,10 +58,12 @@
             <thead class="bg-gray-50 text-gray-600 text-sm uppercase tracking-wide">
                 <tr>
                     <th>#</th>
+                    <th>UUID</th>
                     <th>Name</th>
                     <th>Code</th>
                     <th>Category/Type</th>
-                    {{-- <th class="w-28">Actions</th> --}}
+                    <th>Status</th>
+                    <th class="w-28 no-export">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y stripe"></tbody> <!-- DataTable will populate this -->
@@ -100,18 +137,6 @@
         border: 1px solid #d1d5db;
     }
 
-    /* Action Button Styles */ 
-     /* .action-btn {
-        cursor: pointer;
-        padding: 0.5rem 1rem;
-        border-radius: 9999px;
-        font-size: 0.875rem;
-        transition: background-color 0.3s, transform 0.2s;
-    }
-
-    .action-btn:hover {
-        background-color: #e5e7eb;
-    } */
 
     /* Dropdown Menu Styles */
     .dropdown-menu {
@@ -225,6 +250,9 @@
 <script>
 $(document).ready(function() {
     let activeDropdown = null;
+    const isSystemAdmin = @json($isSystemAdmin);
+    const isMinistryAdmin = @json($isMinistryAdmin);
+
 
     // Close dropdown when clicking outside
     $(document).on('click', function(e) {
@@ -263,40 +291,91 @@ $(document).ready(function() {
        },
        columns: [
            { data: 'id'},
+           { data: 'uuid', visible: false}, // Hide UUID column
            { data: 'name' },
            { data: 'code'},
-           { data: 'type_name'},
-          
+           { data: 'type_name', name: 'organisation_types.name' },
+           {
+                data: 'is_active',
+                render: function (data) {
+                    return Number(data) === 1
+                        ? '<span class="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">Active</span>'
+                        : '<span class="inline-flex rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800">Inactive</span>';
+                }
+            },
+           { 
+                data: null,
+                name: 'actions',
+                orderable: false,
+                searchable: false,
+                render(data, type, row) {
+                    let buttons = `
+                        <a href="/registry/organisations/${row.uuid}" 
+                            class="inline-flex items-center justify-center hover:text-gray-600 transition"
+                                title="View">
+                                <i class="fa fa-eye text-sm"></i>
+                        </a>
+                        `;
+                    if (isSystemAdmin || isMinistryAdmin) {
+                        buttons += `<a href="/registry/organisations/${row.uuid}/edit" 
+                            class="inline-flex items-center justify-center hover:text-gray-600 transition ms-3"
+                            title="Edit">
+                            <i class="fa fa-pen text-sm"></i>
+                        </a>
+                         `;
+                        const isActive = Number(row.is_active);
+                        if (isActive === 1) {
+                            buttons += `
+                                <button class="inline-flex items-center justify-center hover:text-red-600 transition ms-3 deactivate-action" 
+                                    data-id="${row.id}" 
+                                    title="Deactivate">
+                                    <i class="fa fa-ban text-sm"></i>
+                                </button>
+                            `;
+                        } else {
+                            buttons += `
+                                <button class="inline-flex items-center justify-center hover:text-red-600 transition ms-3 activate-action" 
+                                    data-id="${row.id}" 
+                                    title="Activate">
+                                    <i class="fa fa-circle-check text-sm"></i>
+                                </button>
+                            `;
+                        }
+                    }
+                    return buttons;
+                }
+            }
+           
        ],
         dom: "<'row mb-3'<'col-md-6 d-flex align-items-center'B><'col-12 col-md-6 text-md-end text-start'f>>" +
              "<'row'<'col-sm-12'tr>>" +
              "<'row mt-3'<'col-sm-5'i><'col-sm-7'p>>",
         language: {
-                        paginate: {
-                            previous: "←",
-                            next: "→"
+            paginate: {
+                previous: "←",
+                next: "→"
+            }
+        },
+       buttons: [
+                    {
+                        extend: 'excelHtml5',
+                        text: '<i class="fas fa-download"></i>EXCEL',
+                        className: 'excel-export-btn',
+                        title: 'DMS Organisations',
+                        exportOptions: {
+                            columns: ':visible:not(.no-export)'
                         }
                     },
-       buttons: [
-                        {
-                            extend: 'excelHtml5',
-                            text: '<i class="fas fa-download"></i>EXCEL',
-                            className: 'excel-export-btn',
-                            title: 'File types',
-                            exportOptions: {
-                                columns: ':not(:last-child)'
-                            }
-                        },
-                        {
-                            extend: 'pdfHtml5',
-                            text: '<i class="fas fa-download"></i>PDF',
-                            className: 'pdf-export-btn',
-                            title: 'File types',
-                            exportOptions: {
-                                columns: ':not(:last-child)'
-                            }
-                        }
-                    ]
+                    {
+                        extend: 'pdfHtml5',
+                        text: '<i class="fas fa-download"></i>PDF',
+                        className: 'pdf-export-btn',
+                        title: 'DMS Organisations',
+                        exportOptions: {
+                        columns: ':visible:not(.no-export)'
+                    }
+                    }
+                ]
    });
 
    // Reload table when initial type changes
@@ -304,65 +383,25 @@ $(document).ready(function() {
         table.ajax.reload();
     });
 
-   // Handle action button click
-   $('#fileTypesTable').on('click', '.action-dropdown', function(e) {
-       e.stopPropagation();
-       const button = $(this);
-       const rowId = button.data('id');
-       
-       // Close any open dropdowns
-       closeAllDropdowns();
-
-       // Create and position the dropdown
-       const dropdown = $(` 
-           <div class="dropdown-menu" style="display:none;">
-               <a class="dropdown-item" href="${route('registry.file-types.show', rowId)}">
-                   <i class="fas fa-eye text-cyan-500 mr-2"></i> View
-               </a>
-               <a class="dropdown-item" href="${route('registry.file-types.edit', rowId)}">
-                   <i class="fas fa-edit text-cyan-500 mr-2"></i> Edit
-               </a>
-               <a class="dropdown-item delete-action" href="#" data-id="${rowId}">
-                   <i class="fas fa-trash text-red-500 mr-2"></i> Delete
-               </a>
-           </div>`);
-
-       // Position the dropdown below the button
-       const buttonPosition = button.offset();
-       const buttonHeight = button.outerHeight();
-       
-       dropdown.css({
-           top : buttonPosition.top + buttonHeight +5,
-           left : buttonPosition.left 
-       });
-
-       // Add to body and show
-       $('body').append(dropdown);
-       dropdown.show();
-       
-       // Mark this button as active
-       button.addClass('active');
-       activeDropdown = button; 
-   });
 
    // Handle delete action
    $(document).on('click', '.delete-action', function(e) {
        e.preventDefault();
        const id = $(this).data('id');
        
-       if (confirm('Are you sure you want to delete this file type?')) {
+       if (confirm('Are you sure you want to delete this organisation?')) {
            $.ajax({
-               url : route('registry.file-types.destroy', id),
+               url : route('registry.organisations.destroy', id),
                type : 'DELETE',
                headers :{
                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') 
                },
                success(response) {
-                   $('#fileTypesTable').DataTable().ajax.reload();
-                   alert('File type deleted successfully'); 
+                   $('#organisationsTable').DataTable().ajax.reload();
+                   alert('Organisation deleted successfully'); 
                },
                error(xhr) {
-                   alert('Error deleting file type'); 
+                   alert('Error deleting organisation'); 
                } 
            });
        }
@@ -371,9 +410,9 @@ $(document).ready(function() {
 
    function route(name, id) {
       return {
-          'registry.file-types.show': "{{ route('registry.file-types.show', ':id') }}".replace(':id', id),
-          'registry.file-types.edit': "{{ route('registry.file-types.edit', ':id') }}".replace(':id', id),
-          'registry.file-types.destroy': "{{ route('registry.file-types.destroy', ':id') }}".replace(':id', id)
+          'registry.organisations.show': "{{ route('registry.organisations.show', ':id') }}".replace(':id', id),
+          'registry.organisations.edit': "{{ route('registry.organisations.edit', ':id') }}".replace(':id', id),
+          'registry.organisations.destroy': "{{ route('registry.organisations.destroy', ':id') }}".replace(':id', id)
       }[name];
    }
 });

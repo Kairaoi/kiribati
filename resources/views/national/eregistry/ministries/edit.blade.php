@@ -41,23 +41,23 @@
         </div>
     @endif
 
-    <form action="{{ route('registry.ministries.update', Auth::user()->ministry_id) }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ route('registry.ministries.update', $ministry) }}" method="POST" enctype="multipart/form-data">
         @csrf
         @method('PUT')
  
-        <div class="bg-white shadow-sm font-poppins rounded-2xl p-6 max-w-2xl mx-auto mt-4 mb-4">
+        <div class="bg-white shadow font-poppins rounded-2xl p-6 max-w-2xl mx-auto mt-4 mb-4">
             <h2 class="text-m font-semibold text-gray-800 mb-6">
                 <span class="text-cyan-600">Edit Ministry Details</span>
             </h2>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="mb-5">
+            <div class="grid grid-cols-1 text-sm md:grid-cols-1 gap-6">
+                <div class="mb-1">
                     <label for="name" class="block text-sm font-medium text-gray-700">
                         Name <span class="text-red-500">*</span>
                     </label>
 
                     <input type="text" name="name" id="name"
-                        value="{{ old('name', $ministry->name) }}"
+                        value="{{ old('name', $ministry->identityOrganisation->name) }}"
                         class="mt-1 w-full rounded-lg border-gray-300 shadow-sm 
                             focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 
                             text-sm px-3 py-2"
@@ -65,13 +65,13 @@
                         readonly>
                 </div>
 
-                <div class="mb-5">
+                <div class="mb-1">
                     <label for="name" class="block text-sm font-medium text-gray-700">
                         Code <span class="text-red-500">*</span>
                     </label>
 
                     <input type="text" name="code" id="code"
-                        value="{{ old('code', $ministry->code) }}"
+                        value="{{ old('code', $ministry->identityOrganisation->code) }}"
                         class="mt-1 w-full rounded-lg border-gray-300 shadow-sm 
                             focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 
                             text-sm px-3 py-2"
@@ -79,13 +79,13 @@
                         readonly>
                 </div>
 
-                <div class="mb-5">
+                <div class="mb-1">
                     <label for="address" class="block text-sm font-medium text-gray-700">
                         Address <span class="text-red-500">*</span>
                     </label>
 
                     <input type="text" name="address" id="address"
-                        value="{{ old('address', $ministry->address) }}"
+                        value="{{ old('address', $ministry->identityOrganisation->address) }}"
                         class="mt-1 w-full rounded-lg border-gray-300 shadow-sm 
                             focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 
                             text-sm px-3 py-2"
@@ -93,7 +93,21 @@
                         required>
                 </div>
 
-                <div class="mb-5">
+                <div class="mb-1">
+                    <label for="address" class="block text-sm font-medium text-gray-700">
+                        Reviewer Title <span class="text-red-500">*</span>
+                    </label>
+
+                    <input type="text" name="reviewer_title" id="reviewer_title"
+                        value="{{ old('reviewer_title', $ministry->reviewer_title) }}"
+                        class="mt-1 w-full rounded-lg border-gray-300 shadow-sm 
+                            focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 
+                            text-sm px-3 py-2"
+                        placeholder="e.g. Secretary or Chairperson"
+                        required>
+                </div>
+
+                <div class="mb-1">
                     <label for="po_box" class="block text-sm font-medium text-gray-700">
                         PO Box Number <span class="text-red-500">*</span>
                     </label>
@@ -107,7 +121,7 @@
                         required>
                 </div>
 
-                <div class="mb-5">
+                <div class="mb-1">
                     <label for="phone" class="block text-sm font-medium text-gray-700">
                         Phone Number <span class="text-red-500">*</span>
                     </label>
@@ -121,7 +135,7 @@
                         required>
                 </div>
 
-                <div class="mb-5">
+                <div class="mb-1">
                     <label for="email" class="block text-sm font-medium text-gray-700">
                         Email <span class="text-red-500">*</span>
                     </label>
@@ -134,7 +148,7 @@
                         required>
                 </div>
 
-                <div class="mb-5">
+                <div class="mb-1">
                     <label for="website" class="block text-sm font-medium text-gray-700">
                         Website <span class="text-red-500">*</span>
                     </label>
@@ -148,12 +162,11 @@
                         required>
                 </div>
 
-                <div class="mb-5">
+                <div class="mb-1">
                     <label for="logo" class="block text-sm font-medium text-gray-700">
                         Ministry Logo <span class="text-red-500"> * </span>
                     </label>
                    
-
                     @if($ministry->logo_path)
                         <p> <span class="text-sm text-gray-500"> Logo Preview: </span> </p>
                         <div class="mb-3">
@@ -188,180 +201,6 @@
             </div>
         </div>
     </form>
-
-@push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-
-            const input = document.getElementById('file_type_name');
-            const box = document.getElementById('name-suggestions');
-            const warning = document.getElementById('name-warning');
-
-            const suggestionUrl = "{{ route('registry.file-types.name.suggestions') }}";
-
-            let currentSuggestions = [];
-
-            if (!input || !box || !warning) return;
-
-            function checkDuplicate(value) {
-                const exists = currentSuggestions.some(
-                    name => name.toLowerCase() === value.toLowerCase()
-                );
-
-                if (exists) {
-                    warning.classList.remove('hidden');
-                } else {
-                    warning.classList.add('hidden');
-                }
-            }
-
-            input.addEventListener('input', function () {
-
-                let query = this.value.trim();
-
-                checkDuplicate(query);
-
-                if (query.length < 2) {
-                    box.classList.add('hidden');
-                    warning.classList.add('hidden');
-                    return;
-                }
-
-                fetch(`${suggestionUrl}?q=${encodeURIComponent(query)}`, {
-                    method: 'GET',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json',
-                    },
-                    credentials: 'same-origin'
-                })
-                .then(res => res.json())
-                .then(data => {
-
-                    currentSuggestions = data; // store for duplicate check
-
-                    box.innerHTML = '';
-
-                    if (!data.length) {
-                        box.classList.add('hidden');
-                        return;
-                    }
-
-                    box.classList.remove('hidden');
-
-                    // Header
-                    const header = document.createElement('div');
-                    header.className = "px-2 py-1 text-xs text-gray-500 border-b";
-                    header.textContent = "Existing file-types:";
-                    box.appendChild(header);
-
-                    data.forEach(name => {
-
-                        const isExact = name.toLowerCase() === query.toLowerCase();
-
-                        const item = document.createElement('div');
-                        item.className = `
-                            p-2 cursor-pointer text-sm
-                            ${isExact ? 'bg-red-50 text-red-600 font-medium' : 'hover:bg-gray-100'}
-                        `;
-                        item.textContent = name;
-
-                        item.addEventListener('click', () => {
-                            input.value = name;
-                            box.classList.add('hidden');
-
-                            // show warning immediately
-                            warning.classList.remove('hidden');
-                        });
-
-                        box.appendChild(item);
-                    });
-
-                    // re-check after fetch
-                    checkDuplicate(query);
-                })
-                .catch(() => {
-                    box.classList.add('hidden');
-                });
-            });
-
-        });
-    </script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-
-            const input = document.getElementById('code');
-            const box = document.getElementById('code-suggestions');
-            const suggestionUrl = "{{ route('registry.file-types.code.suggestions') }}";
-
-            if (!input || !box) {
-                console.error('Input or suggestion box not found');
-                return;
-            }
-
-            input.addEventListener('input', function () {
-                let query = this.value.trim();
-
-                if (query.length < 1 ) {
-                    box.classList.add('hidden');
-                    return;
-                }
-
-                fetch(`${suggestionUrl}?q=${encodeURIComponent(query)}`, {
-                    method: 'GET',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json',
-                    },
-                    credentials: 'same-origin' // ensures auth session is sent
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Request failed: ' + response.status);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Suggestions:', data); 
-
-                    box.innerHTML = '';
-
-                    if (!data.length) {
-                        box.classList.add('hidden');
-                        return;
-                    }
-
-                    box.classList.remove('hidden');
-
-                    // ADD HEADER HERE
-                    const header = document.createElement('div');
-                    header.className = "px-2 py-1 text-xs text-gray-500 border-b";
-                    header.textContent = "Existing codes:";
-                    box.appendChild(header);
-
-                    data.forEach(name => {
-                        const item = document.createElement('div');
-                        item.className = "p-2 cursor-pointer hover:bg-gray-100 text-sm";
-                        item.textContent = name;
-
-                        item.addEventListener('click', () => {
-                            input.value = name;
-                            box.classList.add('hidden');
-                        });
-
-                        box.appendChild(item);
-                    });
-                })
-                .catch(error => {
-                    console.error('Fetch error:', error);
-                    box.classList.add('hidden');
-                });
-            });
-
-        });
-    </script>
-@endpush
 
 @endsection
 

@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mx-auto font-montserrat px-4 py-6 max-w-5xl">
-    <h1 class="flex mt-4 text-xl font-bold mb-6">Create New User</h1>
+<div class="container mt-6 mb-6 mx-auto shadow rounded-lg px-4 py-6 max-w-5xl">
+    <h1 class="flex mt-2 text-xl font-bold mb-6">Create User</h1>
 
     @if ($errors->any())
         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -20,41 +20,74 @@
 
               <!-- Ministry -->
             <div>
-                <label for="ministry_id" class="block text-sm font-medium text-gray-700">Ministry/Public Body: <span class="text-red-600">*</span></label>
-                @role('registry')
-                    <input type="text"
-                            name="ministry_id"
-                            id="ministry_id"
-                            value="{{ Auth::user()->ministry?->name ?? 'N/A' }}"
-                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-700 sm:text-sm"
-                            readonly>
-                @endrole
-                @hasrole('system-admin')
-                        <select name="ministry_id" id="ministry_id"
-                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
-                            required>
-                            <option value="">-- Select Ministry --</option>
+                @if ($isSystemAdmin)
+                    <div>
+                        <label for="ministry_id" class="mb-1 block text-sm font-medium text-gray-700">
+                            Organisation
+                        </label>
 
-                            @foreach($ministries as $ministry)
-                                <option value="{{ $ministry->id }}" {{ old('ministry_id') == $ministry->id ? 'selected' : '' }}>
-                                    {{ $ministry->name }}
+                        <select
+                            name="organisation_id"
+                            id="organisation_id"
+                            required
+                            class="mt-1 text-sm block w-full rounded-md border-gray-300
+                                shadow-sm focus:border-cyan-500
+                                focus:ring-cyan-500"
+                        >
+                            <option value="">Select organisation</option>
+
+                            @foreach ($organisations as $organisation)
+                                <option
+                                    value="{{ $organisation->id }}"
+                                    @selected(
+                                        old('organisation_id') == $organisation->id
+                                    )
+                                >
+                                    {{ $organisation->name }}
                                 </option>
                             @endforeach
                         </select>
-                @endhasrole
+
+                        @error('organisation_id')
+                            <p class="mt-1 text-sm text-red-600">
+                                {{ $message }}
+                            </p>
+                        @enderror
+                    </div>
+                @else
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-gray-700">
+                            Organisation
+                        </label>
+
+                        <input type="text"
+                            value="{{ $user->organisation->name }}"
+                            readonly
+                            class="mt-1 block text-sm w-full rounded-md border-gray-300
+                                bg-gray-100 text-gray-600 shadow-sm"
+                        >
+
+                        <input
+                            type="hidden"
+                            id="organisation_id"
+                            name="organisation_id"
+                            value="{{ $user->organisation_id }}"
+                        >
+                    </div>
+                @endif
             </div>
 
             <!-- Division -->
             <div>
-                    <label for="division" class="block text-sm font-medium text-gray-700"> Select division: <span class="text-red-600">*</span></label>
-                    <select name="division_id" id="division_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm" required>
+                <label for="division" class="block text-sm font-medium text-gray-700"> Select division: <span class="text-red-600">*</span></label>
+                <select name="division_id" id="division_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm" required>
                         <option value="">Select a division </option>
                         @foreach($divisions as $division)
                             @if($division->organisation_id == Auth::user()->organisation_id)
                                 <option value="{{ $division->id }}">{{ $division->name }}</option>
                             @endif
                         @endforeach
-                    </select>
+                </select>
             </div> 
 
             <!-- First Name -->
@@ -90,15 +123,15 @@
                     <input type="password" name="password" id="password"
                         class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
                         required oninput="checkPasswordLength()">
-                    <p id="password-hint" class="mt-2 text-sm text-red-600 hidden">Password must be at least 8 characters.</p>
+                    {{-- <p id="password-hint" class="mt-2 text-sm text-red-600 hidden">Password must be at least 8 characters.</p> --}}
                 </div>
             </div>
 
             <!-- Role -->
             <div>
-                <label for="role" class="block text-sm font-medium text-gray-700">Select Role: <span class="text-red-600">*</span></label>
+                <label for="role" class="block text-sm font-medium text-gray-700">Select Role: <span class="text-red-700 text-sm"> (NOTE: "admin" role refers to IT admin) </span> <span class="text-red-600">*</span></label> 
                 <select name="role" id="role" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm">
-                    <option value=""> Select a role</option>
+                    <option value=""> Roles</option>
                     @foreach ($roles as $id => $name)
                         <option value="{{ $id }}">
                             {{ $name }}
@@ -108,9 +141,9 @@
             </div>
                           
         </div>
-            <button type="submit" class="w-full bg-cyan-600 text-white py-2 px-4 rounded-md hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
-                Create User
-            </button>
+        <button type="submit" class="mt-4 mb-10 justify-left bg-cyan-600 text-white py-3 px-6 rounded-md hover:bg-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:ring-offset-2">
+            Create User
+        </button>
     </form>
 
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -118,7 +151,6 @@
 
         <!-- JavaScript to toggle all checkboxes -->
     <script>
-
         document.addEventListener('DOMContentLoaded', function () {
             let fileCounter = 1;  // Start with the initial file
             const container = document.getElementById('file-upload-container');
@@ -156,7 +188,6 @@
             });
         });
 
-
         document.getElementById('select_all_organisations').addEventListener('change', function() {
             const checkboxes = document.querySelectorAll('input[name="organisations[]"]');
             checkboxes.forEach(checkbox => {
@@ -181,15 +212,56 @@
         });
 
         function checkPasswordLength() {
-        const passwordInput = document.getElementById('password');
-        const hint = document.getElementById('password-hint');
+            const passwordInput = document.getElementById('password');
+            const hint = document.getElementById('password-hint');
 
-        if (passwordInput.value.length < 8) {
-            hint.classList.remove('hidden');
-        } else {
-            hint.classList.add('hidden');
+            if (passwordInput.value.length < 4) {
+                hint.classList.remove('hidden');
+            } else {
+                hint.classList.add('hidden');
+            }
         }
-    }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const ministrySelect = document.getElementById('organisation_id');
+            const divisionSelect = document.getElementById('division_id');
+
+            const divisions = @json($divisions);
+            const oldDivisionId = @json(old('division_id'));
+
+            function loadDivisions(ministryId) {
+                divisionSelect.innerHTML =
+                    '<option value="">Select division</option>';
+
+                if (!ministryId) {
+                    return;
+                }
+
+                divisions
+                    .filter((division) =>
+                        String(division.organisation_id) === String(ministryId)
+                    )
+                    .forEach((division) => {
+                        const option = document.createElement('option');
+
+                        option.value = division.id;
+                        option.textContent = division.name;
+                        option.selected =
+                            String(division.id) === String(oldDivisionId);
+
+                        divisionSelect.appendChild(option);
+                    });
+            }
+
+            ministrySelect?.addEventListener('change', function () {
+                loadDivisions(this.value);
+            });
+
+            if (ministrySelect?.value) {
+                loadDivisions(ministrySelect.value);
+            }
+        });
     </script>
 </div>
 @endsection

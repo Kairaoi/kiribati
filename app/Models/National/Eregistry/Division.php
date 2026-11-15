@@ -18,17 +18,30 @@ class Division extends Model implements Auditable
     protected $table = 'divisions';
 
     protected $fillable = [
-        'ministry_id',
+        'organisation_id',
         'name',
         'location',
         'is_active',
-        'hod_id'
-       
+        'hod_id',
+        'email',
+        'phone',
+        'created_by',
+        'updated_by',
     ];
 
-    public function ministry()
+    public function organisation()
     {
-        return $this->belongsTo(Ministry::class);
+        return $this->belongsTo(Organisation::class, 'organisation_id');
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 
     public function hod()

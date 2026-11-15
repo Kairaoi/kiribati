@@ -125,8 +125,8 @@
     {{-- Header --}}
     <div class="header">
         <img
-            src="{{ Auth::user()->ministry?->logo_path
-                ? public_path('storage/' . Auth::user()->ministry->logo_path)
+            src="{{ Auth::user()->organisation?->logo_path
+                ? public_path('storage/' . Auth::user()->organisation->logo_path)
                 : public_path('images/flag1.png') }}"
             alt="Ministry Logo"
             style="

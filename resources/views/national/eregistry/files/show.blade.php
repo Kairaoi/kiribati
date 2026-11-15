@@ -6,19 +6,22 @@
                 {{ session('error') }}
             </div>
         @endif
+        {{-- @error('hod')
+            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+        @enderror --}}
         @php
             $statusClass = match($file->status) {
                 'Pending Action' => 'bg-red-100 text-red-700',
-                'Rejected' => 'bg-red-100 text-red-700',
+                'Cancelled' => 'bg-red-100 text-red-700',
                 'Received' => 'bg-blue-100 text-blue-700',
                 'Dispatched' => 'bg-cyan-100 text-cyan-700',
-                'Pending Review' => 'bg-yellow-100 text-yellow-700',
-                'Pending SRO Approval' => 'bg-yellow-100 text-yellow-700',
+                'Pending SRO Review' => 'bg-yellow-100 text-yellow-700',
                 'Pending UFS' => 'bg-yellow-100 text-yellow-700',
                 'Approved' => 'bg-emerald-100 text-emerald-700',
                 'UFS Approved' => 'bg-emerald-100 text-emerald-700',
                 'Reviewed' => 'bg-green-100 text-green-700',
                 'Pending Signature' => 'bg-red-100 text-red-700',
+                'Pending finalisation' => 'bg-red-100 text-red-700',
                 default => 'bg-gray-100 text-gray-600',
             };
         @endphp
@@ -30,7 +33,7 @@
                 'Dispatched' => 'bg-cyan-100 text-cyan-700',
                 'Pending Review' => 'bg-yellow-100 text-yellow-700',
                 'Pending Receipt' => 'bg-yellow-100 text-yellow-700',
-                'Pending SRO Approval' => 'bg-yellow-100 text-yellow-700',
+                'Pending SRO Review' => 'bg-yellow-100 text-yellow-700',
                 'Pending UFS' => 'bg-yellow-100 text-yellow-700',
                 'Approved' => 'bg-emerald-100 text-emerald-700',
                 'UFS Approved' => 'bg-emerald-100 text-emerald-700',
@@ -40,6 +43,7 @@
             };
         @endphp
         <div class="container mx-w-5xl mx-auto">
+
             {{-- File Info --}}
             <div class="mx-auto  max-w-5xl bg-white justify-center border border-gray-200 rounded-lg shadow-sm p-4 mt-4">
                 <p class="font-bold text-cyan-600 uppercase mb-2">File Details</p>
@@ -54,22 +58,22 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <p class="text-sm text-gray-500 ">File Status</p>
-                        @if($file->ministry_id == Auth::user()->ministry_id && !$circulation)
+                        @if($file->organisation_id === Auth::user()->organisation_id && !$circulation)
                             <span class="inline-block mt-1 text-xs font-medium px-2 py-1 rounded-full {{ $statusClass }}">
                                 {{ $file->status ?? '-' }}
                             </span>
-                        @elseif($circulation?->to_ministry_id == Auth::user()->ministry_id && $file->ministry_id != Auth::user()->ministry_id) 
+                        @elseif($circulation?->to_organisation_id === Auth::user()->organisation_id && $file->organsation_id != Auth::user()->organisation_id) 
                             <span class="inline-block mt-1 text-xs font-medium px-2 py-1 rounded-full {{ $statusClass2 }}">
                                 {{ $circulation->status ?? '-' }}
                             </span>
-                        @elseif($file->ministry_id == Auth::user()->ministry_id && $circulation && $circulation?->to_ministry_id == Auth::user()->ministry_id) 
+                        @elseif($file->organisation_id === Auth::user()->organisation_id && $circulation && $circulation?->to_organisation_id == Auth::user()->organisation_id) 
                             <span class="inline-block mt-1 text-xs font-medium px-2 py-1 rounded-full {{ $statusClass2 }}">
                                 {{ $circulation->status ?? '-' }}
                             </span>
                         @endif
                     </div>  
                     <div>
-                        <p class="text-sm text-gray-500">Source / Origin</p>
+                        <p class="text-sm text-gray-500">Source/Origin</p>
                         <p class="text-md font-medium text-gray-800 mt-1">
                             {{ $file->source->name ?? '-' }}
                         </p>
@@ -129,6 +133,8 @@
                     </div>
                 </div>
             </div>
+
+
             {{-- UFS details --}}
             @if($file->ufsOfficer && ( $file->status === 'Pending UFS' || $file->status === 'UFS Approved' || $file->status === 'UFS Rejected'))  
                 <div class="mx-auto max-w-5xl justify-center border bg-white border-gray-200 rounded-lg shadow-sm p-4 mt-4">
@@ -157,38 +163,85 @@
                 </div>
             @endif  
 
+            {{-- Signature Details --}}
+            @can('viewSignatureDetails', $file)
+                    <div class="mx-auto max-w-5xl justify-center border bg-white border-gray-200 rounded-lg shadow-sm p-4 mt-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-cyan-600">File Signature Details</h3>
 
-            {{-- HOD Review Details --}}
-            @if($file->created_by === Auth::user()->id && $circulation && $circulation->colleague_id !== null) 
-                <div class="mx-auto max-w-5xl justify-center border bg-white border-gray-200 rounded-lg shadow-sm p-4 mt-4">
-                    <h3 class="font-bold text-cyan-600 mb-2">HOD Review Details</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <div>
-                            <p class="text-sm text-gray-500">Name</p>
-                            <p class="text-sm font-medium text-gray-800 mt-1">
-                                {{ $circulation->colleague->name ?? '-'}}
-                            </p>
+                            @if ($file->status === 'Signature Cancelled')
+                                <span class="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">
+                                    Signature Cancelled
+                                </span>
+                            @elseif($file->status === 'Pending Signature')
+                                <span class="rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-700">
+                                    Pending Signature
+                                </span>
+                            @elseif($file->status === 'Signed')
+                                <span class="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+                                    Signed
+                                </span>
+                            @endif
                         </div>
-                        
-                        <div>
-                            <p class="text-sm text-gray-500">Feedback</p>
-                            <p class="text-sm font-medium text-gray-800 mt-1">
-                                {{ $circulation->colleague_comment ?? '-' }}
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <p class="text-sm text-gray-500">Signed By</p>
+                                <p class="text-sm font-medium text-gray-800 mt-1">
+                                    {{ $file->signedBy?->name ?? '-' }}
+                                    {{ $file->signedBy?->designation ? '('.$file->signedBy->designation.')' : '' }}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p class="text-sm text-gray-500">Signed On</p>
+                                <p class="text-sm font-medium text-gray-800 mt-1">
+                                    {{ $file->signed_at
+                                        ? \Carbon\Carbon::parse($file->signed_at)->format('d M Y, h:i A')
+                                        : '-' }}
+                                </p>
+                            </div>
+                        </div>
+
+                        @if ($file->status === 'Signature Cancelled')
+                            <p class="text-sm text-red-700">
+                                This signature has been cancelled.
                             </p>
+                        @endif
+                    </div>
+                
+            @endcan
+
+            {{-- Circulation Details --}}
+            @if($circulation)
+                @can('viewHodReview', $circulation)
+                    <div class="mx-auto max-w-5xl justify-center border bg-white border-gray-200 rounded-lg shadow-sm p-4 mt-4">
+                        <h3 class="font-bold text-cyan-600 mb-2">HOD Review Details</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <p class="text-sm text-gray-500">Name</p>
+                                <p class="text-sm font-medium text-gray-800 mt-1">
+                                    {{ $circulation->colleague->name ?? '-'}}
+                                </p>
+                            </div>
+                            
+                            <div>
+                                <p class="text-sm text-gray-500">Feedback</p>
+                                <p class="text-sm font-medium text-gray-800 mt-1">
+                                    {{ $circulation->colleague_comment ?? '-' }}
+                                </p>
+                            </div>
                         </div>
                     </div>
-                </div>
-            @endif  
-            
-            @if($circulation)
-                @can('viewFinalReview', $circulation)
+                @endcan
+                @can('viewSROReview', $circulation)
                         <div class="mx-auto max-w-5xl justify-center border bg-white border-gray-200 rounded-lg shadow-sm p-4 mt-4">
-                            <p class="font-bold text-cyan-600 uppercase mb-2">Final Review Details</p>
+                            <p class="font-bold text-cyan-600 uppercase mb-2">SRO Review Details</p>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                 <div>
                                     <p class="text-sm text-gray-500">Status</p>
                                     <p class="text-sm font-medium text-gray-800 mt-1">
-                                        {{ $circulation->status ?? '-' }}
+                                        {{ $circulation->final_review_status ?? '-' }}
                                     </p>
                                 </div>
                                 <div>
@@ -202,6 +255,12 @@
                                         <p class="text-sm font-medium text-gray-800 mt-1">
                                         {{ $circulation->reviewOfficer->name ?? '-'}} 
                                         </p>
+                                        @if(auth()->user()->hasRole('registry'))
+                                            <a href="{{ route('registry.users.edit-review-officer') }}"
+                                                class="text-xs font-medium underline text-cyan-500 transition hover:text-cyan-700">
+                                                Change reviewer
+                                            </a>
+                                        @endif
                                     @endif
                                 </div>
                                 <div>
@@ -367,7 +426,7 @@
             @endcan
 
             {{-- Dispatch Details  --}}
-            @if($file->ministry_id == $ministryId && $fileCirculations->isNotEmpty())
+            @if($file->organisation_id == $organisationId && $fileCirculations->isNotEmpty())
                 <div class="mx-auto max-w-5xl justify-center border border-gray-200 rounded-lg bg-white shadow-sm p-4 mt-4">
                     <div class="mb-4">
                         <h3 class="uppercase font-bold text-cyan-600">
@@ -379,7 +438,7 @@
                             <div class="flex items-center justify-between border border-gray-100 bg-white p-3">
                                 <div>
                                     <p class="text-sm font-semibold text-gray-800">
-                                        {{ $circulation->toMinistry?->name ?? 'Unknown Ministry' }}
+                                        {{ $circulation->toOrganisation?->name ?? 'Unknown Organisation' }}
                                     </p>
                                     <p class="mt-1 text-xs text-gray-500">
                                         Dispatched:
@@ -387,6 +446,11 @@
                                             ? \Carbon\Carbon::parse($circulation->dispatch->dispatch_date)->format('d M Y g:i A')
                                             : '-' 
                                         }}
+                                    </p>
+                                    <p class="mt-1 text-xs text-gray-500">
+                                        By:
+                                        {{ $circulation->dispatch?->dispatchedBy?->name ?? '-' }}
+
                                     </p>
                                 </div>
                                 <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold {{ $statusClass2 }}">
@@ -456,7 +520,7 @@
             @endif
 
             {{-- download main file --}}
-            <div class="mb-2 max-w-5xl mx-auto flex">
+            {{-- <div class="mb-2 max-w-5xl mx-auto flex">
                 <a href="{{ $downloadUrl }}"
                     class="inline-flex items-center justify-center gap-2 border border-gray-300 bg-white px-3 py-3 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 hover:border-gray-400">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
@@ -466,12 +530,12 @@
                         </svg>
                     Download Main File
                 </a>
-            </div>
+            </div> --}}
 
             {{-- Supporting Documents --}}
             @if(!empty($file->additional_file_paths))
                 <div class="mx-auto max-w-5xl mb-6 justify-center border border-gray-200 rounded-lg bg-white shadow-sm p-4 mt-2">
-                    <h3 class="text-lg text-gray-900 mb-3">
+                    <h3 class="text-sm text-gray-900 mb-3">
                         Supporting Documents
                     </h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -500,7 +564,7 @@
                                 </div>
 
                                 <a href="{{ $docDownloadUrl }}"
-                                class="inline-flex items-center gap-2 rounded-lg border border-gray-600 bg-gray-600 px-3 py-2 text-sm font-medium text-slate-500 shadow-sm transition hover:bg-gray-700 text-white">
+                                class="inline-flex items-center gap-2 rounded-lg border border-gray-600 bg-gray-600 px-3 py-2 text-xs font-medium text-slate-500 shadow-sm transition hover:bg-gray-700 text-white">
                                     <i class="fa fa-download"></i>
                                     Download
                                 </a>
@@ -511,10 +575,9 @@
             @endif
 
             {{-- Actions --}}
-            <div class="mb-6 max-w-5xl mx-auto flex justify-center">
-                <div class="w-full space-y-6">
+            <div class="flex-wrap items-center mb-6 mt-3 max-w-5xl mx-auto flex gap-2 w-full space-y-6 md:space-y-0">
                     @if($isClosed)
-                        <div class="mx-auto max-w-full py-6 px-6 rounded-2xl bg-gray-100 border border-gray-300 text-center shadow-sm">
+                        <div class="w-full py-6 px-6 rounded-2xl bg-gray-100 border border-gray-300 text-center shadow-sm">
                             <p class="text-3xl font-extrabold text-gray-800 tracking-wide">
                                 File Closed
                             </p>
@@ -530,14 +593,7 @@
                     @else 
                         @can('update', $file)
                             <a href="{{ route('registry.files.edit', $file) }}"
-                                class="inline-flex items-center justify-center gap-2 border border-cyan-600 bg-cyan-600 px-3 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-cyan-700">
-                                <svg xmlns="http://www.w3.org/2000/svg" 
-                                    class="h-4 w-4" 
-                                    fill="none" 
-                                    viewBox="0 0 24 24" 
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.586-9.414a2 2 0 112.828 2.828L12 20l-4 1 1-4 10.414-10.414z" />
-                                </svg>
+                                class="inline-flex items-center rounded-md justify-center gap-2 border border-cyan-600 bg-cyan-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-cyan-700">
                                 Edit File
                             </a>
                         @endcan
@@ -545,7 +601,7 @@
                         @can('sign', $file)
                             <button type="button"
                                     onclick="toggleActionPanel('sign-memo-box', this)"
-                                    class="action-button inline-flex items-center justify-center gap-2
+                                    class="action-button rounded-md inline-flex items-center justify-center gap-2
                                             border border-cyan-600 bg-cyan-600 p-6 py-3
                                             text-sm font-medium text-white shadow-sm transition
                                             hover:bg-cyan-700">                                    
@@ -567,10 +623,10 @@
                             </button>
                         @endcan
 
-                        @can('reject', $file)
+                        @can('cancelSignature', $file)
                             <button type="button"
-                                    onclick="toggleActionPanel('reject-memo-box', this)"
-                                    class="action-button inline-flex items-center justify-center gap-2
+                                    onclick="toggleActionPanel('cancel-signature-box', this)"
+                                    class="action-button rounded-md inline-flex items-center justify-center gap-2
                                             border border-red-600 bg-red-600 p-6 py-3
                                             text-sm font-medium text-white shadow-sm transition
                                             hover:bg-red-700">      
@@ -584,49 +640,55 @@
                                             stroke-width="2" 
                                             d="M6 18L18 6M6 6l12 12" />
                                     </svg>                              
-                                    
-                                    Reject File
+                                    Cancel
                             </button>
                         @endcan
+                       
+                        @can('submitForSroSignature', $file)
+                            <button type="button"
+                                    onclick="toggleActionPanel('submit-sro-signature', this)"
+                                    class="action-button rounded-md inline-flex items-center justify-center gap-2
+                                           border border-cyan-600 bg-cyan-600 px-3 py-3
+                                           text-sm font-medium text-white shadow-sm transition
+                                           hover:bg-cyan-700">                                     
+                                    Submit to SRO for Signature
+                            </button>
+                        @endcan 
 
-                        @can('circulateToReviewOfficer', $file)
+                        @can('submitForHodSignature', $file)
+                            <form action="{{ route('registry.files.submitForHodSignature', $file) }}" 
+                                method="POST">
+                                @csrf
+                                <button type="submit"
+                                    class="m-0 rounded-md inline-flex items-center justify-center gap-2
+                                        border border-cyan-600 bg-cyan-600 px-6 py-3
+                                        text-sm font-medium text-white shadow-sm transition
+                                        hover:bg-cyan-700 focus:outline-none focus:ring-2
+                                        focus:ring-cyan-400">                                   
+                                    Submit to HOD for Signature
+                                </button>
+                            </form>
+                        @endcan 
+
+                        @can('submitForSroReview', $file)
                             <button type="button"
                                     onclick="toggleActionPanel('circulatePanel', this)"
-                                    class="action-button inline-flex items-center justify-center gap-2
-                                                                                border border-cyan-600 bg-cyan-600 px-3 py-3
-                                                                                text-sm font-medium text-white shadow-sm transition
-                                                                                hover:bg-cyan-700">                                     
-                                    <svg xmlns="http://www.w3.org/2000/svg" 
-                                        class="h-4 w-4" 
-                                        fill="none" 
-                                        viewBox="0 0 24 24" 
-                                        stroke="currentColor">
-                                        <path stroke-linecap="round" 
-                                            stroke-linejoin="round" 
-                                            stroke-width="2" 
-                                            d="M8 7h8m-8 5h8m-8 5h5" />
-                                    </svg>
-                                    Submit to SRO
+                                    class="action-button rounded-md inline-flex items-center justify-center gap-2
+                                            border border-cyan-600 bg-cyan-600 px-3 py-3
+                                            text-sm font-medium text-white shadow-sm transition
+                                            hover:bg-cyan-700">                                     
+                                    Submit for SRO Review
                             </button>
                         @endcan 
 
                         @can('dispatch', $file)
                             <button type="button"
                                     onclick="toggleActionPanel('dispatchPanel', this)"
-                                    class="action-button inline-flex items-center justify-center gap-2
-                                                border border-cyan-600 bg-cyan-600 px-8 py-3
-                                                text-sm font-medium text-white shadow-sm transition
-                                                hover:bg-cyan-700">                                 
-                                <svg xmlns="http://www.w3.org/2000/svg" 
-                                    class="h-4 w-4" 
-                                    fill="none" 
-                                    viewBox="0 0 24 24" 
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" 
-                                        stroke-linejoin="round" 
-                                        troke-width="2" 
-                                        d="M3 10l9-7 9 7M4 10v10h16V10" />
-                                </svg>
+                                    class="m-0 inline-flex items-center justify-center gap-2
+                                            border rounded-md border-cyan-600 bg-cyan-600 px-6 py-3
+                                            text-sm font-medium text-white shadow-sm transition
+                                            hover:bg-cyan-700 focus:outline-none focus:ring-2
+                                            focus:ring-cyan-400">                                 
                                 Dispatch File
                             </button>
                         @endcan
@@ -636,7 +698,7 @@
                                 <button
                                     type="button"
                                     onclick="toggleActionPanel('ufs-selection-box', this)"
-                                    class="action-button inline-flex items-center justify-center gap-2
+                                    class="action-button rounded-md inline-flex items-center justify-center gap-2
                                                 border border-cyan-600 bg-cyan-600 px-3 py-3
                                                 text-sm font-medium text-white shadow-sm transition
                                                 hover:bg-cyan-700">   
@@ -666,7 +728,7 @@
                             @endif
                         @endcan
                        
-                        @can('circulateToHod', $file)
+                        {{-- @can('circulateToHod', $file)
                             <button
                                 type="button"
                                 onclick="toggleActionPanel('colleague-selection-box', this)"
@@ -686,8 +748,70 @@
                                 </svg>
                                 Submit to HOD
                             </button>
+                        @endcan --}}
+
+                        @can('close', $file)
+                            <form action="{{ route('registry.files.close', $file) }}" 
+                                method="POST"
+                                onsubmit="return confirmCloseFile();">
+                                @csrf
+                                <button type="submit"
+                                    id="closeFileBtn"
+                                    class="m-0 rounded-md inline-flex items-center justify-center gap-2
+                                        border border-cyan-600 bg-cyan-600 px-6 py-3
+                                        text-sm font-medium text-white shadow-sm transition
+                                        hover:bg-cyan-700 focus:outline-none focus:ring-2
+                                        focus:ring-cyan-400">                                   
+                                    Move to closed files
+                                </button>
+                            </form>
                         @endcan
-                         
+
+                        @can('delete', $file)
+                            <form action="{{ route('registry.files.destroy', $file) }}" method="POST">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit"
+                                        class="action-button inline-flex items-center justify-center gap-2
+                                                border rounded-md border-red-600 bg-red-600 p-4 py-3
+                                                text-sm font-medium text-white shadow-sm transition
+                                                hover:bg-red-700">      
+                                        <svg xmlns="http://www.w3.org/2000/svg" 
+                                            class="h-4 w-4" 
+                                            fill="none" 
+                                            viewBox="0 0 24 24" 
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" 
+                                                stroke-linejoin="round" 
+                                                stroke-width="2" 
+                                                d="M6 18L18 6M6 6l12 12" />
+                                        </svg>                              
+                                        Delete File
+                                </button>
+                            </form>
+                        @endcan
+
+                        @can('finalise', $file)
+                            <form method="POST" action="{{ route('registry.files.finalise', $file) }}">
+                                @csrf
+                                <div class="flex-1">
+                                    <div class="flex justify-left">
+                                        <button type="submit"
+                                                class="inline-flex rounded-md items-center gap-2 bg-cyan-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-cyan-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
+                                             Finalise signature and create final pdf
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        @endcan
+
+                        @can('editSignature', $file)
+                            <a href="{{ route('registry.users.signature.edit', $file) }}"
+                                class="inline-flex items-center rounded-md justify-center gap-2 border border-cyan-600 bg-cyan-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-cyan-700">
+                                Edit Signature
+                            </a>
+                        @endcan
+
                         @if($circulation)
                             @can('ufs', $circulation)
                                 <div class="w-full mt-4">
@@ -713,45 +837,9 @@
                             {{-- sro, hod review buttons --}}
                             @can('review', $circulation)
                                     <div id="approveSection" class="w-full">
-                                        <form method="POST" action="{{ route('registry.file.review', $circulation) }}" class="border border-gray-200 bg-white p-4 shadow-sm">
+                                        <form method="POST" action="{{ route('registry.file.review', $circulation->id) }}" class="border border-gray-200 bg-white p-4 shadow-sm">
                                             @csrf
                                             <input type="hidden" name="file_id" value="{{ $file->id }}">
-                                            <div>
-                                                <label class="mb-2 block text-md font-semibold text-gray-700">
-                                                    Select Status <span class="text-red-600">*</span>
-                                                </label>
-
-                                                <div class="space-y-2">
-
-                                                    {{-- Approve --}}
-                                                    <label class="flex items-center gap-3 cursor-pointer">
-                                                        <input type="radio"
-                                                            name="status"
-                                                            value="Approved"
-                                                            class="h-4 w-4 border-gray-300 text-green-600 focus:ring-green-500"
-                                                            {{ old('status') === 'Approved' ? 'checked' : '' }}
-                                                            required>
-
-                                                        <span class="text-md font-medium text-gray-700">
-                                                            Approve
-                                                        </span>
-                                                    </label>
-
-                                                    {{-- Reject --}}
-                                                    <label class="flex items-center gap-3 cursor-pointer">
-                                                        <input type="radio"
-                                                            name="status"
-                                                            value="Rejected"
-                                                            class="h-4 w-4 border-gray-300 text-red-600 focus:ring-red-500"
-                                                            {{ old('status') === 'Rejected' ? 'checked' : '' }}>
-
-                                                        <span class="text-md font-medium text-gray-700">
-                                                            Reject
-                                                        </span>
-                                                    </label>
-
-                                                </div>
-                                            </div>
 
                                             <div>
                                                 <label class="mb-2 mt-4 block text-md font-semibold text-gray-700">
@@ -798,7 +886,7 @@
                                             </div>
                                             <div class="flex mt-6 justify-right">
                                                 <button type="submit"
-                                                    class="inline-flex items-center gap-2 bg-cyan-400 rounded-lg px-5 py-2.5 text-sm font-medium shadow-sm transition
+                                                    class="inline-flex rounded-md items-center gap-2 bg-cyan-400 rounded-lg px-5 py-2.5 text-sm font-medium shadow-sm transition
                                                     ? 'bg-gray-400 cursor-not-allowed'
                                                     : 'bg-cyan-600 hover:bg-cyan-700' }}">
                                                     <svg xmlns="http://www.w3.org/2000/svg"
@@ -825,7 +913,7 @@
                                         @method('patch')
                                         <button type="submit"
                                                 id="acceptFileBtn"
-                                                class="inline-flex gap-2 bg-cyan-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-cyan-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                class="inline-flex rounded-md gap-2 bg-cyan-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-cyan-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                                                 <svg xmlns="http://www.w3.org/2000/svg"
                                                     class="h-4 w-4"
                                                     fill="none"
@@ -841,28 +929,18 @@
                                     </form>
                             @endcan
 
-                            @can('circulateToReviewOfficer', $circulation)
+                            @can('submitForSroReview', $circulation)
                                 <button type="button"
                                     onclick="toggleActionPanel('circulation-review-officer', this)"
-                                    class="inline-flex items-center gap-2 bg-cyan-700 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-cyan-800 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <svg xmlns="http://www.w3.org/2000/svg" 
-                                        class="h-4 w-4" 
-                                        fill="none" 
-                                        viewBox="0 0 24 24" 
-                                        stroke="currentColor">
-                                        <path stroke-linecap="round" 
-                                            stroke-linejoin="round" 
-                                            stroke-width="2" 
-                                            d="M8 7h8m-8 5h8m-8 5h5" />
-                                    </svg>
-                                    Submit to SRO
+                                    class="inline-flex items-center rounded-md gap-2 bg-cyan-700 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-cyan-800 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    Submit for SRO review
                                 </button>
                             @endcan
 
                             @can('hodReview', $circulation)
                                 <button type="button"
                                     onclick="toggleActionPanel('colleague-review', this)"
-                                    class="inline-flex items-center gap-2 bg-cyan-700 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-cyan-800 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    class="inline-flex rounded-md items-center gap-2 bg-cyan-700 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-cyan-800 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                                     <svg xmlns="http://www.w3.org/2000/svg" 
                                         class="h-4 w-4" 
                                         fill="none" 
@@ -880,131 +958,135 @@
 
                         @if($fileAssignment)
                             @can('reassign', $fileAssignment)
-                                <form method="POST" action="{{ route('registry.file.reassign', $circulation->id) }}" class="mb-6 mt-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                                    @csrf
-                                    @if($fileAssignment->reassigned_from === null)
-                                        <div class="mb-4 font-semibold border-b pb-4">
-                                            <label class="text-cyan-700">
-                                                This file has been assigned to you. Select from the available actions:
-                                            </label>
-                                            <div class="mt-2 space-y-2">
-                                                <label class="flex items-center gap-2">
-                                                    <input type="radio" name="action" value="accepted" class="action-radio">
-                                                    <span class="text-gray-700">Accept file task </span>
+                                <div class="w-full"> 
+                                    <form method="POST" action="{{ route('registry.file.reassign', $circulation->id) }}" class="mb-6 mt-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                                        @csrf
+                                        @if($fileAssignment->reassigned_from === null)
+                                            <div class="mb-4 font-semibold border-b pb-4">
+                                                <label class="text-cyan-700">
+                                                    This file has been assigned to you. Select from the available actions:
                                                 </label>
-                                                @if(!$notAssignedOfficers->isEmpty())
+                                                <div class="mt-2 space-y-2">
                                                     <label class="flex items-center gap-2">
-                                                        <input type="radio" name="action" value="reassign" class="action-radio">
-                                                        <span class="text-gray-700">Assign other officers in your division</span>
-                                                    </label>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    @endif
-                                
-                                    <div id="officer-select" class="mb-4 hidden">
-                                            <label class="block font-semibold text-gray-700 mb-2">
-                                                Assign Tasks
-                                            </label>
-
-                                            <div id="task-assignments" class="space-y-3">
-                                                <div class="task-row rounded-lg border border-gray-200 bg-gray-50 p-4">
-                                                    <label class="block text-sm font-semibold text-gray-700 mb-1">
-                                                        Responsible Officer <span class="text-red-600">*</span>
+                                                        <input type="radio" name="action" value="accepted" class="action-radio">
+                                                        <span class="text-gray-700">Accept file task </span>
                                                     </label>
 
-                                                    <select
-                                                        name="tasks[0][officer_id]"
-                                                        required
-                                                        class="mt-1 mb-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                                    >
-                                                        <option value="">-- Select an officer --</option>
-
-                                                        @foreach($notAssignedOfficers as $user)
-                                                            @if($user->division_id === Auth::user()->division_id && $user->id !== Auth::user()->id)
-                                                                <option value="{{ $user->id }}">
-                                                                    {{ $user->name }}
-                                                                </option>
-                                                            @endif
-                                                        @endforeach
-                                                    </select>
-
-                                                    <label class="block text-sm font-semibold text-gray-700 mb-1">
-                                                        Task <span class="text-red-600">*</span>
-                                                    </label>
-
-                                                    <textarea
-                                                        name="tasks[0][task]"
-                                                        rows="2"
-                                                        required
-                                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                                        placeholder="Describe the task for this officer"
-                                                    ></textarea>
+                                                    @if(!$notAssignedOfficers->isEmpty())
+                                                        <label class="flex items-center gap-2">
+                                                            <input type="radio" name="action" value="reassign" class="action-radio">
+                                                            <span class="text-gray-700">Assign other officers in your division</span>
+                                                        </label>
+                                                    @endif
                                                 </div>
                                             </div>
-
-                                            <button
-                                                type="button"
-                                                onclick="addTaskRow()"
-                                                class="mt-3 rounded-md bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200"
-                                            >
-                                                + Add another officer task
-                                            </button>
-
-                                            @error('tasks')
-                                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                            @enderror
-                                    </div>
+                                        @endif
                                     
+                                        <div id="officer-select" class="mb-4 hidden">
+                                                <label class="block font-semibold text-gray-700 mb-2">
+                                                    Assign Tasks
+                                                </label>
 
-                                    <button type="submit"
-                                        class="bg-cyan-600 w-full hover:bg-cyan-800 text-white font-semibold py-2 px-4 rounded-md shadow-sm transition duration-200">
-                                        Submit
-                                    </button>
-                                </form>
+                                                <div id="task-assignments" class="space-y-3">
+                                                    <div class="task-row rounded-lg border border-gray-200 bg-gray-50 p-4">
+                                                        <label class="block text-sm font-semibold text-gray-700 mb-1">
+                                                            Responsible Officer <span class="text-red-600">*</span>
+                                                        </label>
+
+                                                        <select
+                                                            name="tasks[0][officer_id]"
+                                                            required
+                                                            class="mt-1 mb-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                                                        >
+                                                            <option value="">-- Select an officer --</option>
+
+                                                            @foreach($notAssignedOfficers as $user)
+                                                                @if($user->division_id === Auth::user()->division_id && $user->id !== Auth::user()->id)
+                                                                    <option value="{{ $user->id }}">
+                                                                        {{ $user->name }}
+                                                                    </option>
+                                                                @endif
+                                                            @endforeach
+                                                        </select>
+
+                                                        <label class="block text-sm font-semibold text-gray-700 mb-1">
+                                                            Task <span class="text-red-600">*</span>
+                                                        </label>
+
+                                                        <textarea
+                                                            name="tasks[0][task]"
+                                                            rows="2"
+                                                            required
+                                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                                                            placeholder="Describe the task for this officer"
+                                                        ></textarea>
+                                                    </div>
+                                                </div>
+
+                                                <button
+                                                    type="button"
+                                                    onclick="addTaskRow()"
+                                                    class="mt-3 rounded-md bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200"
+                                                >
+                                                    + Add another officer task
+                                                </button>
+
+                                                @error('tasks')
+                                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                                @enderror
+                                        </div>
+                                        
+                                        <button type="submit"
+                                            class="bg-cyan-600 w-full hover:bg-cyan-800 text-white font-semibold py-2 px-4 rounded-md shadow-sm transition duration-200">
+                                            Submit
+                                        </button>
+                                    </form>
+                                </div>
                             @endcan
 
                             @can('accept', $fileAssignment)
-                                <form method="POST" action="{{ route('registry.file.accept', $circulation->id) }}" class="mb-6 mt-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                                    @csrf
-                                    <span class="font-semibold text-lg">
-                                        Assigned File 
-                                    </span><br>
-                                    <div class="mt-4 mb-2 p-4 rounded-lg border border-gray-200 bg-gray-50">
-                                            <div class="flex items-start justify-between">
-                                                <div class="text-md text-gray-700">
-                                                    This file was assigned to you by
-                                                    <span class="font-medium text-gray-800">
-                                                        {{ $fileAssignment->reassignedFrom->name }}
-                                                    </span><br>
-                                                    <div class="mt-2">
-                                                        Task:
+                                <div class="w-full"> 
+                                    <form method="POST" action="{{ route('registry.file.accept', $circulation->id) }}" class="mb-6 mt-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                                        @csrf
+                                        <span class="font-semibold text-lg">
+                                            Assigned File 
+                                        </span><br>
+                                        <div class="mt-4 mb-2 p-4 rounded-lg border border-gray-200 bg-gray-50">
+                                                <div class="flex items-start justify-between">
+                                                    <div class="text-md text-gray-700">
+                                                        This file was assigned to you by
                                                         <span class="font-medium text-gray-800">
-                                                            {{ $fileAssignment->task}}
-                                                        </span>
+                                                            {{ $fileAssignment->reassignedFrom->name }}
+                                                        </span><br>
+                                                        <div class="mt-2">
+                                                            Task:
+                                                            <span class="font-medium text-gray-800">
+                                                                {{ $fileAssignment->task}}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 </div>
+                                                
+                                                {{-- <div class="mt-4 space-y-3">
+                                                    <label class="flex items-center gap-2 cursor-pointer">
+                                                        <input type="checkbox" name="action" value="accepted" class="action-checkbox">
+                                                        <span class="text-gray-700 font-medium">
+                                                            Accept and mark as Received
+                                                        </span>
+                                                    </label>
+                                                </div> --}}
                                             </div>
-                                            
-                                            {{-- <div class="mt-4 space-y-3">
-                                                <label class="flex items-center gap-2 cursor-pointer">
-                                                    <input type="checkbox" name="action" value="accepted" class="action-checkbox">
-                                                    <span class="text-gray-700 font-medium">
-                                                        Accept and mark as Received
-                                                    </span>
-                                                </label>
-                                            </div> --}}
-                                        </div>
-                                    <button type="submit"
-                                            name="action" value="accepted"
-                                            class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 shadow-sm transition duration-200">
-                                        Accept and Mark as Received
-                                    </button>
-                                </form>
+                                        <button type="submit"
+                                                name="action" value="accepted"
+                                                class="bg-emerald-400 rounded-md hover:bg-emerald-700 text-white font-semibold py-2 px-3 shadow-sm transition duration-200">
+                                            Accept and Mark as Received
+                                        </button>
+                                    </form>
+                                </div>
                             @endcan
 
                             @can('complete', $fileAssignment)
-                                <div>
+                                <div class="w-full">
                                     <form method="POST" action="{{ route('registry.file.complete', $circulation->id) }}" class="mb-6 mt-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
                                         @csrf
                                         <input type="hidden" name="file_id" value="{{ $file->id }}">
@@ -1023,65 +1105,47 @@
                                             @enderror
                                         </div>
                                         <button type="submit"
-                                            class="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold py-3 px-4 shadow-sm transition duration-200">
+                                            class="bg-emerald-400 hover:bg-emerald-500 font-semibold py-2 px-4 rounded-md shadow-sm transition duration-200">
                                             Mark as Complete
                                         </button>
                                     </form>
                                 </div>
                             @endcan
-                        @endcan
+                        @endif
+            </div>
 
-                        @can('close', $file)
-                            <form action="{{ route('registry.files.close', $file) }}" 
-                                method="POST"
-                                onsubmit="return confirmCloseFile();">
-                                @csrf
-                                <button type="submit"
-                                    id="closeFileBtn"
-                                    class="inline-flex items-center gap-2 bg-red-500 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-red-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-400">
-
-                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                        class="h-4 w-4"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor">
-                                        <path stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                    Close File
-                                </button>
-                            </form>
-                        @endcan 
-
-                        {{-- ****************************----Panels-----******************************************************************************************************************************************************************************************* --}}
-
+            {{-- ****************************----Panels-----******************************************************************************************************************************************************************************************* --}}
+            
+            <div class="max-w-5xl mx-auto">
                         @can('dispatch', $file)
                             <div>
                                 @if($file->document_source === 'upload') 
+                                    
                                     <form action="{{ route('registry.dispatches.store') }}" method="POST">
                                         @csrf
-                                        <div id="dispatchPanel" class="action-panel hidden rounded-2xl mt-2 border border-gray-200 bg-white p-6 shadow-sm">
+                                        <div id="dispatchPanel" class="action-panel hidden rounded-2xl mt-2 mb-4 border border-gray-200 bg-white p-6 shadow-sm">
                                             <input type="hidden" name="file_id" value="{{ $file->id }}">
                                             <div class="mb-4">
                                                 <h3 class="text-sm text-gray-900">
-                                                    Dispatch to Ministries
+                                                    Dispatch to Organisations
                                                 </h3>
-                                                <p class="mt-1 text-sm text-gray-500">
-                                                    Select one or more ministries to receive this file.
-                                                </p>
                                             </div>
                                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                @foreach($ministries as $id => $ministry)
+                                                @php
+                                                    $dispatchedMinistryIds = $dispatchedMinistries->pluck('id');
+                                                @endphp
+
+                                                @foreach ($ministries as $ministry)
+                                                    @continue($dispatchedMinistryIds->contains($ministry->id))
                                                     <label class="flex items-start gap-3 border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700 hover:bg-gray-100 transition">
                                                         <input type="checkbox"
                                                             name="recipient_ministries[]"
                                                             value="{{ $ministry->id }}"
                                                             class="recipient-checkbox mt-1 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500">
-                                                            <span class="font-medium">
-                                                                {{ $ministry->name }} ({{ $ministry->code }})
-                                                            </span>
+
+                                                        <span class="font-medium">
+                                                            {{ $ministry->name }} ({{ $ministry->code }})
+                                                        </span>
                                                     </label>
                                                 @endforeach
                                             </div>
@@ -1090,18 +1154,19 @@
                                                     id="confirmDispatchBtn"
                                                     disabled
                                                     onclick="return confirm('Are you sure you want to dispatch this file?');"
-                                                    class="mt-6 w-full rounded-xl bg-gray-300 px-5 py-3 text-sm font-bold text-gray-500 cursor-not-allowed shadow-sm transition">
+                                                    class="mt-6 rounded-xl bg-gray-300 px-5 py-3 text-sm font-bold text-gray-500 cursor-not-allowed shadow-sm transition">
                                                     Confirm Dispatch
                                                 </button>
                                             @else
                                                 <button type="button"
                                                     disabled
-                                                    class="mt-6 w-full rounded-xl bg-gray-200 px-5 py-3 text-sm font-bold text-gray-500 cursor-not-allowed">
+                                                    class="mt-6 mt-4 rounded-xl bg-gray-200 px-5 py-3 text-sm font-bold text-gray-500 cursor-not-allowed">
                                                     No Ministries Available
                                                 </button>
                                             @endif
                                         </div>
                                     </form>
+
                                 @elseif ($file->document_source === 'online')
                                      <form action="{{ route('registry.dispatches.store') }}" method="POST">
                                         @csrf
@@ -1139,14 +1204,13 @@
                                             @endif
                                         </div>
                                     </form>
-
                                 @endif
                             </div>
                         @endcan
 
                         @can('sign', $file)
                             <div id="sign-memo-box" class="action-panel hidden">
-                                <form method="POST" action="{{ route('registry.files.sign', $file) }}" class="space-y-2 border border-gray-200 bg-gray-50 p-5 shadow-sm">
+                                <form method="POST" action="{{ route('registry.files.sign', $file) }}" class="space-y-2 mb-4 border border-gray-200 bg-gray-50 p-5 shadow-sm">
                                     @csrf
                                     @php
                                         $hasSignature = !empty(Auth::user()->signature_path);
@@ -1170,7 +1234,7 @@
                                             <div class="flex justify-right">
                                                 <button type="submit"
                                                     {{ (!$hasSignature) ? 'disabled' : '' }}
-                                                    class="mt-4 inline-flex items-center gap-2 px-5 py-3 text-sm font-medium text-white shadow-sm transition
+                                                    class="mt-4 rounded-md inline-flex items-center gap-2 px-5 py-3 text-sm font-medium text-white shadow-sm transition
                                                         {{ (!$hasSignature)
                                                         ? 'bg-gray-400 cursor-not-allowed'
                                                         : 'bg-cyan-600 hover:bg-cyan-700' }}">
@@ -1202,75 +1266,42 @@
                             </div>
                         @endcan
 
-                        @can('reject', $file)
-                            <div id="reject-memo-box" class="action-panel hidden">
-                                <form method="POST" action="{{ route('registry.files.sign', $file) }}" class="space-y-2 border border-gray-200 bg-gray-50 p-5 shadow-sm">
+                        @can('cancelSignature', $file)
+                            <div id="cancel-signature-box" class="action-panel hidden">
+                                <form method="POST" action="{{ route('registry.files.cancel-signature', $file) }}" class="space-y-2 border border-gray-200 bg-gray-50 p-4 mb-6 shadow-sm">
                                     @csrf
-                                    @php
-                                        $hasSignature = !empty(Auth::user()->signature_path);
-                                    @endphp
-                                            <div class="flex-1">
-                                                <label class="block text-sm font-semibold text-gray-800">
-                                                    Electronic Signature
-                                                </label>
-                                                <p class="mt-1 text-xs text-gray-600">
-                                                    Your stored system signature will automatically be added to the approved memo.
-                                                </p>
-                                                @if($hasSignature)
-                                                    <div class="mt-3 border bg-white p-3">
-                                                        <p class="mb-2 text-xs font-medium text-gray-500">
-                                                            Signature Preview
-                                                        </p>
-                                                        <img src="{{ asset('storage/' . Auth::user()->signature_path) }}"
-                                                            alt="User Signature"
-                                                            class="max-h-20 object-contain">
-                                                    </div>
-                                                    <div class="flex justify-right">
-                                                        <button type="submit"
-                                                            {{ (!$hasSignature) ? 'disabled' : '' }}
-                                                                class="mt-4 inline-flex items-center gap-2 px-5 py-3 text-sm font-medium text-white shadow-sm transition
-                                                                {{ (!$hasSignature)
-                                                                ? 'bg-gray-400 cursor-not-allowed'
-                                                                : 'bg-cyan-600 hover:bg-cyan-700' }}">
-                                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                                class="h-4 w-4"
-                                                                fill="none"
-                                                                viewBox="0 0 24 24"
-                                                                stroke="currentColor">
-                                                                <path stroke-linecap="round"
-                                                                    stroke-linejoin="round"
-                                                                    stroke-width="2"
-                                                                    d="M16.862 3.487a2.1 2.1 0 113 2.97L8.25 18.07 4 19l.93-4.25L16.862 3.487z" />
-                                                                <path stroke-linecap="round"
-                                                                    stroke-linejoin="round"
-                                                                    stroke-width="2"
-                                                                    d="M13.5 6.5l4 4" />
-                                                            </svg>
-                                                            Sign File
-                                                        </button>
-                                                    </div>
-                                                @else
-                                                    <div class="mt-3 rounded-md border border-red-300 bg-red-50 p-3 text-xs text-red-700">
-                                                        A signature is required before signing this memo.
-                                                        Please upload your signature in your profile settings.
-                                                    </div>
-                                                @endif
-                                            </div>
-                                
+                                    <div class="mb-4">
+                                        <label class="mb-2 mt-4 block text-md font-semibold text-gray-700">
+                                            Comment
+                                        </label>
+                                        <textarea name="comment"
+                                                rows="3"
+                                                class="w-full rounded-lg border-gray-300 text-sm shadow-sm text-gray-700 focus:border-cyan-500 focus:ring-cyan-500"
+                                                placeholder="Write your review comment..."
+                                                required
+                                        >{{ old('comment') }}</textarea>
+                                        @error('comment')
+                                            <p class="mt-1 text-sm text-red-600"    >{{ $message }}</p>
+                                        @enderror
+                                        <button type="submit"
+                                                class="mt-4 inline-flex bg-red-600 rounded-md items-center gap-2 px-5 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-red-700">
+                                                Submit
+                                        </button>
+                                    </div>
                                 </form>
                             </div>
                         @endcan
 
-                        @can('circulateToReviewOfficer', $file)
-                            <div id="circulatePanel" class="action-panel hidden">
-                                <form method="POST" action="{{ route('registry.file-circulations.store') }}">
+                        @can('submitForSroReview', $file)
+                            <div id="circulatePanel" class="action-panel hidden border border-gray-200 bg-gray-50 p-4">
+                                    <form method="POST" action="{{ route('registry.files.submitForSroReview', $file) }}">
                                         @csrf
-                                        <input type="hidden" name="file_id" value="{{ $file->id }}">
+
                                         @if(!$reviewOfficer)
-                                            <div class="mb-6 border border-red-200 bg-red-50 px-6 py-4">
+                                            <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-6 py-4">
                                                 <a href="{{ route('registry.users.edit-review-officer') }}"
                                                     class="text-sm font-medium text-red-700 hover:text-red-800 hover:underline">
-                                                    ⚠️ No Review Officer assigned. Please assign one before submitting.
+                                                    ⚠️ No Review Officer assigned. Please contact Registry officers to assign one.
                                                 </a>
                                             </div>
                                         @else
@@ -1282,13 +1313,16 @@
                                                         </h3>
 
                                                         <a href="{{ route('registry.users.edit-review-officer') }}"
-                                                            class="inline-flex items-center border border-cyan-200 bg-cyan-50 px-3 py-1.5 text-xs font-medium text-cyan-700 transition hover:bg-cyan-100">
+                                                            class="inline-flex items-center rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-1.5 text-xs font-medium text-cyan-700 transition hover:bg-cyan-100">
                                                             Change
                                                         </a>
                                                     </div>
                                                 </div>
 
                                                 <div class="px-6 py-3">
+
+                                                    <input type="hidden" name="review_officer_id" value="{{ $reviewOfficer->id }}">
+
                                                     <p class="text-lg font-semibold text-gray-900">
                                                         {{ $reviewOfficer->name }}
                                                     </p>
@@ -1299,18 +1333,17 @@
                                                         </p>
                                                     @endif
                                                 </div>
-                                                
-                                                <div class="px-6 py-3">
-                                                    <button type="submit"
-                                                        class="inline-flex items-center gap-2 bg-cyan-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-cyan-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
-                                                        <i class="fas fa-paper-plane"></i>
-                                                        Submit
-                                                    </button>
-                                                </div>
                                             </div>
 
+                                            <div class="flex justify-left">
+                                                <button type="submit"
+                                                    class="inline-flex items-center rounded-md gap-2 bg-cyan-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-cyan-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
+                                                    <i class="fas fa-paper-plane"></i>
+                                                    Submit for SRO Review
+                                                </button>
+                                            </div>
                                         @endif
-                                </form>
+                                    </form>
                             </div>
                         @endcan
 
@@ -1331,7 +1364,7 @@
 
                                         <button
                                             type="submit"
-                                            class="mt-4 bg-cyan-600 px-5 py-3 text-sm font-bold text-white shadow-sm hover:bg-cyan-800">
+                                            class="mt-4 rounded-md bg-cyan-600 px-5 py-3 text-sm font-bold text-white shadow-sm hover:bg-cyan-800">
                                             Submit
                                         </button>
                                     </form>
@@ -1385,18 +1418,72 @@
                                             </div>
                                             <div class="flex justify-left">
                                                 <button type="submit"
-                                                    class="inline-flex items-center gap-2 bg-cyan-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-cyan-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
+                                                    class="inline-flex rounded-md items-center gap-2 bg-cyan-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-cyan-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
                                                     <i class="fas fa-paper-plane"></i>
                                                     Submit for Review
                                                 </button>
                                             </div>
-                                   
                                 </form>
                             </div>
                         @endcan
 
-                        @can('circulateToReviewOfficer', $circulation)
-                            <div id="circulation-review-officer" class="action-panel hidden border border-gray-200 bg-gray-50 p-4">
+                        @can('submitForSroSignature', $file)
+                            <div id="submit-sro-signature" class="action-panel hidden border border-gray-200 bg-gray-50 p-4">
+                                    <form method="POST" action="{{ route('registry.files.submitForSroSignature', $file) }}">
+                                        @csrf
+
+                                        @if(!$reviewOfficer)
+                                            <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-6 py-4">
+                                                <a href="{{ route('registry.users.edit-review-officer') }}"
+                                                    class="text-sm font-medium text-red-700 hover:text-red-800 hover:underline">
+                                                    ⚠️ No Review Officer assigned. Please contact Registry officers to assign one.
+                                                </a>
+                                            </div>
+                                        @else
+                                            <div class="mb-6 border border-gray-200 bg-white shadow-sm">
+                                                <div class="border-b border-gray-100 px-6 py-4">
+                                                    <div class="flex items-center justify-between">
+                                                        <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-500">
+                                                            Review Officer
+                                                        </h3>
+
+                                                        <a href="{{ route('registry.users.edit-review-officer') }}"
+                                                            class="inline-flex items-center rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-1.5 text-xs font-medium text-cyan-700 transition hover:bg-cyan-100">
+                                                            Change
+                                                        </a>
+                                                    </div>
+                                                </div>
+
+                                                <div class="px-6 py-3">
+
+                                                    <input type="hidden" name="review_officer_id" value="{{ $reviewOfficer->id }}">
+
+                                                    <p class="text-lg font-semibold text-gray-900">
+                                                        {{ $reviewOfficer->name }}
+                                                    </p>
+
+                                                    @if($reviewOfficer->designation)
+                                                        <p class="mt-1 text-sm text-gray-600">
+                                                            {{ $reviewOfficer->designation }}
+                                                        </p>
+                                                    @endif
+                                                </div>
+                                            </div>
+
+                                            <div class="flex justify-left">
+                                                <button type="submit"
+                                                    class="inline-flex rounded-md items-center gap-2 bg-cyan-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-cyan-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
+                                                    <i class="fas fa-paper-plane"></i>
+                                                    Submit for SRO Signature
+                                                </button>
+                                            </div>
+                                        @endif
+                                    </form>
+                            </div>
+                        @endcan
+
+                        @can('submitForSroReview', $circulation)
+                            <div id="circulation-review-officer" class="action-panel mb-4 hidden border border-gray-200 bg-gray-50 p-4">
                                     <form method="POST" action="{{ route('registry.file-circulations.update', $circulation) }}">
                                         @csrf
                                         @method('put')
@@ -1424,6 +1511,7 @@
                                                 </div>
 
                                                 <div class="px-6 py-3">
+                                                    <input type="hidden" name="review_officer_id" value="{{ $reviewOfficer->id }}">
                                                     <p class="text-lg font-semibold text-gray-900">
                                                         {{ $reviewOfficer->name }}
                                                     </p>
@@ -1438,7 +1526,7 @@
 
                                             <div class="flex justify-left">
                                                 <button type="submit"
-                                                    class="inline-flex items-center gap-2 bg-cyan-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-cyan-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
+                                                    class="inline-flex rounded-md items-center gap-2 bg-cyan-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-cyan-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
                                                     <i class="fas fa-paper-plane"></i>
                                                     Submit for Review
                                                 </button>
@@ -1475,7 +1563,6 @@
                             </div>
                         @endcan
                     @endif
-                </div> 
             </div>
         </div>
     <script>
@@ -1690,57 +1777,57 @@
 
     </script>
     <script>
-                                        let taskIndex = 1;
+        let taskIndex = 1;
 
-                                        function addTaskRow() {
-                                            const wrapper = document.getElementById('task-assignments');
+        function addTaskRow() {
+            const wrapper = document.getElementById('task-assignments');
 
-                                            const row = document.createElement('div');
-                                            row.className = 'task-row rounded-lg border border-gray-200 bg-gray-50 p-4';
+            const row = document.createElement('div');
+            row.className = 'task-row rounded-lg border border-gray-200 bg-gray-50 p-4';
 
-                                            row.innerHTML = `
-                                                <div class="flex justify-between items-center mb-2">
-                                                    <p class="text-sm font-semibold text-gray-700">Officer Task</p>
-                                                    <button type="button" onclick="this.closest('.task-row').remove()" class="text-sm text-red-600 hover:underline">
-                                                        Remove
-                                                    </button>
-                                                </div>
+            row.innerHTML = `
+                <div class="flex justify-between items-center mb-2">
+                    <p class="text-sm font-semibold text-gray-700">Officer Task</p>
+                    <button type="button" onclick="this.closest('.task-row').remove()" class="text-sm text-red-600 hover:underline">
+                        Remove
+                    </button>
+                </div>
 
-                                                <label class="block text-sm font-semibold text-gray-700 mb-1">
-                                                    Responsible Officer <span class="text-red-600">*</span>
-                                                </label>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">
+                    Responsible Officer <span class="text-red-600">*</span>
+                </label>
 
-                                                <select
-                                                    name="tasks[${taskIndex}][officer_id]"
-                                                    required
-                                                    class="mt-1 mb-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                                >
-                                                    <option value="">-- Select an officer --</option>
-                                                    @foreach(($divisionUsers ?? []) as $user)
-                                                        @if($user->id !== auth()->id() && $user->id !== optional($reviewOfficer)->id)
-                                                            <option value="{{ $user->id }}">
-                                                                {{ $user->name }}
-                                                            </option>
-                                                        @endif
-                                                    @endforeach
-                                                </select>
+                <select
+                    name="tasks[${taskIndex}][officer_id]"
+                    required
+                    class="mt-1 mb-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                >
+                    <option value="">-- Select an officer --</option>
+                    @foreach(($divisionUsers ?? []) as $user)
+                        @if($user->id !== auth()->id() && $user->id !== optional($reviewOfficer)->id)
+                            <option value="{{ $user->id }}">
+                                {{ $user->name }}
+                            </option>
+                        @endif
+                    @endforeach
+                </select>
 
-                                                <label class="block text-sm font-semibold text-gray-700 mb-1">
-                                                    Task <span class="text-red-600">*</span>
-                                                </label>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">
+                    Task <span class="text-red-600">*</span>
+                </label>
 
-                                                <textarea
-                                                    name="tasks[${taskIndex}][task]"
-                                                    rows="2"
-                                                    required
-                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                                    placeholder="Describe the task for this officer"
-                                                ></textarea>
-                                            `;
+                <textarea
+                    name="tasks[${taskIndex}][task]"
+                    rows="2"
+                    required
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                    placeholder="Describe the task for this officer"
+                ></textarea>
+            `;
 
-                                            wrapper.appendChild(row);
-                                            taskIndex++;
-                                        }
+            wrapper.appendChild(row);
+            taskIndex++;
+        }
     </script>
     <script>
         function confirmCloseFile() {

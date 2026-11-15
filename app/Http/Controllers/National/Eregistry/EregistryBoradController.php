@@ -16,11 +16,14 @@ class EregistryBoradController extends Controller
     {
         $user = Auth::user();
         $ministryId = Auth::user()->ministry_id;
-        // $reviewOfficer = User::role('review-officer')
-        //                         ->where('ministry_id', $ministryId)
-        //                         ->first();
+        $reviewOfficer = User::role('review-officer')
+                                ->where('ministry_id', $ministryId)
+                                ->first();
+        $sro = User::role('sro')
+                    ->where('ministry_id', $ministryId)
+                    ->first();
        
-        return view('national.eregistry.files.index');  
+        return view('national.eregistry.files.index', compact('reviewOfficer', 'sro'));  
           
     }
 

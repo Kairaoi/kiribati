@@ -11,7 +11,7 @@ use App\Models\User;
 use App\Repositories\National\Eregistry\DispatchRepository;
 use App\Repositories\National\Eregistry\DivisionRepository;
 use App\Repositories\National\Eregistry\FileRepository;
-use App\Repositories\National\Eregistry\MinistryRepository;
+use App\Repositories\National\Eregistry\OrganisationRepository;
 use App\Repositories\National\Eregistry\UserRepository;
 use App\Repositories\National\Eregistry\FileCirculationRepository;
 use Illuminate\Container\Attributes\Storage;
@@ -30,7 +30,7 @@ class DispatchController extends Controller
 {
     private $dispatches;
     private $files;
-    private $ministries;
+    private $organisations;
     private $divisions;
     private $users;
     private $fileCirculations;
@@ -38,7 +38,7 @@ class DispatchController extends Controller
     public function __construct(
         DispatchRepository $dispatches,
         FileRepository $files,
-        MinistryRepository $ministries,
+        OrganisationRepository $organisations,
         DivisionRepository $divisions,
         UserRepository $users,
         FileCirculationRepository $fileCirculations
@@ -46,7 +46,7 @@ class DispatchController extends Controller
     {
         $this->dispatches = $dispatches;
         $this->files = $files;
-        $this->ministries = $ministries;
+        $this->organisations = $organisations;
         $this->divisions = $divisions;
         $this->users = $users;
         $this->fileCirculations = $fileCirculations;
@@ -58,18 +58,18 @@ class DispatchController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\Response
      */
-    public function getDataTables(Request $request)
-    {
-        $userOrgId = Auth()->user()->organisation_id;
+    // public function getDataTables(Request $request)
+    // {
+    //     $userOrgId = Auth()->user()->organisation_id;
 
-        $search = $request->get('search', '');
-        if (is_array($search)) {
-            $search = $search['value'];
-        }
-        $query = $this->dispatches->getForDataTable($search, $userOrgId);
+    //     $search = $request->get('search', '');
+    //     if (is_array($search)) {
+    //         $search = $search['value'];
+    //     }
+    //     $query = $this->dispatches->getForDataTable($search, $userOrgId);
 
-        return DataTables::of($query)->make(true);
-    }
+    //     return DataTables::of($query)->make(true);
+    // }
 
 
     /**
@@ -78,17 +78,17 @@ class DispatchController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\Response
      */
-    public function getUserDataTables(Request $request)
-    {
+    // public function getUserDataTables(Request $request)
+    // {
         
-        $search = $request->get('search', '');
-        if (is_array($search)) {
-            $search = $search['value'];
-        }
-        $query = $this->dispatches->getForUserDataTable($search);
+    //     $search = $request->get('search', '');
+    //     if (is_array($search)) {
+    //         $search = $search['value'];
+    //     }
+    //     $query = $this->dispatches->getForUserDataTable($search);
 
-        return DataTables::of($query)->make(true);
-    }
+    //     return DataTables::of($query)->make(true);
+    // }
 
 
 
@@ -126,12 +126,10 @@ class DispatchController extends Controller
      */
     public function store(Request $request)
     {
-        // $organisationId = $user->organisation_id; // Get the organisation ID of the authenticated user
-        // dd($request->all());
         $validated = $request->validate([
             'file_id' => 'required|exists:files,id',
             'recipient_ministries' => 'required|array',
-            'recipient_ministries.*' => 'exists:ministries,id',
+            'recipient_ministries.*' => 'exists:organisations,id',
         ]);    
 
         try {
@@ -147,7 +145,7 @@ class DispatchController extends Controller
             $file->status = 'Dispatched';
             $file->save();
 
-            $fileOwnerCirculation = $this->fileCirculations->thisCirculation($validated['file_id'], Auth::user()->ministry_id);
+            $fileOwnerCirculation = $this->fileCirculations->thisCirculation($validated['file_id'], Auth::user()->organisation_id);
 
             if ($fileOwnerCirculation) {
                 $fileOwnerCirculation->update([
@@ -160,7 +158,7 @@ class DispatchController extends Controller
                 $circulation = FileCirculation::create([
                     'file_id' => $validated['file_id'],
                     'dispatch_id' => $dispatch->id,
-                    'to_ministry_id' => $ministryId,
+                    'to_organisation_id' => $ministryId,
                     'circulated_by' => auth()->id(),
                     'circulated_at' => now(),
                     'status' => 'Pending Receipt',
@@ -168,12 +166,12 @@ class DispatchController extends Controller
                 ]);
 
                 $circulation->load([
-                    'file.ministry',
-                    'toMinistry',
+                    'file.organisation',
+                    'toOrganisation',
                 ]);
 
                 $recipients = User::query()
-                    ->where('ministry_id', $ministryId)
+                    ->where('organisation_id', $ministryId)
                     ->where('is_active', true)
                     ->whereNotNull('email')
                     ->role('registry')
@@ -188,7 +186,7 @@ class DispatchController extends Controller
             if (Auth::user()->hasRole('registry')) {
                 return redirect()
                     ->route('registry.files.index')
-                    ->with('success', 'File dispatched successfully!');
+                    ->with('success', 'File dispatched');
             }
 
 

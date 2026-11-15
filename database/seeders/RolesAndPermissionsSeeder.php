@@ -15,39 +15,88 @@ class RolesAndPermissionsSeeder extends Seeder
     public function run(): void
     {
         $systemadmin = Role::create(['name' => 'system-admin']);
-        $ministryadmin = Role::create(['name' => 'ministry-admin']);
+        $admin = Role::create(['name' => 'admin']);
         $registry = Role::create(['name' => 'registry']);
         $sro = Role::create(['name' => 'sro']);
         $hod = Role::create(['name' => 'hod']);
         $user = Role::create(['name' => 'user']);
         $review_officer = Role::create(['name' => 'review-officer']);
 
-        Permission::create(['name' => 'view-admin-dashboard']);
-        Permission::create(['name' => 'view-registry-dashboard']);
-        Permission::create(['name' => 'view-user-dashboard']);
-        Permission::create(['name' => 'dispatch-file']);
-        Permission::create(['name' => 'create-file']);
-        Permission::create(['name' => 'approve-dispatch']);
-        Permission::create(['name' => 'assign-officer']);
-        Permission::create(['name' => 'view-all-files']);
-        Permission::create(['name' => 'view-assigned-files']);
-        Permission::create(['name' => 'review-file']);
+        $systemAdminPermissions = [
+            // Ministries
+            'ministries.view-any',
+            'ministries.create',
+            'ministries.update',
+            'ministries.activate',
+            'ministries.deactivate',
 
-        $ministryadmin->givePermissionTo(['view-admin-dashboard', 
-                                  'view-registry-dashboard', 
-                                  'view-user-dashboard', 
-                                  'approve-dispatch',
-                                  'assign-officer']);
+            // Ministry administrators
+            'admins.view-any',
+            'admins.create',
+            'admins.update',
+            'admins.activate',
+            'admins.deactivate',
+            'admins.reset-password',
 
-        $registry->givePermissionTo(['view-registry-dashboard', 
-                                     'view-user-dashboard',
-                                     'dispatch-file',
-                                     'create-file']);
+            // Users
+            'users.view-any',
+            'users.view',
+            'users.update',
+            'users.activate',
+            'users.deactivate',
+            'users.reset-password',
+            'users.transfer-ministry',
 
-        $user->givePermissionTo(['view-user-dashboard',
-                                 'create-file']);
+            // Roles
+            'roles.view-any',
+            'roles.create',
+            'roles.update',
+            'roles.assign',
+            'permissions.view-any',
 
-        $review_officer->givePermissionTo(['review-file']);
+            // Organisation structure
+            'divisions.view-any',
+            'divisions.create',
+            'divisions.update',
+            'divisions.activate',
+            'units.view-any',
+            'units.create',
+            'units.update',
+            'units.activate',
+
+            // Organisations
+            'organisations.view-any',
+            'organisations.create',
+            'organisations.update',
+            'organisation-types.manage',
+
+            // Global configuration
+            'system-file-types.manage',
+            'system-categories.manage',
+            'system-templates.manage',
+            'system-settings.manage',
+
+            // Governance and monitoring
+            'audit-logs.view-any',
+            'system-reports.view',
+            'system-health.view',
+            'failed-jobs.manage',
+            'user-sessions.revoke',
+        ];
+
+        
+        $operationalPermissions = [
+            'files.create',
+            'files.review',
+            'files.approve',
+            'files.sign',
+            'files.dispatch',
+            'files.receive',
+            'files.assign',
+            'files.close',
+        ];
+
+      
 
     }
 }

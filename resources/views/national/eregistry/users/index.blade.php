@@ -40,25 +40,60 @@
     </div>
     <div class="mb-4 flex items-start justify-between">
         <div>
-            <a href="{{ route('registry.users.create') }}"
-                class="inline-flex items-center mt-3 gap-2 px-4 py-2 bg-cyan-600 font-semibold text-sm text-white hover:bg-cyan-700 transition">
-                Create New User
-            </a>
+            @role('admin|system-admin')
+                <a href="{{ route('registry.users.create') }}"
+                    class="inline-flex items-center mt-3 gap-2 px-4 py-2 bg-cyan-600 font-semibold text-sm text-white hover:bg-cyan-700 transition">
+                    Create New User
+                </a>
+            @endrole
 
-            <a href="{{ route('registry.users.edit-review-officer') }}"
-                class="inline-flex items-center mt-3 gap-2 px-4 py-2 bg-cyan-600 font-semibold text-sm text-white hover:bg-cyan-700 transition">
-                Review Officer: {{ $reviewOfficer->name }}
-            </a>
+            @role('registry|system-admin')
+                    <a href="{{ route('registry.users.edit-review-officer') }}"
+                    class="inline-flex items-center mt-3 gap-2 px-4 py-2 border font-semibold text-sm transition
+                        {{ $reviewOfficer
+                            ? 'bg-gray-200 border-cyan-100 text-cyan-700 hover:bg-gray-300'
+                            : 'bg-red-100 border-red-300 text-red-700 hover:bg-red-200' }}">
 
-            <a href="{{ route('registry.users.edit-secretary') }}"
-                class="inline-flex items-center mt-3 gap-2 px-4 py-2 bg-cyan-600 font-semibold text-sm text-white hover:bg-cyan-700 transition">
-                {{ $ministry->reviewer_title ?? 'Reviewer title not set' }}: {{ $sro->name ?? 'SRO not set'}}
-            </a>
+                        @unless($reviewOfficer)
+                            <span aria-hidden="true" class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-600 text-white font-bold">!</span>
+                        @endunless
 
-            <a href="{{ route('registry.divisions.index') }}"
-                class="inline-flex items-center mt-3 gap-2 px-4 py-2 bg-cyan-600 font-semibold text-sm text-white hover:bg-cyan-700 transition">
-                Assign Division HOD
-            </a>
+                        <span>Current Reviewer: {{ $reviewOfficer?->name ?? 'Not assigned' }}</span>
+                    </a>
+                @else
+                    <div class="inline-flex items-center mt-3 gap-2 px-4 py-2 border font-semibold text-sm cursor-default
+                        {{ $reviewOfficer
+                            ? 'bg-gray-100 border-gray-200 text-gray-600'
+                            : 'bg-red-100 border-red-300 text-red-700' }}">
+
+                        @unless($reviewOfficer)
+                            <span aria-hidden="true" class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-600 text-white font-bold">!</span>
+                        @endunless
+
+                        <span>Current Reviewer: {{ $reviewOfficer?->name ?? 'Not assigned' }}</span>
+                    </div>
+                @endrole
+
+                @role('registry|system-admin')
+                    <a href="{{ route('registry.users.edit-secretary') }}"
+                    class="inline-flex items-center mt-3 gap-2 px-4 py-2 border font-semibold text-sm transition
+                        {{ $sro
+                            ? 'bg-gray-200 border-cyan-100 text-cyan-700 hover:bg-gray-300'
+                            : 'bg-red-100 border-red-300 text-red-700 hover:bg-red-200' }}">
+
+                        @unless($sro)
+                            <span aria-hidden="true"
+                                class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-600 text-white font-bold">
+                                !
+                            </span>
+                        @endunless
+
+                        <span>
+                            {{ $organisation->reviewer_title ?? 'Reviewer title not set' }}:
+                            {{ $sro?->name ?? 'Secretary not set' }}
+                        </span>
+                    </a>
+                @endrole
         </div>
     </div>
 
@@ -72,9 +107,9 @@
                     <th>Email</th>
                     <th>Division</th>
                     <th>Designation</th>
-                    <th>Role</th>
+                    <th>Roles</th>
                     <th>Status</th>
-                    <th>Actions</th>
+                    <th class="w-28 no-export">Actions</th>
                 </tr>
             </thead>
             <tbody></tbody> <!-- DataTable will populate this -->
@@ -273,6 +308,9 @@
 $(document).ready(function() {
     let activeDropdown = null;
 
+    const isSystemAdmin = @json($isSystemAdmin);
+    const isMinistryAdmin = @json($isMinistryAdmin);
+
     // Close dropdown when clicking outside
     $(document).on('click', function(e) {
         if (!$(e.target).closest('.action-dropdown').length) {
@@ -327,34 +365,35 @@ $(document).ready(function() {
                                 title="View">
                                 <i class="fa fa-eye text-sm"></i>
                         </a>
-                        <a href="/registry/users/${row.uuid}/edit" 
+                        `;
+                    if (isSystemAdmin || isMinistryAdmin) {
+                        buttons += `<a href="/registry/users/${row.uuid}/edit" 
                             class="inline-flex items-center justify-center hover:text-gray-600 transition ms-3"
-                                title="Edit">
-                                <i class="fa fa-pen text-sm"></i>
+                            title="Edit">
+                            <i class="fa fa-pen text-sm"></i>
                         </a>
-                    `;
-
-                    const isActive = Number(row.is_active);
-
-                    if (isActive === 1) {
-                        buttons += `
-                            <button class="inline-flex items-center justify-center hover:text-red-600 transition ms-3 deactivate-action" 
-                                data-id="${row.uuid}" 
-                                title="Deactivate">
-                                <i class="fa fa-user-slash text-sm"></i>
-                            </button>
-                        `;
-                    } else {
-                        buttons += `
-                            <button class="inline-flex items-center justify-center hover:text-red-600 transition ms-3 activate-action" 
-                                data-id="${row.uuid}" 
-                                title="Activate">
-                                <i class="fa fa-user text-sm"></i>
-                            </button>
-                        `;
-
+                         `;
+                        const isActive = Number(row.is_active);
+                        if (isActive === 1) {
+                            buttons += `
+                                <button class="inline-flex items-center justify-center hover:text-red-600 transition ms-3 deactivate-action" 
+                                    data-id="${row.uuid}" 
+                                    title="Deactivate">
+                                    <i class="fa fa-user-slash text-sm"></i>
+                                </button>
+                            `;
+                        } else {
+                            buttons += `
+                                <button class="inline-flex items-center justify-center hover:text-red-600 transition ms-3 activate-action" 
+                                    data-id="${row.uuid}" 
+                                    title="Activate">
+                                    <i class="fa fa-user text-sm"></i>
+                                </button>
+                            `;
+                        }
                     }
-                    return buttons;
+                     return buttons;
+                
                 }
             }
         ],
@@ -377,18 +416,18 @@ $(document).ready(function() {
                 extend: 'excelHtml5',
                 text: '<i class="fas fa-file-excel me-1"></i> Excel',
                 className: 'excel-export-btn',
-                title: 'Document Management System Users',
+                title: 'Document Management System(DMS) Users',
                 exportOptions: {
-                    columns: ':not(:last-child)'
+                    columns: ':visible:not(.no-export)'
                 }
             },
             {
                 extend: 'pdfHtml5',
                 text: '<i class="fas fa-file-pdf me-1"></i> PDF',
                 className: 'pdf-export-btn',
-                title: 'Document Management System Users',
+                title: 'Document Management System(DMS) Users',
                 exportOptions: {
-                    columns: ':not(:last-child)'
+                    columns: ':visible:not(.no-export)'
                 }
             }
         ]

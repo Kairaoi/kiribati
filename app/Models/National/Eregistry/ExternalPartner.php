@@ -5,6 +5,7 @@ namespace App\Models\National\Eregistry;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
+use App\Models\User;
 
 class ExternalPartner extends Model implements Auditable
 {
@@ -17,10 +18,9 @@ class ExternalPartner extends Model implements Auditable
     protected $fillable = [
         'name',
         'location',
-        'ministry_id',
+        'organisation_id',
         'phone',
         'email',
-        'identity_organisation_id',
         'organisation_type_id',
         'is_active',
         'created_by',
@@ -42,9 +42,21 @@ class ExternalPartner extends Model implements Auditable
         return $this->morphMany(File::class, 'source');
     }
 
-    public function ministry()
+    public function organisation()
     {
-        return $this->belongsTo(Ministry::class, 'ministry_id');
+        return $this->belongsTo(Organisation::class, 'organisation_id');
     }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+
 
 }

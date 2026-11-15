@@ -12,8 +12,15 @@ class DivisionStoreRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        $authenticatedUser = auth()->user();
+
+        return $authenticatedUser
+            && $authenticatedUser->hasAnyRole([
+                'system-admin',
+                'registry',
+            ]);
     }
+
 
     /**
      * Get the validation rules that apply to the request.
@@ -32,20 +39,27 @@ class DivisionStoreRequest extends FormRequest
                 'string',
                 'max:255',
             ],
-            'code' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('divisions')->whereNull('deleted_at'), // Check for uniqueness in the 'divisions' table
-            ],
             'description' => [
                 'nullable',
                 'string',
+                'max:255',
             ],
-            'is_active' => [
+            'location' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+            'email' => [
                 'nullable',
-                'boolean',
+                'email',
+                'max:255',
+            ],
+            'phone' => [
+                'nullable',
+                'string',
+                'max:10',
             ],
         ];
+            
     }
 }

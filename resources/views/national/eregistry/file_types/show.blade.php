@@ -99,9 +99,9 @@
             <div class="col-span-2 sm:grid sm:grid-cols-3 sm:gap-4 py-2 border-b">
                 <dt class="font-semibold text-sm text-gray-700">Scope:</dt>
                 <dd class="sm:col-span-2">
-                    @if($fileType->ministry_id)
+                    @if($fileType->organisation_id)
                         <span class="inline-flex rounded-full bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-800">
-                            Ministry-specific
+                            Organisation-specific
                         </span>
                     @else
                         <span class="inline-flex rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
@@ -112,8 +112,8 @@
             </div>
 
             <div class="col-span-2 sm:grid sm:grid-cols-3 sm:gap-4 py-2 border-b">
-                <dt class="font-semibold text-sm text-gray-700">Ministry:</dt>
-                <dd class="sm:col-span-2 text-sm text-gray-900">{{ $fileType->ministry->name ?? '-' }}</dd>
+                <dt class="font-semibold text-sm text-gray-700">Organisation:</dt>
+                <dd class="sm:col-span-2 text-sm text-gray-900">{{ $fileType->organisation->name ?? '-' }}</dd>
             </div>
            
 

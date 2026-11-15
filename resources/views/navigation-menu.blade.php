@@ -16,14 +16,14 @@
                                         @click.outside="open = false"
                                         class="inline-flex items-center gap-1 text-cyan-600 hover:text-cyan-700">
                                     <span>
-                                        {{ Auth::user()->ministry->code ?? 'No Ministry Assigned' }}
+                                        {{ Auth::user()->organisation->code ?? 'No Organisation Assigned' }}
                                     </span>
                                 </button>
                             </div>
                         </div>
                     </div>
             
-                    <div class="hidden space-x-8 font-medium ml-4 sm:flex items-center">
+                    <div class="hidden space-x-6 text-md ml-4 sm:flex items-center">
                         {{-- E-Registry --}}
                                 <div x-data="{ open: false }"
                                     class="relative flex items-center h-16"
@@ -60,8 +60,20 @@
                                         </a>
                                     </div>
                                 </div>
+                            @hasrole(['registry', 'system-admin'])
+                                <div class="relative flex items-center h-16">
+                                    <x-nav-link
+                                            href="{{ route('registry.folders.index') }}"
+                                            :active="request()->routeIs('registry.folders.*')"
+                                            class="flex items-center h-full cursor-pointer"
+                                        >
+                                        <span class="leading-none flex items-center text-gray-500 font-semibold">
+                                            {{ __('E-Filing') }}
+                                        </span>
+                                    </x-nav-link>
+                                </div>
                     
-                        @hasrole(['registry', 'system-admin'])
+                        
                                 <div x-data="{ open: false }"
                                     class="relative flex items-center h-16"
                                     @mouseenter="open = true"
@@ -150,135 +162,62 @@
                                     </div>
                                 </div>
 
-                                <div x-data="{ open: false, templateOpen: false }"
-                                    class="relative flex items-center h-16"
-                                    @mouseenter="open = true"
-                                    @mouseleave="open = false"
-                                    class="relative">
-
-                                    <x-nav-link href="#"
-                                        class="flex items-center h-full">
-
-                                        <span class="leading-none flex items-center text-gray-500 font-semibold space-x-2">
-                                            {{ __('Ministry Admin') }}
-                                            <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                                            </svg>
-                                        </span>
-                                    </x-nav-link>
-
-                                    <!-- Main Dropdown -->
-                                    <div x-show="open"
-                                        x-transition
-                                        class="absolute left-0 top-full w-64 bg-white border border-gray-200 rounded-md shadow-md z-50">
-
-                                        <a href="{{ route('registry.ministries.edit', Auth::user()->ministry_id) }}"
-                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            Profile & Logo
-                                        </a>
-
-                                        <a href="{{ route('registry.divisions.index', Auth::user()->ministry_id) }}"
-                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            Divisions
-                                        </a>
-
-                                        <a href="{{ route('registry.users.index', Auth::user()->ministry_id) }}"
-                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            Users & Roles
-                                        </a>
-
-                                        <!-- Nested Templates Dropdown -->
-                                        {{-- <div class="relative"
-                                            @mouseenter="templateOpen = true"
-                                            @mouseleave="templateOpen = false">
-
-                                            <button type="button"
-                                                    class="w-full flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                                <span> File Templates</span>
-                                                <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                                                </svg>
-                                            </button>
-
-                                            <!-- Sub Dropdown -->
-                                            <div x-show="templateOpen"
-                                                x-transition
-                                                class="absolute left-full top-0 w-56 bg-white border border-gray-200 rounded-md shadow-md z-50">
-
-                                                <a href="{{ route('registry.file-types.index') }}"
-                                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                                    Memorandum
-                                                </a>
-
-                                                <a href="{{ route('registry.file-types.index') }}"
-                                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                                    Official Letter
-                                                </a>
-
-                                                <a href="{{ route('registry.file-types.create') }}"
-                                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                                    Internal Memo
-                                                </a>
-                                            </div>
-                                        </div>
-                                         --}}
-                                    </div>
-                                </div>
-
-                                {{-- <div x-data="{ open: false }"
-                                    class="relative flex items-center h-16"
-                                    @mouseenter="open = true"
-                                    @mouseleave="open = false">
-                                    
-                                    <x-nav-link href="#"
-                                        class="flex items-center h-full" :active="request()->routeIs('registry.file-types.*')">
-                                        <span class="leading-none flex items-center">
-                                            {{ __('Ministry Templates') }}
-                                            <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                                            </svg>
-                                        </span>
-                                    </x-nav-link>
-
-                                    <!-- Dropdown -->
-                                    <div x-show="open"
-                                        x-transition
-                                        class="absolute left-0 top-full w-64 bg-white border border-gray-200 rounded-md shadow-md z-50">
-
-                                        <div class="px-4 py-2 text-xs text-gray-400 uppercase tracking-wide">
-                                            {{ __('Templates') }}
-                                        </div>
-                                        <a href="{{ route('registry.file-types.index') }}"
-                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            Memorandum
-                                        </a>
-                                        <a href="{{ route('registry.file-types.index') }}"
-                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            Official Letter
-                                        </a>
-                                        <a href="{{ route('registry.file-types.create') }}"
-                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            Internal Memo
-                                        </a>
-                                    </div>
-                                </div> --}}
-
                                 <div class="relative flex items-center h-16">
                                     <x-nav-link
-                                        href="{{ route('registry.users.edit-review-officer') }}"
-                                        :active="request()->routeIs('registry.users.edit-review-officer')"
-                                        class="flex items-center h-full cursor-pointer"
-                                    >
+                                            href="{{ route('registry.organisations.edit', Auth::user()->organisation) }}"
+                                            :active="request()->routeIs('registry.organisations.edit')"
+                                            class="flex items-center h-full cursor-pointer"
+                                        >
                                         <span class="leading-none flex items-center text-gray-500 font-semibold">
-                                            {{ __('Review Officer') }}
+                                            {{ __('Logo & Profile') }}
                                         </span>
                                     </x-nav-link>
                                 </div>
+                                <div class="relative flex items-center h-16">
+                                    <x-nav-link
+                                            href="{{ route('registry.divisions.index') }}"
+                                            :active="request()->routeIs('registry.divisions.*')"
+                                            class="flex items-center h-full cursor-pointer"
+                                        >
+                                        <span class="leading-none flex items-center text-gray-500 font-semibold">
+                                            {{ __('Divisions & HODs') }}
+                                        </span>
+                                    </x-nav-link>
+                                </div>
+                            @endhasrole
+
+                            @hasrole(['admin', 'system-admin', 'registry'])
+                                <div class="relative flex items-center h-16">
+                                    <x-nav-link
+                                            href="{{ route('registry.users.index') }}"
+                                            :active="request()->routeIs('registry.users.*')"
+                                            class="flex items-center h-full cursor-pointer"
+                                        >
+                                        <span class="leading-none flex items-center text-gray-500 font-semibold">
+                                            {{ __('Users') }}
+                                        </span>
+                                    </x-nav-link>
+                                </div>
+                            @endhasrole
+                                
+                          
+                        
+
+                               
+
+                        {{-- @hasrole(['admin', 'system-admin'])
+                            <div class="relative flex items-center h-16">
+                                <x-nav-link
+                                        href="{{ route('registry.users.index') }}"
+                                        :active="request()->routeIs('registry.users.*')"
+                                        class="flex items-center h-full cursor-pointer"
+                                    >
+                                    <span class="leading-none flex items-center text-gray-500 font-semibold">
+                                        {{ __('Users') }}
+                                    </span>
+                                </x-nav-link>
                             </div>
-                        @endhasrole 
+                        @endhasrole --}}
                     </div>
                     
                     <div class="hidden sm:flex sm:items-center sm:ms-6">

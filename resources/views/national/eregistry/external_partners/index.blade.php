@@ -1,6 +1,33 @@
 @extends('layouts.app')
 
 @section('content')
+@if (session('success'))
+        <div 
+            x-data="{ show: true }"
+            x-show="show"
+            x-transition.opacity.scale.80
+            x-init="setTimeout(() => show = false, 4000)" 
+            class="fixed right-0 bg-cyan-400 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 z-50">
+            <!-- Icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke-width="2" 
+                stroke="currentColor" 
+                class="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+
+            <!-- Message -->
+            <span class="font-medium">{{ session('success') }}</span>
+
+            <!-- Close button -->
+            <button @click="show = false" class="ml-4 hover:text-gray-200">
+                &times;
+            </button>
+        </div>
+@endif
+
 <div class="container mx-auto px-4 py-8 max-w-5xl mt-3 rounded-md min-h-screen ">
     <div class="mb-4 flex items-start justify-between">
         <div>
@@ -20,7 +47,7 @@
             <thead class="bg-gray-50 text-gray-600 text-sm uppercase tracking-wide">
                 <tr>
                     <th>NAME</th>
-                    <th>Category</th>
+                    <th>Type</th>
                     <th>Email</th>
                     <th>Phone</th>
                     <th>Status</th>
@@ -236,8 +263,8 @@ $(document).ready(function() {
    }
 
    var table = $('#externalPartnersTable').DataTable({
-       processing: true,
-        serverSide: true,  
+        processing: true,
+        serverSide: false,  
         searching: true,
         paging: true,
         info: true,
@@ -253,10 +280,10 @@ $(document).ready(function() {
            
        },
        columns: [
-            { data: 'name' },
-            { data: 'organisation_type_name' },
-            { data: 'email' },
-            { data: 'phone' },
+            { data: 'name', name:'external_partners.id'},
+            { data: 'organisation_type_name', name:'organisation_types.name'},
+            { data: 'email', name:'external_partners.email'},
+            { data: 'phone', name:'external_partners.phone'},
             {
                 data: 'is_active',
                 render: function (data, type, row) {
@@ -283,9 +310,17 @@ $(document).ready(function() {
                 render: function (data, type, row) {
                     let buttons = `
                         <a href="/registry/external-partners/${row.id}"
-                            class="inline-flex items-center border justify-center gap-2 rounded-md px-4 py-2 text-xs font-medium shadow-sm transition hover:bg-gray-100"
-                            title="View">
-                            View
+                            class="inline-flex items-center justify-center rounded-md p-2 transition focus:outline-none"
+                            title="View"
+                            aria-label="View file type">
+                            <i class="fa fa-eye text-sm"></i>
+                        </a>
+
+                        <a href="/registry/external-partners/${row.id}/edit"
+                            class="inline-flex items-center justify-center rounded-md p-2 transition focus:outline-none"
+                            title="Edit"
+                            aria-label="Edit file type">
+                            <i class="fa fa-edit text-sm"></i>
                         </a>
                     `;
 
@@ -294,19 +329,36 @@ $(document).ready(function() {
                     if (isActive === 1) {
                         buttons += `
                             <button
+                                type="button"
                                 data-id="${row.id}"
-                                class="inline-flex items-center mt-1 border justify-center gap-2 rounded-md px-4 py-2 text-xs font-medium shadow-sm transition hover:bg-gray-100 deactivate-action"
-                                title="Deactivate">
-                                Deactivate
+                                class="deactivate-action inline-flex items-center justify-center rounded-md p-2 transition"
+                                title="Deactivate"
+                                aria-label="Deactivate file type">
+                                <i class="fa fa-ban text-sm"></i>
                             </button>
                         `;
-                    } else {
+                    } else if (isActive === 0) {
                         buttons += `
                             <button
+                                type="button"
                                 data-id="${row.id}"
-                                class="inline-flex items-center mt-1 border justify-center gap-2 rounded-md px-4 py-2 text-xs font-medium shadow-sm transition hover:bg-gray-100 activate-action"
-                                title="Activate">
-                                Activate
+                                class="activate-action inline-flex items-center justify-center rounded-md p-2 text-green-600 transition hover:bg-green-50 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                                title="Activate"
+                                aria-label="Activate file type">
+                                <i class="fa fa-check-circle text-sm"></i>
+                            </button>
+                        `;
+                    }
+
+                    if (Number(row.files_count) === 0) {
+                        buttons += `
+                            <button
+                                type="button"
+                                data-id="${row.id}"
+                                class="delete-action inline-flex items-center justify-center rounded-md p-2 transition hover:bg-red-50"
+                                title="Delete"
+                                aria-label="Delete file type">
+                                <i class="fa fa-trash text-sm"></i>
                             </button>
                         `;
                     }

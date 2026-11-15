@@ -27,12 +27,13 @@ class DivisionRepository extends BaseRepository
     public function create(array $input)
     {
         $data = [
-            'ministry_id' => $input['ministry_id'],
+            'organisation_id' => $input['organisation_id'],
             'name' => $input['name'],
+            'description' => $input['description'] ?? null,
+            'location' => $input['location'] ?? null,
             'is_active' => $input['is_active'] ?? true,
             'created_at' => now(),
             'updated_at' => now(),
-            'location' => $input['location'] ?? null,
             'email' => $input['email'] ?? null,
             'phone' => $input['phone'] ?? null,
             'created_by' => Auth::id(),
@@ -56,10 +57,12 @@ class DivisionRepository extends BaseRepository
     public function update(Division $model, array $input)
     {
         $data = [
-            'ministry_id' => $input['ministry_id'],
-            'name' => $input['name'],
-            'code' => $input['code'],
+            'organisation_id' => $input['organisation_id'] ?? $model->organisation_id,
+            'name' => $input['name'] ?? $model->name,
             'description' => $input['description'] ?? $model->description,
+            'location' => $input['location'] ?? $model->location,
+            'email' => $input['email'] ?? $model->email,
+            'phone' => $input['phone'] ?? $model->phone,
             'is_active' => $input['is_active'] ?? $model->is_active,
             'updated_by' => Auth::id(),
         ];
@@ -83,18 +86,18 @@ class DivisionRepository extends BaseRepository
                       'divisions.name as division_name', 
                       'divisions.location as location', 
                       'divisions.is_active as is_active',
+                      'organisations.name as org.name',
                       'divisions.created_at as created_at',
                       DB::raw("CONCAT(users.first_name, ' ', users.last_name) as hod_name"),
                       'divisions.updated_at as updated_at'])
 
-                      
-            ->join('ministries', 'divisions.ministry_id', '=', 'ministries.id')
+            ->join('organisations', 'divisions.organisation_id', '=', 'organisations.id')
             ->leftJoin('users', 'divisions.hod_id', '=', 'users.id');
 
             if($user && $user->hasRole('system-admin')) {
                 // System Admin can see all divisions, no additional filtering needed
             } else {
-                $query->where('divisions.ministry_id', $ministryId); // Filter by ministry
+                $query->where('divisions.organisation_id', $ministryId); // Filter by organisation
             }   
 
     
@@ -103,8 +106,6 @@ class DivisionRepository extends BaseRepository
 
             $query->where(function ($q) use ($search) {
                 $q->whereRaw('LOWER(divisions.name) LIKE ?', [$search])
-                    ->orWhereRaw('LOWER(ministries.code) LIKE ?', [$search])
-                    ->orWhereRaw('LOWER(divisions.location) LIKE ?', [$search])
                     ->orWhereRaw(
                         "LOWER(CONCAT(users.first_name, ' ', users.last_name)) LIKE ?",
                         [$search]
@@ -142,17 +143,28 @@ class DivisionRepository extends BaseRepository
     {
         return $this->model()::query()
             ->orderBy($column)
-            ->get();
+            ->get(['id', 'name']);
     }
 
 
-    //Get the list of divisions for a specific ministry
+    //Get the list of divisions for a specific organisation
     //used in create function in file controller
-    public function listWithMinistry($ministryId)
+    public function listWithOrganisation(?int $organisationId = null)
     {
-        return $this->model->query()
-            ->select('id', 'name')
-            ->where('ministry_id', $ministryId)
+        return $this->model()::query()
+            ->select([
+                'id',
+                'organisation_id',
+                'name',
+            ])
+            ->when(
+                $organisationId !== null,
+                fn ($query) => $query->where(
+                    'organisation_id',
+                    $organisationId
+                )
+            )
+            ->where('is_active', true)
             ->orderBy('name')
             ->get();
     }
