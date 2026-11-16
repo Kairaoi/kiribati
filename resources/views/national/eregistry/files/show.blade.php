@@ -343,7 +343,7 @@
                 @endcan
             @endif
 
-            @can('viewHodAssignments', $fileAssignment)
+            {{-- @can('viewHodAssignments', $fileAssignment)
                 <div class="mx-auto max-w-5xl justify-center border bg-white border-gray-200 rounded-lg shadow-sm p-4 mt-4">
                     <h3 class="font-bold text-cyan-600 uppercase mb-2">Assigned Officers </h3>
                   
@@ -423,7 +423,7 @@
                     @endif
                     
                 </div>
-            @endcan
+            @endcan --}}
 
             {{-- Dispatch Details  --}}
             @if($file->organisation_id == $organisationId && $fileCirculations->isNotEmpty())
@@ -581,12 +581,19 @@
                             <p class="text-3xl font-extrabold text-gray-800 tracking-wide">
                                 File Closed
                             </p>
-                            <div class="mt-4 space-y-1">
-                                <p class="text-sm text-gray-500 mt-3">
-                                    Date Closed:
+                            <div class="space-y-1">
+                                <p class="text-md font-semibold text-gray-700">
+                                   By {{ $closeByFirstName }} {{ $closeByLastName }}                           
                                 </p>
-                                <p class="text-lg font-semibold text-gray-700">
-                                    {{ \Carbon\Carbon::parse($closedDate)->format('d M Y \a\t g:i A') }}                                
+                            </div>
+                            <div class="mt-4 space-y-1">
+                                <p class="text-sm text-gray-700 mt-3">
+                                    Date Closed: {{ \Carbon\Carbon::parse($closeDate)->format('d M Y \a\t g:i A') }}                                
+                                </p>
+                            </div>
+                            <div class="mt-2 space-y-1">
+                                <p class="text-sm text-gray-700">
+                                    Remarks: {{ $closeRemarks }}
                                 </p>
                             </div>
                         </div>
@@ -751,32 +758,18 @@
                         @endcan --}}
 
                         @can('close', $file)
-                            <form action="{{ route('registry.files.close', $file) }}" 
-                                method="POST"
-                                onsubmit="return confirmCloseFile();">
-                                @csrf
-                                <button type="submit"
-                                    id="closeFileBtn"
-                                    class="m-0 rounded-md inline-flex items-center justify-center gap-2
-                                        border border-cyan-600 bg-cyan-600 px-6 py-3
-                                        text-sm font-medium text-white shadow-sm transition
-                                        hover:bg-cyan-700 focus:outline-none focus:ring-2
-                                        focus:ring-cyan-400">                                   
-                                    Move to closed files
-                                </button>
-                            </form>
+                            <button type="button"
+                                    onclick="toggleActionPanel('close-file', this)"
+                                    class="inline-flex items-center rounded-md gap-2 bg-cyan-700 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-cyan-800 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    Move to Closed Files
+                            </button>
                         @endcan
 
                         @can('delete', $file)
-                            <form action="{{ route('registry.files.destroy', $file) }}" method="POST">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit"
-                                        class="action-button inline-flex items-center justify-center gap-2
-                                                border rounded-md border-red-600 bg-red-600 p-4 py-3
-                                                text-sm font-medium text-white shadow-sm transition
-                                                hover:bg-red-700">      
-                                        <svg xmlns="http://www.w3.org/2000/svg" 
+                            <button type="button"
+                                    onclick="toggleActionPanel('delete-file', this)"
+                                    class="inline-flex items-center rounded-md gap-2 bg-red-700 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-red-800 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                                    <svg xmlns="http://www.w3.org/2000/svg" 
                                             class="h-4 w-4" 
                                             fill="none" 
                                             viewBox="0 0 24 24" 
@@ -785,10 +778,10 @@
                                                 stroke-linejoin="round" 
                                                 stroke-width="2" 
                                                 d="M6 18L18 6M6 6l12 12" />
-                                        </svg>                              
-                                        Delete File
-                                </button>
-                            </form>
+                                    </svg> 
+                                    Delete file
+                            </button>
+                            
                         @endcan
 
                         @can('finalise', $file)
@@ -852,7 +845,7 @@
                                             </div>
                                             <div class="mt-6">
                                                 <label for="assignedOfficers" class="block text-md font-medium text-gray-700 mb-2">
-                                                    Assign Responsible Officers
+                                                    Assign HODs
                                                     <button
                                                     type="button"
                                                     id="selectAllBtn"
@@ -866,7 +859,7 @@
                                                     name="officers[]"
                                                     multiple
                                                     class="w-full">
-                                                    @foreach($notAssignedOfficers as $user)
+                                                    @foreach($hods as $user)
                                                         @if(!($user->id === $circulation->review_officer) || $user->id != Auth::user()->id)
                                                             <option value="{{ $user->id }}" class="bg-white border rounded-xl">
                                                                 {{ $user->name }}
@@ -969,15 +962,15 @@
                                                 <div class="mt-2 space-y-2">
                                                     <label class="flex items-center gap-2">
                                                         <input type="radio" name="action" value="accepted" class="action-radio">
-                                                        <span class="text-gray-700">Accept file task </span>
+                                                        <span class="text-gray-700">Mark Received</span>
                                                     </label>
 
-                                                    @if(!$notAssignedOfficers->isEmpty())
+                                                    {{-- @if(!$notAssignedOfficers->isEmpty())
                                                         <label class="flex items-center gap-2">
                                                             <input type="radio" name="action" value="reassign" class="action-radio">
                                                             <span class="text-gray-700">Assign other officers in your division</span>
                                                         </label>
-                                                    @endif
+                                                    @endif --}}
                                                 </div>
                                             </div>
                                         @endif
@@ -1037,7 +1030,7 @@
                                         </div>
                                         
                                         <button type="submit"
-                                            class="bg-cyan-600 w-full hover:bg-cyan-800 text-white font-semibold py-2 px-4 rounded-md shadow-sm transition duration-200">
+                                            class="bg-cyan-600 hover:bg-cyan-800 text-white font-semibold py-3 px-4 rounded-md shadow-sm transition duration-200">
                                             Submit
                                         </button>
                                     </form>
@@ -1105,7 +1098,7 @@
                                             @enderror
                                         </div>
                                         <button type="submit"
-                                            class="bg-emerald-400 hover:bg-emerald-500 font-semibold py-2 px-4 rounded-md shadow-sm transition duration-200">
+                                            class="bg-emerald-400 hover:bg-emerald-500 font-semibold py-3 px-4 rounded-md shadow-sm transition duration-200">
                                             Mark as Complete
                                         </button>
                                     </form>
@@ -1292,6 +1285,7 @@
                             </div>
                         @endcan
 
+
                         @can('submitForSroReview', $file)
                             <div id="circulatePanel" class="action-panel hidden border border-gray-200 bg-gray-50 p-4">
                                     <form method="POST" action="{{ route('registry.files.submitForSroReview', $file) }}">
@@ -1376,6 +1370,88 @@
                             @enderror
                         @endcan
 
+                        @can('close', $file)
+                        <div id="close-file" class="action-panel mb-4 hidden border border-gray-200 bg-gray-50 p-4">
+                            <form action="{{ route('registry.files.close', $file) }}" method="POST">
+                                @csrf
+                                <div>
+                                    <label class="mb-2 block text-sm font-semibold text-gray-700">
+                                        Comments for Closing
+                                        <span class="text-red-500">*</span>
+                                    </label>
+
+                                    <textarea
+                                        name="close_remarks"
+                                        rows="2"
+                                        class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-cyan-500 focus:ring focus:ring-cyan-200"
+                                        required
+                                    >{{ old('close_remarks') }}</textarea>
+
+                                    <div class="flex justify-left">
+                                        <button type="submit"
+                                            class="inline-flex mt-2 rounded-md items-center gap-2 bg-cyan-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-cyan-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
+                                                Close file
+                                        </button>
+                                    </div>
+
+                                </div>
+                            </form>
+                        </div>
+                        @endcan
+
+                        @can('delete', $file)
+                            <div id="delete-file"
+                                class="action-panel mb-4 hidden rounded-lg border border-red-200 bg-red-50/50 p-6 shadow-sm">
+
+                                <div class="mx-auto flex max-w-md flex-col items-center text-center">
+
+                                    <!-- Warning Icon -->
+                                    <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                            class="h-6 w-6 text-red-600"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                            stroke-width="1.8">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M12 9v4m0 4h.01M10.29 3.86L1.82 18.14A2 2 0 003.54 21h16.92a2 2 0 001.72-2.86L13.71 3.86a2 2 0 00-3.42 0z" />
+                                        </svg>
+                                    </div>
+
+                                    <!-- Confirmation Message -->
+                                    <h3 class="text-base font-semibold text-gray-900">
+                                        Delete this file?
+                                    </h3>
+
+                                    <p class="mt-2 text-sm leading-6 text-gray-600">
+                                        Are you sure you want to delete this file?
+                                        This action cannot be undone.
+                                    </p>
+
+                                    <!-- Action Buttons -->
+                                    <form action="{{ route('registry.files.destroy', $file) }}"
+                                        method="POST"
+                                        class="mt-6 flex flex-wrap items-center justify-center gap-3">
+
+                                        @csrf
+                                        @method('DELETE')
+
+                                        <button type="button"
+                                            onclick="document.getElementById('delete-file').classList.add('hidden')"
+                                            class="rounded-md border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                                            Cancel
+                                        </button>
+
+                                        <button type="submit"
+                                            class="inline-flex items-center justify-center gap-2 rounded-md bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+
+                                            Delete File
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        @endcan
+                        
                         @can('circulateToHod', $file)
                             <div id="colleague-selection-box" class="action-panel hidden border border-gray-200 bg-gray-50 p-4">
                                 <form method="POST" action="{{ route('registry.file-circulations.colleague.store') }}">
@@ -1393,7 +1469,7 @@
 
                                                 <div class="px-6 py-3">
                                                     @if(!$hod)
-                                                        <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-6 py-4">
+                                                        <div class="mb-6 rounded-xl border border-red-200 px-6 py-4">
                                                             @if(Auth::user()->hasRole('registry'))
                                                             <a href="{{ route('registry.divisions.assign-hod', Auth::user()->division) }}"
                                                                 class="text-sm font-medium text-red-700 hover:text-red-800 hover:underline">

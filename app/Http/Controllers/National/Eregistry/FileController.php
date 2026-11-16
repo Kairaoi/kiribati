@@ -395,13 +395,18 @@ class FileController extends Controller
                 ->select(
                     'organisation_closed_files.created_at',
                     'users.first_name as closed_by_name',
-                    'users.last_name as closed_by_lastName',
+                    'users.last_name as closed_by_last_name',
+                    'organisation_closed_files.remarks as remarks'
                 )
                 ->first();
 
+        // dd($closedRecord);
+
         $isClosed = !is_null($closedRecord);
-        $closedBy = $closedRecord?->closed_by_name ?? 'Unknown';
-        $closedDate = $closedRecord?->closed_at ?? null;
+        $closeByFirstName = $closedRecord?->closed_by_name ?? '';
+        $closeByLastName = $closedRecord?->closed_by_last_name ?? '';
+        $closeRemarks = $closedRecord?->remarks ?? '-';
+        $closeDate = $closedRecord?->closed_at ?? null;
     
         //get dispatch ministries circulations, not internal circulation
         $fileCirculations = $this->fileCirculations
@@ -442,11 +447,13 @@ class FileController extends Controller
                                        ->whereNotIn('id', $fileCirculations->pluck('to_organisation_id')->unique())
                                        ->values();
 
+
         $officers = $this->users->pluck();
 
         $hods = User::role('hod')
                     ->where('organisation_id', $organisationId)
-                    ->get('id', 'name', 'designation');
+                    ->get();
+        // dd($hods);
 
         $reviewOfficer = User::role('review-officer')
                                 ->where('organisation_id', $organisationId)
@@ -468,8 +475,10 @@ class FileController extends Controller
         return view('national.eregistry.files.show', compact('file',
                                                              'hods', 
                                                              'isClosed', 
-                                                             'closedBy',
-                                                             'closedDate', 
+                                                             'closeByFirstName',
+                                                             'closeByLastName',
+                                                             'closeRemarks',
+                                                             'closeDate', 
                                                              'organisationId', 
                                                              'ministries', 
                                                              'officers',  
@@ -1049,9 +1058,12 @@ class FileController extends Controller
     // }
 
 
-    public function close(File $file)
+    public function close(Request $request, File $file)
     {
-
+        $validated = $request->validate([
+            'close_remarks' => ['required', 'string', 'max:1000'],
+        ]);
+        
         OrganisationClosedFile::firstOrCreate(
             [
                 'file_id' => $file->id,
@@ -1060,6 +1072,7 @@ class FileController extends Controller
             [
                 'closed_by' => auth()->id(),
                 'closed_at' => now(),
+                'remarks' => $validated['close_remarks'],
             ]
         );
 

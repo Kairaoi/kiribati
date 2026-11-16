@@ -952,12 +952,9 @@
 
                             closeModal();
 
-                            $('#files-table')
-                                .DataTable()
-                                .ajax
-                                .reload(null, false);
-
                             alert(result.message ?? 'Document filed successfully.');
+
+                            $('#filesTable').DataTable().ajax.reload(null, false);
 
                         } catch (error) {
                             alert(error.message);
