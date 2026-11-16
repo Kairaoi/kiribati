@@ -30,14 +30,19 @@ use Illuminate\Support\Facades\Route;
 
 // Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
-Route::get('/', [AuthController::class, 'redirect'])
-    ->middleware('guest')
-    ->name('keycloak.login');
+// Route::get('/', [AuthController::class, 'redirect'])
+//     ->middleware('guest')
+//     ->name('keycloak.login');
 
 
-// Keycloak callback.
-Route::get('/auth/callback', [AuthController::class, 'callback'])
-    ->name('keycloak.callback');
+// // Keycloak callback.
+// Route::get('/auth/callback', [AuthController::class, 'callback'])
+//     ->name('keycloak.callback');
+
+// Redirect visitors to the Laravel login page
+Route::get('/', function () {
+    return redirect()->route('login');
+})->middleware('guest');
 
 
 Route::middleware([
