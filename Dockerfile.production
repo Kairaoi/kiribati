@@ -15,11 +15,13 @@ RUN npm run build
 # Stage 2: Laravel PHP application
 FROM php:8.4.27-fpm-alpine
 
-# Install production dependencies only
+
+# Install production dependencies and PHP extensions
 RUN apk add --no-cache \
     nginx \
     supervisor \
-    && docker-php-ext-install pdo_mysql opcache
+    icu-dev \
+    && docker-php-ext-install pdo_mysql opcache intl
 
 # RUN apt-get update && apt-get install -y \
 #     libpng-dev \
@@ -40,6 +42,8 @@ COPY --chown=www-data:www-data . /var/www/html
 
 # Install Composer dependencies without dev packages
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/html
 
 RUN mkdir -p \
     storage/framework/cache/data \
