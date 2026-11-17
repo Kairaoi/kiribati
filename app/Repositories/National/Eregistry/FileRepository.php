@@ -175,11 +175,16 @@ class FileRepository extends BaseRepository
         if ($this->userHasRole($user, 'sro')) {
             $query->where(function ($q) use ($user) {
                 $q->where('fc.status', 'Pending SRO Review')
-                  ->orWhere('files.status', 'Pending SRO Review')
-                  ->orWhere('fc.status', 'Reviewed')
-                  ->orWhere('fc.reviewed_by', $user->id)
-                  ->orWhere('fc.review_officer', $user->id)
-                  ->orWhere('files.created_by', $user->id);
+                    ->orWhere('files.status', 'Pending SRO Review')
+                    ->orWhere('fc.status', 'Reviewed')
+                    ->orWhere('fc.reviewed_by', $user->id)
+                    ->orWhere('fc.review_officer', $user->id)
+                    ->orWhere('files.created_by', $user->id);
+            });
+
+            $query->where(function ($q) use ($userOrgId) {
+                $q->where('files.organisation_id', $userOrgId)
+                    ->orWhereNotNull('fc.id');
             });
 
         } else if ($this->userHasRole($user, ['system-admin', 'admin']) && 
