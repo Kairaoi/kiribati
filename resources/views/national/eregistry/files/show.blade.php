@@ -806,7 +806,7 @@
                         @endcan
 
                         @if($circulation)
-                            @can('ufs', $circulation)
+                            {{-- @can('ufs', $circulation)
                                 <div class="w-full mt-4">
                                     <form id="ufsDecisionForm" method="POST" action="{{ route('registry.ufs.approve', $circulation) }}" class="space-y-4 border rounded-xl p-4 bg-gray-50">
                                         @csrf
@@ -825,7 +825,7 @@
                                         </div>
                                     </form>
                                 </div>
-                            @endcan
+                            @endcan --}}
                            
                             {{-- sro, hod review buttons --}}
                             @can('review', $circulation)
@@ -1775,7 +1775,7 @@
             toggleDispatchButton();
         });
     </script>
-    <script>
+    {{-- <script>
         const approveBtn = document.getElementById('showApproveSection');
         const reviewBtn = document.getElementById('showReviewSection');
         const rejectBtn = document.getElementById('showRejectSection');
@@ -1803,8 +1803,8 @@
             reviewSection.classList.add('hidden');
         });
 
-    </script>
-    <script>
+    </script> --}}
+    {{-- <script>
         function setApprovalRoute(actionType, circulationId) {
 
             const form = document.getElementById('ufsDecisionForm');
@@ -1817,7 +1817,7 @@
                     .replace(':id', circulationId);
             }
         }
-    </script>
+    </script> --}}
     <script>
         const choices = new Choices('#assignedOfficers', {
             removeItemButton: true,
