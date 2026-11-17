@@ -975,7 +975,7 @@
                                             </div>
                                         @endif
                                     
-                                        <div id="officer-select" class="mb-4 hidden">
+                                        {{-- <div id="officer-select" class="mb-4 hidden">
                                                 <label class="block font-semibold text-gray-700 mb-2">
                                                     Assign Tasks
                                                 </label>
@@ -1027,7 +1027,7 @@
                                                 @error('tasks')
                                                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                                                 @enderror
-                                        </div>
+                                        </div> --}}
                                         
                                         <button type="submit"
                                             class="bg-cyan-600 hover:bg-cyan-800 text-white font-semibold py-3 px-4 rounded-md shadow-sm transition duration-200">
@@ -1690,7 +1690,7 @@
         }
     </script>
    
-    <script>
+    {{-- <script>
         document.addEventListener('DOMContentLoaded', function () {
             const actionRadios = document.querySelectorAll('.action-radio');
             const officerSelect = document.getElementById('officer-select');
@@ -1728,7 +1728,7 @@
 
             updateActionFields();
         });
-    </script>
+    </script> --}}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const checkboxes = document.querySelectorAll('.recipient-checkbox');
