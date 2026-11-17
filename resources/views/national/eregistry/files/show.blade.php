@@ -1819,15 +1819,21 @@
         }
     </script> --}}
     <script>
-        const choices = new Choices('#assignedOfficers', {
+        const select = document.getElementById('assignedOfficers');
+
+        const choices = select ? new Choices(select, {
             removeItemButton: true,
             placeholder: true,
             placeholderValue: 'Select officers to assign',
             shouldSort: false,
             searchEnabled: true
-        });
+        }) : null;
 
         function clearAssignedOfficers() {
+            if (!choices) {
+                return;
+            }
+
             choices.removeActiveItems();
 
             Array.from(select.options).forEach(option => {
@@ -1837,20 +1843,17 @@
             select.dispatchEvent(new Event('change', { bubbles: true }));
         }
 
-        document.getElementById('selectAllBtn').addEventListener('click', () => {
-            const values = Array.from(
-                document.querySelectorAll('#assignedOfficers option')
-            ).map(option => option.value);
+        if (choices) {
+            document.getElementById('selectAllBtn')?.addEventListener('click', () => {
+                const values = Array.from(select.options, option => option.value);
 
-            choices.removeActiveItems();
-            choices.setChoiceByValue(values);
-            updateButton();
-        });
+                choices.removeActiveItems();
+                choices.setChoiceByValue(values);
+                updateButton();
+            });
 
-        // Initial check
-        toggleAssignButton();
-
-
+            toggleAssignButton();
+        }
     </script>
     <script>
         let taskIndex = 1;
