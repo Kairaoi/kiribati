@@ -39,6 +39,13 @@ class FilePolicy
         }
 
 
+        // if ($file->circulations()->whereHas('assignments', function ($query) use ($user) {
+        //             $query->where('officer_id', $user->id);
+        //     })->exists()) {
+        //     return true;
+        // }
+
+
         if ($file->internal_ufs_id === $user->id) {
             return true;
         }
@@ -56,6 +63,12 @@ class FilePolicy
 
         // Registry officers of the recipient organisation
         if ($user->hasRole('registry') &&
+            $file->circulations()->where('to_organisation_id', $user->organisation_id)->exists()
+        ) {
+            return true;
+        }
+
+        if ($user->hasRole('sro') &&
             $file->circulations()->where('to_organisation_id', $user->organisation_id)->exists()
         ) {
             return true;

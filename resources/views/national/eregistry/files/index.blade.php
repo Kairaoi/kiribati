@@ -36,12 +36,11 @@
             </div>
             <div>
                 @role('registry|system-admin')
-
                     <a href="{{ route('registry.files.create') }}"
                         class="inline-flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white text-sm font-medium shadow-sm hover:bg-cyan-700 transition">
                         Create File
                     </a>
-
+                    
                     <a href="{{ route('registry.users.edit-review-officer') }}"
                     class="inline-flex items-center mt-3 gap-2 px-4 py-2 border font-semibold text-sm transition
                         {{ $reviewOfficer
