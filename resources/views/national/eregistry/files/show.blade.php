@@ -494,7 +494,8 @@
                         </p>
                     @endif
                 </div>
-            @elseif ($file->final_pdf_path)
+            @endif
+            {{-- @elseif ($file->final_pdf_path)
                 <div class="mt-4 mb-2 flex justify-center">
                     <label class="text-sm text-gray-500 block uppercase justify-center">Final PDF Preview</label>
                 </div>
@@ -517,7 +518,7 @@
                         style="height: 900px;"
                     ></iframe>
                 </div>
-            @endif
+            @endif --}}
 
             {{-- download main file --}}
             {{-- <div class="mb-2 max-w-5xl mx-auto flex">
