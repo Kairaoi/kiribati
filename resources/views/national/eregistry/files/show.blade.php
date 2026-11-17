@@ -1733,6 +1733,11 @@
         document.addEventListener('DOMContentLoaded', function () {
             const checkboxes = document.querySelectorAll('.recipient-checkbox');
             const dispatchBtn = document.getElementById('confirmDispatchBtn');
+            
+            if (!dispatchBtn) {
+                return;
+            }
+            
             function toggleDispatchButton() {
                 const anyChecked = [...checkboxes].some(cb => cb.checked);
 
