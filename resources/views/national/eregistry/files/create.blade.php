@@ -145,6 +145,9 @@
                                 {{ Auth::user()->division->name }}
                             </option>                        
                         </select>
+                        @error('from_division_id')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
                 @endif
                 
@@ -227,7 +230,7 @@
                                 class="text-cyan-600 focus:ring-cyan-500" checked>
                             <div>
                                 <div class="text-sm font-medium text-gray-800">Upload Document</div>
-                                <div class="text-xs text-gray-500">Upload an existing PDF file</div>
+                                <div class="text-xs text-gray-500">Upload an existing PDF file </div>
                             </div>
                         </label>
                         {{-- <label id="online-option"
@@ -249,7 +252,7 @@
                 {{-- Upload Section --}}
                 <div id="upload-section" class="mt-4 text-gray-700 text-sm grid grid-cols-1">
                     <label for="main_file" class="block text-sm font-medium text-gray-700 mb-2">
-                        Main Document
+                        Main Document (max 30MB)
                     </label>
                     <input type="file" name="main_file" id="main_file" accept="application/pdf"
                         class="block w-full text-sm
@@ -559,7 +562,7 @@
         <div id="file-upload-container" class="space-y-4">
             <div class="file-upload-item text-sm relative">
                 <label for="file_1" class="block mt-4">
-                    Supporting Documents (PDF):      
+                    Supporting Documents (30MB per file):      
                 </label>
                 <input type="file" name="additional_files[]" id="file_1" accept="application/pdf"
                         class="block w-full text-sm text-gray-600
@@ -707,6 +710,7 @@
             function loadDivisions() {
                 divisionContainer.style.display = "block";
                 divisionSelect.disabled = false;
+                divisionSelect.required = true;
 
                 reset(divisionSelect, "Select Division");
 

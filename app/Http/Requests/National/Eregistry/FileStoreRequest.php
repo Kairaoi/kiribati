@@ -53,7 +53,7 @@ class FileStoreRequest extends FormRequest
                 ),
             ],
             'from_division_id' => [
-                'required_unless:source_type,external_partner',
+                'required_unless:source_type,external_partner,identity_organisation',
                 'nullable',
                 'exists:divisions,id'
             ],
@@ -77,19 +77,19 @@ class FileStoreRequest extends FormRequest
             'additional_files' => [
                 'nullable',
                 'array',
-                'max:3'
+                'max:5'
             ],
             'additional_files.*' => [
                 'file',
                 'mimes:pdf,xls,xlsx,png,jpg,jpeg,doc,docx,ppt,pptx',
-                'max:10240'
+                'max:30720'
             ],
             'main_file' => [
                 'exclude_unless:document_source,upload',
                 'required_if:document_source,upload',
                 'file',
                 'mimes:pdf,jpg,jpeg,png,gif,webp,tif,tiff',
-                'max:10240'
+                'max:30720'
             ],
             'correspondence_type' => [
                 'exclude_unless:document_source,online',

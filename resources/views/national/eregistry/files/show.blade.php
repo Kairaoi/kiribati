@@ -761,7 +761,7 @@
                         @can('close', $file)
                             <button type="button"
                                     onclick="toggleActionPanel('close-file', this)"
-                                    class="inline-flex items-center rounded-md gap-2 bg-cyan-700 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-cyan-800 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    class="inline-flex items-center rounded-md gap-2 bg-cyan-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-cyan-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                                     Move to Closed Files
                             </button>
                         @endcan
@@ -769,7 +769,7 @@
                         @can('delete', $file)
                             <button type="button"
                                     onclick="toggleActionPanel('delete-file', this)"
-                                    class="inline-flex items-center rounded-md gap-2 bg-red-700 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-red-800 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                                    class="inline-flex items-center rounded-md gap-2 bg-red-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-red-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500">
                                     <svg xmlns="http://www.w3.org/2000/svg" 
                                             class="h-4 w-4" 
                                             fill="none" 
