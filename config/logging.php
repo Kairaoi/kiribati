@@ -128,5 +128,11 @@ return [
         ],
 
     ],
+    'login' => [
+        'driver' => 'daily',
+        'path' => storage_path('logs/login.log'),
+        'level' => 'info',
+        'days' => 60,
+    ],
 
 ];

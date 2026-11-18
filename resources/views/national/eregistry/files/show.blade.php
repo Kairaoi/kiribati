@@ -782,7 +782,6 @@
                                     </svg> 
                                     Delete file
                             </button>
-                            
                         @endcan
 
                         @can('finalise', $file)
