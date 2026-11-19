@@ -974,13 +974,47 @@ class FileController extends Controller
      * @param int $id
      * @return \Illuminate\Http\RedirectResponse
      */
+
     public function destroy(File $file)
     {
         $this->authorize('delete', $file);
-        $this->files->deleteById($file->id);
-        return redirect()->route('registry.files.index')->with('success', 'File deleted.');
-    }
 
+        $paths = [$file->main_file_path];
+
+        foreach ($file->additional_file_paths ?? [] as $attachment) {
+            $paths[] = $attachment['file_path'] ?? null;
+        }
+
+        $paths = array_values(array_unique(array_filter(
+            $paths,
+            fn ($path) => is_string($path) && trim($path) !== ''
+        )));
+
+        // dd([
+        //     'attachments' => $file->additional_file_paths,
+        //     'raw_attachments' => $file->getRawOriginal('additional_file_paths'),
+        //     'paths_to_delete' => $paths,
+        // ]);
+
+        // If repository returns false on failure, stop before touching storage.
+        if ($this->files->deleteById($file->id) === false) {
+            return back()->with('error', 'The file record could not be deleted.');
+        }
+
+        try {
+            if ($paths !== [] && !Storage::disk('public')->delete($paths)) {
+                throw new \RuntimeException("Upload cleanup failed for file {$file->id}.");
+            }
+        } catch (\Exception $exception) {
+            report($exception);
+
+            return redirect()->route('registry.files.index')
+                ->with('warning', 'File record deleted, but some uploads could not be removed.');
+        }
+
+        return redirect()->route('registry.files.index')
+            ->with('success', 'File and its uploads deleted.');
+    }
 
     /**
      * Download the specified file.
