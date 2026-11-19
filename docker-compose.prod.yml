@@ -1,4 +1,3 @@
-# docker-compose.prod.yml
 services:
     app:
         env_file:
