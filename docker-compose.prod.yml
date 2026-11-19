@@ -1,6 +1,8 @@
 # docker-compose.prod.yml
 services:
     app:
+        env_file:
+            - .env
         container_name: eregistry-app
         build:
             context: .
@@ -12,7 +14,15 @@ services:
         depends_on:
             - mysql
             - redis
-
+        volumes:
+            - vite_assets:/var/www/html/public/build
+            - ./docker/php/uploads.ini:/usr/local/etc/php/conf.d/zz-uploads.ini:ro
+            - dms-uploads:/var/www/html/storage/app/public
+        logging:
+            driver: json-file
+            options:
+              max-size: "10m"
+              max-file: "3"
     mysql:
         container_name: eregistry-mysql
         image: mysql/mysql-server:8.0
@@ -24,6 +34,11 @@ services:
             MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
         volumes:
             - mysql-data:/var/lib/mysql
+        logging:
+            driver: json-file
+            options:
+              max-size: "10m"
+              max-file: "3"
 
     nginx:
         image: nginx:alpine
@@ -34,6 +49,7 @@ services:
             - "443:443"
         volumes:
             - ./:/var/www/html
+            - vite_assets:/var/www/html/public/build:ro
             - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
             - /etc/ssl/cloudflare/digital-gov-ki.pem:/etc/ssl/cloudflare/digital-gov-ki.pem:ro
             - /etc/ssl/cloudflare/digital-gov-ki.key:/etc/ssl/cloudflare/digital-gov-ki.key:ro
@@ -41,6 +57,11 @@ services:
             - app
         networks:
             - default
+        logging:
+            driver: json-file
+            options:
+              max-size: "10m"
+              max-file: "3"
 
     redis:
         image: redis:alpine
@@ -48,3 +69,5 @@ services:
 
 volumes:
     mysql-data:
+    vite_assets:
+    dms-uploads:

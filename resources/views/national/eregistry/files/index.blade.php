@@ -35,7 +35,7 @@
                 <p class="text-sm text-gray-500">Manage all incoming, outgoing and internal files</p>
             </div>
             <div>
-                @role('registry|system-admin')
+                @role('registry')
                     <a href="{{ route('registry.files.create') }}"
                         class="inline-flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white text-sm font-medium shadow-sm hover:bg-cyan-700 transition">
                         Create File
