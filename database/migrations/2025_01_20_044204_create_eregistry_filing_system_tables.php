@@ -99,6 +99,20 @@ class CreateEregistryFilingSystemTables extends Migration
             $table->timestamps();
         });
 
+        
+        Schema::create('hod_appointments', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('division_id')->constrained('divisions')->restrictOnDelete();
+            $table->foreignId('officer_id')->constrained('users')->restrictOnDelete();
+            $table->foreignId('appointed_by')->constrained('users')->restrictOnDelete();
+            $table->dateTime('starts_at');
+            $table->dateTime('ends_at');
+            $table->dateTime('revoked_at')->nullable();
+            $table->timestamps();
+
+            $table->index(['division_id', 'revoked_at', 'starts_at'], 'hod_appointments_active_index');
+        });
+
 
         Schema::create('units', function (Blueprint $table) {
             $table->id();
@@ -128,6 +142,7 @@ class CreateEregistryFilingSystemTables extends Migration
             $table->foreignId('category_id')->nullable()->constrained('categories');
             $table->string('subject');
             $table->string('main_file_path')->nullable();
+            $table->string('main_file_name')->nullable();
             $table->json('additional_file_paths')->nullable(); 
             $table->date('letter_date');
             $table->date('due_date')->nullable();
@@ -251,7 +266,6 @@ class CreateEregistryFilingSystemTables extends Migration
             $table->datetime('ufs_rejected_at')->nullable();
             $table->string('ufs_comment')->nullable();
            
-    
             $table->timestamps();
     
             $table->unique(['file_id',  'to_organisation_id']); 
@@ -340,14 +354,18 @@ class CreateEregistryFilingSystemTables extends Migration
         Schema::dropIfExists('file_recipients');
         Schema::dropIfExists('file_types');
         Schema::dropIfExists('divisions');
+        Schema::dropIfExists('hod_appointments');
         Schema::dropIfExists('organisations');
         Schema::dropIfExists('organisation_types');
         Schema::dropIfExists('file_sequences');
         Schema::dropIfExists('audit_logs');
         Schema::dropIfExists('dispatches');
         Schema::dropIfExists('categories');
+        Schema::dropIfExists('file_assignments');
         Schema::dropIfExists('organisation_archived_files');
-        Schema::dropIfExists('file_assignments ');
-
+        Schema::dropIfExists('file_folder_assignments');
+        Schema::dropIfExists('organisation_closed_files');
+        Schema::dropIfExists('file_assignments');
+        Schema::dropIfExists('folders');
     }
 }

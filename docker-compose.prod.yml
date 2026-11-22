@@ -38,6 +38,21 @@ services:
             options:
               max-size: "10m"
               max-file: "3"
+    queue:
+        image: eregistry-app:production
+        env_file:
+            - .env
+        working_dir: /var/www/html
+        command: ["php", "artisan", "queue:work", "database", "--sleep=3", "-v"]
+        restart: unless-stopped
+        depends_on:
+            - mysql
+        stop_grace_period: 90s
+        logging:
+        driver: json-file
+        options:
+            max-size: "10m"
+            max-file: "3"
 
     nginx:
         image: nginx:alpine

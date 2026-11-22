@@ -187,6 +187,8 @@ class FileController extends Controller
      */
     public function create()
     {
+        $this->authorize('create', File::class);
+
         $organisationId = Auth::user()->organisation_id;
 
         $ownOrganisationId = Auth::user()->organisation_id;
@@ -329,6 +331,8 @@ class FileController extends Controller
                     'updated_at' => now(),];
             }
         }
+
+        $mainFileName = $request->file('main_file')?->getClientOriginalName();
            
         $file = $this->files->createFile(
                 validated: $validated,
@@ -339,6 +343,7 @@ class FileController extends Controller
                 memoRecipients: $memoRecipients,
                 userId: auth()->id(),
                 organisationId: auth()->user()->organisation_id,
+                mainFileName: $mainFileName,
         );
             
         activity('file')
@@ -625,7 +630,6 @@ class FileController extends Controller
         return redirect()->route('registry.files.index')->with('success', 'File circulated for UFS');
     }
 
-
     //sign and create final pdf 
     public function signFile(File $file) 
     {
@@ -880,6 +884,7 @@ class FileController extends Controller
     public function update(Request $request, File $file)
     {
         $this->authorize('update', $file);
+
         $validated = $request->validate([
             'organisation_id' => 'required|exists:organisations,id',
             'organisation_name' => 'required_if:organisation_id,null|string|max:255',
@@ -893,6 +898,8 @@ class FileController extends Controller
             'category_id' => 'required|exists:categories,id',
             'recipient_organisations' => 'required|array',
             'recipient_organisations.*' => 'exists:organisations,id',
+            'remove_additional_files' => ['sometimes', 'array'],
+            'remove_additional_files.*' => ['string'],
         ]);
 
         try {
@@ -941,24 +948,12 @@ class FileController extends Controller
             // Update file record
             $file->update($updateData);
 
-            // Sync recipient organisations
-            $syncData = [];
-            foreach ($validated['recipient_organisations'] as $organisationId) {
-                $syncData[$organisationId] = ['status' => 'Pending Dispatch'];
-            }
-            $file->recipientMinistries()->sync($syncData);
 
-            if($file->initial_type === 'dispatch') {
-                if(Auth::user()->hasRole('user') || (Auth::user()->hasRole('admin')) ){
-                    return redirect()->route('registry.dispatches.user.index')->with('success', 'Dispatch file edited successfully!');
-                }
-
-                if(Auth::user()->hasRole('registry')) {
-                    return redirect()->route('registry.dispatches.index')->with('success', 'Dispatch file edited successfully!');
-                }
-
-            }else{
-                return redirect()->route('registry.file-circulations.index')->with('success', 'Circulation file edited successfully!');
+            if ($cleanupFailed) {
+                $response->with(
+                    'warning',
+                    'Changes were saved, but some old uploads could not be removed from storage.'
+                );
             }
 
         } catch (\Exception $e) {
@@ -969,7 +964,7 @@ class FileController extends Controller
 
 
     /**
-     * Remove the specified file from storage.
+     * Remove the specified file and its upload from storage.
      *
      * @param int $id
      * @return \Illuminate\Http\RedirectResponse
@@ -990,11 +985,6 @@ class FileController extends Controller
             fn ($path) => is_string($path) && trim($path) !== ''
         )));
 
-        // dd([
-        //     'attachments' => $file->additional_file_paths,
-        //     'raw_attachments' => $file->getRawOriginal('additional_file_paths'),
-        //     'paths_to_delete' => $paths,
-        // ]);
 
         // If repository returns false on failure, stop before touching storage.
         if ($this->files->deleteById($file->id) === false) {

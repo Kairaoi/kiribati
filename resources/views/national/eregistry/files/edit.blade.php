@@ -301,12 +301,7 @@
 
                 {{-- Upload Section --}}
                 <div id="upload-section" class="mt-4 grid grid-cols-1 text-sm text-gray-700">
-                    @if ($file->main_file_path)
-                        <p class="mb-2">
-                            Current document:
-                            <span class="font-medium">{{ basename($file->main_file_path) }}</span>
-                        </p>
-                    @endif
+                   
 
                     <label for="main_file" class="mb-2 block font-medium">
                         {{ $file->main_file_path ? 'Replace Main Document' : 'Upload Main Document' }}
@@ -318,6 +313,12 @@
                             file:bg-cyan-50 file:text-sm file:font-semibold file:text-cyan-700
                             hover:file:bg-cyan-100"
                         aria-describedby="main-file-help">
+                     @if ($file->main_file_path)
+                        <p class="mb-2 mt-2">
+                            Existing Document:
+                            <span class="font-medium">{{ $file->main_file_name }}</span>
+                        </p>
+                    @endif
 
                     @error('main_file')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -621,22 +622,60 @@
 
 
         <!-- Additional Files Section -->
-        <div id="file-upload-container" class="space-y-4">
-            <div class="file-upload-item text-sm relative">
-                <label for="file_1" class="block mt-4">
-                    Supporting Documents (PDF):      
-                </label>
-                <input type="file" name="additional_files[]" id="file_1" accept="application/pdf"
-                        class="block w-full text-sm text-gray-600
-                            file:mr-4 file:py-2 file:px-4
-                            file:border-0
-                            file:text-sm file:font-semibold
-                            file:bg-cyan-50 file:text-cyan-700
-                            hover:file:bg-cyan-100">                
+        @if (!empty($file->additional_file_paths))
+            <div class="mb-4 mt-4 text-sm">
+                <p class="font-medium text-gray-700">Current supporting documents</p>
+
+                <ul class="mt-2 space-y-2">
+                    @foreach ($file->additional_file_paths as $attachment)
+                        @continue(empty($attachment['file_path']))
+
+                        <li class="flex items-center justify-between gap-3 rounded border p-2"
+                            data-attachment-row>
+                            <span data-attachment-name>
+                                {{ $attachment['name'] ?? 'Uploaded attachment' }}
+                            </span>
+
+                            <input type="hidden" name="remove_additional_files[]"
+                                value="{{ $attachment['file_path'] }}"
+                                data-remove-path disabled>
+
+                            <button type="button"
+                                    class="text-red-700 underline"
+                                    data-remove-attachment
+                                    aria-pressed="false">
+                                Remove
+                            </button>
+                        </li>
+                    @endforeach
+                </ul>
             </div>
-            <button type="button" id="add-file-button"
-                    class="w-full inline-flex justify-start text-cyan-700 underline text-sm">
-                    + Supporting Document
+        @endif
+
+        <div id="file-upload-container" class="space-y-4">
+            <div class="file-upload-item relative text-sm">
+                <label for="file_1" class="mt-4 block">
+                    Add supporting documents (PDF)
+                </label>
+
+                <input
+                    type="file"
+                    name="additional_files[]"
+                    id="file_1"
+                    accept="application/pdf"
+                    class="block w-full text-sm text-gray-600
+                        file:mr-4 file:border-0 file:bg-cyan-50
+                        file:px-4 file:py-2 file:text-sm file:font-semibold
+                        file:text-cyan-700 hover:file:bg-cyan-100"
+                >
+            </div>
+
+            <button
+                type="button"
+                id="add-file-button"
+                class="inline-flex w-full justify-start text-sm text-cyan-700 underline"
+            >
+                + Supporting Document
             </button>
         </div>
 
@@ -712,6 +751,21 @@
                     container.removeChild(newFileInput);
                     fileCounter--; // Allow adding again when one is removed
                 });
+            });
+        });
+
+        document.querySelectorAll('[data-remove-attachment]').forEach((button) => {
+            button.addEventListener('click', () => {
+                const row = button.closest('[data-attachment-row]');
+                const input = row.querySelector('[data-remove-path]');
+                const markedForRemoval = input.disabled;
+
+                input.disabled = !markedForRemoval;
+                row.querySelector('[data-attachment-name]')
+                    .classList.toggle('line-through', markedForRemoval);
+
+                button.textContent = markedForRemoval ? 'Undo remove' : 'Remove';
+                button.setAttribute('aria-pressed', String(markedForRemoval));
             });
         });
 

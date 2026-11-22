@@ -315,6 +315,27 @@ class UserController extends Controller
     }
 
 
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function editTempOfficer()
+    {
+        $organisationId = Auth::user()->organisation_id;
+        $usersWithDivision = $this->users->getUsersDivision();
+
+        $reviewOfficer = User::role('review-officer')
+                                ->where('organisation_id', $organisationId)
+                                ->first();
+
+        return view('national.eregistry.users.editReviewOfficer', compact('usersWithDivision', 
+                                                                        'reviewOfficer',));
+    }
+
+
     //edit page for Secretary or Chairperson or Auditor General, etc in other organisations
     public function editSecretary()
     {

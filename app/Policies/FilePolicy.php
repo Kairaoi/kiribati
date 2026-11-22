@@ -119,7 +119,9 @@ class FilePolicy
      */
     public function create(User $user): bool
     {
-        return false;
+        return (bool) $user->is_active
+            && $user->organisation_id !== null
+            && $user->hasRole('registry');
     }
 
 

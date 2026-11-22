@@ -29,13 +29,15 @@ class FileRepository extends BaseRepository
                            array $letterRecipients = [],
                            array $memoRecipients = [],
                            int $userId,
-                           int $organisationId
+                           int $organisationId,
+                           ?string $mainFileName = null
     ): File {
 
     $correspondenceType = $validated['correspondence_type'] ?? null;
 
     $fileData = array_merge($validated, [
         'main_file_path'        => $mainFilePath,
+        'main_file_name'        => $mainFileName,
         'additional_file_paths' => $additionalFilePaths,
         'reference_no'          => $referenceNo,
         'is_active'             => true,

@@ -31,6 +31,7 @@ class FileDeliveredNotification extends Notification implements ShouldQueue
         return ['database', 'mail'];
     }
 
+
     /**
      * Get the mail representation of the notification.
      */
@@ -42,18 +43,18 @@ class FileDeliveredNotification extends Notification implements ShouldQueue
             ->subject('New File Awaiting Receipt')
             ->greeting('Mauri ' . $notifiable->first_name . ',')
             ->line(
-                'A new file has been dispatched to your ministry through the Document Management System (DMS).'
+                'A new file has been dispatched to your organisation through the DMS.'
             )
             ->line('Subject: ' . $file->subject)
             ->line(
                 'From: ' .
-                ($file->ministry?->name ?? 'Another ministry')
+                ($file->organisation?->name ?? 'Another organisation')
             )
             ->action(
                 'View and Receive File',
                 route(
                     'registry.files.show',
-                    $this->circulation->file->id
+                    $this->circulation->file
                 )
             )
             ->line(
@@ -78,7 +79,7 @@ class FileDeliveredNotification extends Notification implements ShouldQueue
             'subject' => $file->subject,
             'file_id' => $file->id,
             'dispatch_id' => $this->circulation->id,
-            'from_ministry' => $file->ministry?->name,
+            'from_ministry' => $file->organisation?->name,
             'url' => route(
                 'registry.files.show',
                 $this->circulation->file->id

@@ -30,18 +30,23 @@
 @endif
 
 <div class="container mx-auto px-4 py-8 max-w-full mt-3 rounded-md min-h-screen ">
-    <div class="mb-4 flex items-start justify-between">
+    <div class="mb-4 flex flex-wrap items-start gap-6">
         <div>
             <h1 class="text-3xl font-bold tracking-wide">Divisions</h1>
-            <p class="text-base text-gray-500 mt-1">
+            <p class="mt-1 text-base text-gray-500">
                 View and manage all divisions in your organisation.
             </p>
         </div>
 
         <a href="{{ route('registry.divisions.create') }}"
-            class="inline-flex items-center mt-5 gap-2 px-4 py-2 bg-cyan-600 text-white text-sm rounded-md hover:bg-cyan-700 transition">
+            class="mt-4 inline-flex items-center gap-2 rounded-md bg-cyan-600 px-4 py-2 text-sm text-white transition hover:bg-cyan-700">
             <i class="fas fa-plus"></i>
             Create New Division
+        </a>
+
+        <a href="{{ route('registry.hod-appointments.create') }}"
+            class="mt-4 inline-flex items-center gap-2 rounded-md bg-cyan-600 px-4 py-2 text-sm text-white transition hover:bg-cyan-700">
+            Assign Temporary HOD
         </a>
     </div>
 

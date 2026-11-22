@@ -17,6 +17,7 @@ use App\Http\Controllers\National\Eregistry\UfsApprovalController;
 use App\Http\Controllers\National\Eregistry\OrganisationController;
 use App\Http\Controllers\National\Eregistry\DocumentOverlayController;
 use App\Http\Controllers\National\Eregistry\AuthController;
+use App\Http\Controllers\National\Eregistry\HodAppointmentController;
 use App\Http\Controllers\National\Eregistry\UnitController;
 use App\Models\National\Eregistry\Ministry;
 use Illuminate\Support\Facades\Route;
@@ -158,7 +159,10 @@ Route::group(['as' => 'registry.',
     Route::get('dispatches/userIndex', [DispatchController::class, 'userIndex'])->name('dispatches.user.index');
     Route::resource('dispatches', DispatchController::class);
     
-
+    //HOD Temporary Assignments
+    Route::resource('hod-appointments', HodAppointmentController::class);
+    Route::patch('hod-appointments/{appointment}/revoke', [HodAppointmentController::class, 'revokeHod'])->name('hod-appointments.revoke');
+    
     // File Circulation Routes
     Route::resource('file-circulations', FileCirculationController::class);
     Route::get('/file-circulations/review/index', [FileCirculationController::class, 'reviewIndex'])->name('file-circulations.review.index');

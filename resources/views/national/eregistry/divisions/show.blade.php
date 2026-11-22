@@ -4,7 +4,7 @@
 
 <div class="container mx-auto px-4 py-6 max-w-5xl">
 
-    <div class="bg-white rounded-lg shadow-md p-6 mt-6 mb-2">
+    <div class="bg-white rounded-lg shadow-md p-6 mt-2 mb-2">
         <dl class="grid text-base">
             <div class="col-span-2 sm:grid sm:grid-cols-3 sm:gap-4 py-2 border-b">
                 <dt class="font-bold text-cyan-700">Division Details</dt>
@@ -18,6 +18,11 @@
             <div class="col-span-2 sm:grid sm:grid-cols-3 sm:gap-4 py-2 border-b">
                 <dt class="font-semibold text-sm text-gray-700">Organisation:</dt>
                 <dd class="sm:col-span-2 text-sm text-gray-900">{{ $division->organisation->name ?? '-' }}</dd>
+            </div>
+
+            <div class="col-span-2 sm:grid sm:grid-cols-3 sm:gap-4 py-2 border-b">
+                <dt class="font-semibold text-sm text-gray-700">Head of Division (HOD):</dt>
+                <dd class="sm:col-span-2 text-sm text-gray-900">{{ $division->hod->name ?? '-' }}</dd>
             </div>
             
             <div class="col-span-2 sm:grid sm:grid-cols-3 sm:gap-4 py-2 border-b">

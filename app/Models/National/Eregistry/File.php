@@ -38,6 +38,7 @@ class File extends Model implements Auditable
         'category_id',
         'subject',
         'main_file_path',
+        'main_file_name',
         'letter_date',
         'status',
         'is_active',

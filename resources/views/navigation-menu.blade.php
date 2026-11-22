@@ -54,10 +54,12 @@
                                             View Files
                                         </a>
                                     
+                                        @hasrole(['registry'])
                                         <a href="{{ route('registry.files.create') }}"
                                             class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                             Create File
                                         </a>
+                                        @endrole
                                     </div>
                                 </div>
                             @hasrole(['registry', 'system-admin'])
@@ -109,60 +111,9 @@
                                     </div>
                                 </div>
 
-                                <div x-data="{ open: false }"
-                                    class="relative flex items-center h-16"
-                                    @mouseenter="open = true"
-                                    @mouseleave="open = false">
+                               
 
-                                    <x-nav-link href="#"
-                                        class="flex items-center h-full"
-                                        :active="request()->routeIs('registry.organisations.*') || request()->routeIs('registry.external-partners.*')">
-
-                                        <span class="leading-none flex items-center text-gray-500 ">
-                                            {{ __('Organisations') }}
-                                            <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                                            </svg>
-                                        </span>
-                                    </x-nav-link>
-
-                                    <!-- Dropdown -->
-                                    <div x-show="open"
-                                        x-transition
-                                        class="absolute left-0 top-full w-64 bg-white border border-gray-200 rounded-md shadow-md z-50">
-
-                                        <!-- Identity Organisations -->
-                                        <div class="px-4 py-2 text-xs text-gray-400 uppercase tracking-wide">
-                                            Identity Organisations
-                                        </div>
-
-                                        <a href="{{ route('registry.organisations.index') }}"
-                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            View Organisations
-                                        </a>
-
-                                        <div class="border-t my-1"></div>
-
-                                        <!-- External Partners -->
-                                        <div class="px-4 py-2 text-xs text-gray-400 uppercase tracking-wide">
-                                            External Partners
-                                        </div>
-
-                                        <a href="{{ route('registry.external-partners.index') }}"
-                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            View External Partners
-                                        </a>
-
-                                        <a href="{{ route('registry.external-partners.create') }}"
-                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            Add External Partner
-                                        </a>
-
-                                    </div>
-                                </div>
-
-                                <div class="relative flex items-center h-16">
+                                {{-- <div class="relative flex items-center h-16">
                                     <x-nav-link
                                             href="{{ route('registry.organisations.edit', Auth::user()->organisation) }}"
                                             :active="request()->routeIs('registry.organisations.edit')"
@@ -172,7 +123,33 @@
                                             {{ __('Logo & Profile') }}
                                         </span>
                                     </x-nav-link>
+                                </div> --}}
+
+                                <div class="relative flex items-center h-16">
+                                    <x-nav-link
+                                            href="{{ route('registry.external-partners.index') }}"
+                                            :active="request()->routeIs('registry.external-partners.*')"
+                                            class="flex items-center h-full cursor-pointer"
+                                        >
+                                        <span class="leading-none flex items-center text-gray-500 font-semibold">
+                                            {{ __('External Partners') }}
+                                        </span>
+                                    </x-nav-link>
                                 </div>
+
+                                <div class="relative flex items-center h-16">
+                                    <x-nav-link
+                                            href="{{ route('registry.organisations.index') }}"
+                                            :active="request()->routeIs('registry.organisations.*')"
+                                            class="flex items-center h-full cursor-pointer"
+                                        >
+                                        <span class="leading-none flex items-center text-gray-500 font-semibold">
+                                            {{ __('Organisations') }}
+                                        </span>
+                                    </x-nav-link>
+                                </div>
+
+
                                 <div class="relative flex items-center h-16">
                                     <x-nav-link
                                             href="{{ route('registry.divisions.index') }}"
@@ -180,7 +157,7 @@
                                             class="flex items-center h-full cursor-pointer"
                                         >
                                         <span class="leading-none flex items-center text-gray-500 font-semibold">
-                                            {{ __('Divisions & HODs') }}
+                                            {{ __('Divisions & HoDs') }}
                                         </span>
                                     </x-nav-link>
                                 </div>
