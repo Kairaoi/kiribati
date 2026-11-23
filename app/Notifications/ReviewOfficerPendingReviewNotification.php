@@ -20,13 +20,7 @@ class ReviewOfficerPendingReviewNotification extends Notification implements Sho
 
     public function via(object $notifiable): array
     {
-        $channels = ['database'];
-
-        if (!empty($notifiable->email)) {
-            $channels[] = 'mail';
-        }
-
-        return $channels;
+        return ['database', 'mail'];
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -40,7 +34,7 @@ class ReviewOfficerPendingReviewNotification extends Notification implements Sho
             ->line('Subject: ' . $file->subject)
             ->line(
                 'From: ' .
-                ($file->ministry?->name ?? 'Another organisation')
+                ($file->organisation?->name ?? 'Another organisation')
             )
             ->action(
                 'Review File',
@@ -62,10 +56,10 @@ class ReviewOfficerPendingReviewNotification extends Notification implements Sho
             'message' => 'A circulated file is pending your review.',
             'file_id' => $file->id,
             'file_circulation_id' => $this->circulation->id,
-            'from_ministry' => $file->ministry?->name,
+            'from_ministry' => $file->organisation?->name,
             'subject' => $file->subject,
             'url' => route('registry.files.show', 
-                           $this->circulation->file->id),
+                           $this->circulation->file),
         ];
     }
 }

@@ -82,7 +82,7 @@ class FileDeliveredNotification extends Notification implements ShouldQueue
             'from_ministry' => $file->organisation?->name,
             'url' => route(
                 'registry.files.show',
-                $this->circulation->file->id
+                $this->circulation->file
             ),
         ];
     }
