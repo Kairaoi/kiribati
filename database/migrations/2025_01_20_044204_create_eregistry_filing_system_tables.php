@@ -142,7 +142,7 @@ class CreateEregistryFilingSystemTables extends Migration
             $table->foreignId('category_id')->nullable()->constrained('categories');
             $table->string('subject');
             $table->string('main_file_path')->nullable();
-            $table->string('main_file_name')->nullable();
+            // $table->string('main_file_name')->nullable();
             $table->json('additional_file_paths')->nullable(); 
             $table->date('letter_date');
             $table->date('due_date')->nullable();
@@ -342,6 +342,7 @@ class CreateEregistryFilingSystemTables extends Migration
             $table->timestamp('read_at')->nullable();
             $table->timestamps();
         });
+
 
     }
 
