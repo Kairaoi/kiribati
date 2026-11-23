@@ -45,7 +45,7 @@ class OfficerAssignedNotification extends Notification implements ShouldQueue
             ->action(
                 'Review File',
                 route('registry.files.show', 
-                      $file->id)
+                      $file)
             )
             ->line(
                 'Please sign in to the DMS to receive and process the file.'

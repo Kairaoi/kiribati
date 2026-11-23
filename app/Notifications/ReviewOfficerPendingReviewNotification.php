@@ -40,12 +40,12 @@ class ReviewOfficerPendingReviewNotification extends Notification implements Sho
             ->line('Subject: ' . $file->subject)
             ->line(
                 'From: ' .
-                ($file->ministry?->name ?? 'Another organisation')
+                ($file->organisation?->name ?? 'Another organisation')
             )
             ->action(
                 'Review File',
                 route('registry.files.show', 
-                      $this->circulation->file->id)
+                      $this->circulation->file)
             )
             ->line(
                 'Please sign in to the DMS to receive and process the file.'
@@ -62,10 +62,10 @@ class ReviewOfficerPendingReviewNotification extends Notification implements Sho
             'message' => 'A circulated file is pending your review.',
             'file_id' => $file->id,
             'file_circulation_id' => $this->circulation->id,
-            'from_ministry' => $file->ministry?->name,
+            'from_ministry' => $file->organisation?->name,
             'subject' => $file->subject,
             'url' => route('registry.files.show', 
-                           $this->circulation->file->id),
+                           $this->circulation->file),
         ];
     }
 }
