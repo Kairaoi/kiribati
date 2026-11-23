@@ -20,13 +20,7 @@ class ReviewOfficerPendingReviewNotification extends Notification implements Sho
 
     public function via(object $notifiable): array
     {
-        $channels = ['database'];
-
-        if (!empty($notifiable->email)) {
-            $channels[] = 'mail';
-        }
-
-        return $channels;
+        return ['database', 'mail'];
     }
 
     public function toMail(object $notifiable): MailMessage
