@@ -37,6 +37,7 @@ use App\Http\Requests\National\Eregistry\FileUpdateRequest;
 use App\Models\National\Eregistry\FileFolderAssignment;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Validation\ValidationException;
+use App\Notifications\ReviewOfficerPendingReviewNotification;
 
 class FileController extends Controller
 {
@@ -1326,6 +1327,13 @@ class FileController extends Controller
         $fileCirculation->file->update([
             'status' => 'Pending SRO Review',
         ]);
+
+        if ($reviewOfficer) {
+            $reviewOfficer->notify(
+                new ReviewOfficerPendingReviewNotification($fileCirculation)
+            );
+        }
+
 
         return redirect()->route('registry.files.index')->with('success', 'File submitted for SRO review.');
     }
