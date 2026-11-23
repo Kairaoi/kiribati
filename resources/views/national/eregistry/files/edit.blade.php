@@ -301,8 +301,6 @@
 
                 {{-- Upload Section --}}
                 <div id="upload-section" class="mt-4 grid grid-cols-1 text-sm text-gray-700">
-                   
-
                     <label for="main_file" class="mb-2 block font-medium">
                         {{ $file->main_file_path ? 'Replace Main Document' : 'Upload Main Document' }}
                     </label>

@@ -62,10 +62,10 @@ class OfficerAssignedNotification extends Notification implements ShouldQueue
             'message' => 'A file has been assigned to you.',
             'file_id' => $file->id,
             'file_circulation_id' => $this->file_assignment->fileCirculation->id,
-            'from_ministry' => $file->ministry?->name,
+            'from_ministry' => $file->organisation?->name,
             'subject' => $file->subject,
             'url' => route('registry.files.show', 
-                           $file->id),
+                           $file->uuid),
         ];
     }
 }
