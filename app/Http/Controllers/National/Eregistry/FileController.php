@@ -858,11 +858,10 @@ class FileController extends Controller
         }
 
         $newFileTypeId = $validated['file_type_id'] ?? $file->file_type_id;
-
-        $updateData['reference_no'] = $file->reference_no;
+        $validated['reference_no'] = $file->reference_no;
 
         if ((string) $newFileTypeId !== (string) $file->file_type_id) {
-            $updateData['reference_no'] = FileReferenceService::generate(
+            $validated['reference_no'] = FileReferenceService::generate(
                 $file->organisation_id,
                 $newFileTypeId
             );
