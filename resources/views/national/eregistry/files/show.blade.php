@@ -836,7 +836,7 @@
 
                                             <div>
                                                 <label class="mb-2 mt-4 block text-md font-semibold text-gray-700">
-                                                    Comment
+                                                    Comment <span class="text-red-600">*</span>
                                                 </label>
                                                 <textarea name="comment"
                                                     rows="3"

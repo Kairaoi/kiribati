@@ -1,7 +1,20 @@
 <x-guest-layout>
     <x-authentication-card>
         <x-slot name="logo">
-            <x-authentication-card-logo />
+            <div class="flex flex-col items-center space-y-1">
+                <img src="{{ asset('images/flag1.png') }}"
+                    alt="National Flag"
+                    class="w-9 h-9" />
+
+                <div class="text-center leading-tight">
+                    <h1 class="text-base font-semibold text-gray-900 tracking-wide">
+                        Document Management System
+                    </h1>
+                    <p class="text-[10px] text-gray-600 uppercase tracking-widest">
+                        Government of Kiribati
+                    </p>
+                </div>
+            </div>
         </x-slot>
 
         <div class="mb-4 text-sm text-gray-600">

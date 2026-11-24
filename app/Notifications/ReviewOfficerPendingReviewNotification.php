@@ -32,10 +32,6 @@ class ReviewOfficerPendingReviewNotification extends Notification implements Sho
             ->greeting('Mauri ' . $notifiable->first_name . ',')
             ->line('A file is pending your review in the Document Management System (DMS).')
             ->line('Subject: ' . $file->subject)
-            ->line(
-                'From: ' .
-                ($file->organisation?->name ?? 'Another organisation')
-            )
             ->action(
                 'Review File',
                 route('registry.files.show', 
