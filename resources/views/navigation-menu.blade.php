@@ -252,7 +252,7 @@
         {{-- Main Navigation --}}
         <div id="main-navigation"
             :class="mobileOpen ? 'block' : 'hidden'"
-            class="hidden lg:block border-t border-gray-100 bg-gray-50/50">
+            class="lg:block border-t border-gray-100 bg-gray-50/50">
 
             <div class="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8">
 

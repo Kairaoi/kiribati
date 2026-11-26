@@ -65,6 +65,7 @@
                         text-sm px-3 py-2"
                     placeholder="Short description of this file type">
             </div> --}}
+            
 
             <!-- Code -->
             <div class="mb-1">
