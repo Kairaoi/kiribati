@@ -27,13 +27,13 @@
             </button>
         </div>
     @endif
-<div class="container mx-auto px-4 py-8 max-w-5xl mt-3 rounded-md min-h-screen ">
+<div class="container mx-auto px-4 py-8 max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 mt-3 rounded-md min-h-screen ">
     <h1 class="text-3xl font-bold text-gray-800">Organisations</h1>
     <p class="text-gray-500 text-sm mt-2 mb-2">View all organisations registered in the DMS</p>
 
     <div class="mb-4 flex justify-between">
         <div>
-            <select id="typeFilter" class="filter-input w-full border border-gray-600 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-sm transition duration-200 focus:border-cyan-500 focus:outline-none focus:ring-4 focus:ring-cyan-100 hover:border-cyan-400">                
+            <select id="typeFilter" class="filter-input w-full border rounded-lg border-gray-600 bg-white px-4 py-2.5 text-sm text-cyan-900 shadow-sm transition duration-200 focus:border-cyan-500 focus:outline-none focus:ring-4 focus:ring-cyan-100 hover:border-cyan-400">                
                 <option value="">All Organisation</option>
                 <option value="ministry">Ministry</option>
                 <option value="soe">State Owned Enterprise(SOE)</option>
@@ -45,15 +45,19 @@
         @if($isSystemAdmin)
             <div>
                 <a href="{{ route('registry.organisations.create') }}"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white text-sm font-medium shadow-sm rounded-lg hover:bg-cyan-700 transition">
-                    <i class="fas fa-plus text-xs"></i>
+                    class="inline-flex items-center justify-center gap-2
+                            min-h-[60px] border px-5 py-3 rounded-lg
+                            bg-white text-cyan-700 text-sm font-semibold
+                            shadow-sm hover:bg-cyan-700 transition duration-200">
+
+                        <i class="fa-solid fa-plus" aria-hidden="true"></i>
                     Create Organisation
                 </a>
             </div>
         @endif
     </div>
 
-    <div class="bg-white shadow-sm border border-gray-100 p-4">        
+    <div class="bg-white shadow-sm border rounded-2xl border-gray-100 p-4">        
         <table id="organisationsTable" class="w-full text-sm text-left">
             <thead class="bg-gray-50 text-gray-600 text-sm uppercase tracking-wide">
                 <tr>
@@ -74,169 +78,178 @@
 
 @push('styles')
 <style>
-    /* Table Styles */
-   table.dataTable {
-        width: 100%;
-        border-collapse: collapse;
-        /* font-size: 0.85rem; */
-        border-left: 0.5px solid #d3d3d8;
-        border-right: 0.5px solid #d3d3d8;
-    }
+            /* Table Styles */
+            table.dataTable {
+                width: 100%;
+                border-collapse: separate;
+                border-spacing: 0;
+                border: 0.5px solid #d3d3d8;
+                border-radius: 8px;
+                overflow: hidden;
+            }
 
-    /* Header */
-    #organisationsTable thead {
-        background-color: #f9fafb;
-        color: #6b7280;
-        text-transform: uppercase;
-        font-size: 12px;
-    }
+            /* Header */
+            #organisationsTable thead {
+                background-color: #edf0f1;
+                color: #5f6163;
+                font-size: 12px;
+            }
 
-    /* Cells */
-    #organisationsTable th,
-    #organisationsTable td {
-        padding: 8px 10px;
-         border: 1px solid #dbdbe2;
-    }
+            #organisationsTable thead th {
+                padding: 8px 10px;
+                font-weight: 600;
+                
+            }
 
-    /* Row divider */
-    #organisationsTable tbody tr {
-        border-bottom: 1px solid #e5e7eb;
-        padding: 8px 10px;
-         border: 1px solid #dbdbe2;
-    }
+            /* Cells */
+            #organisationsTable td {
+                padding: 12px 14px;
+                white-space: normal !important;
+                border-bottom: 1px solid #cfd4d7;
+            }
 
-    /* Hover effect */
-    #organisationsTable tbody tr:hover {
-        background-color: #f9fafb;
-         padding: 8px 10px;
-        border: 1px solid #9a9aa0;
-    }
+            /* Row divider */
+            #organisationsTable tbody tr {
+                border-bottom: 1.5px solid #6b6969;
+                border-top: 1.5px solid #6b6969;
+                background-color: #ffffff;
+            }
 
-    /* Fix long text */
-    #organisationsTable td {
-        white-space: normal !important;
-         border: 1px solid #dbdbe2;
+            /* Hover effect */
+            #organisationsTable tbody tr:hover {
+                background-color: #f9fafb;
+            }
+
+            .dataTables_filter input {
+                border: 1px solid #d1d5db;
+                border-radius: 8px;
+                padding: 6px 10px;
+                outline: none;
+            }
+
+            .dataTables_filter input:focus {
+                ring: 2px solid #93c5fd;
+            }
+
+            .dataTables_length select {
+                border-radius: 8px;
+                padding: 4px 8px;
+                padding-right: 30px; /* space for arrow */
+                border: 1px solid #d1d5db;
+            }
+
+            /* Action Button Styles */ 
+            /* .action-btn {
+                cursor: pointer;
+                padding: 0.5rem 1rem;
+                border-radius: 9999px;
+                font-size: 0.875rem;
+                transition: background-color 0.3s, transform 0.2s;
+            }
+
+            .action-btn:hover {
+                background-color: #e5e7eb;
+            } */
+
+            /* Dropdown Menu Styles */
+            .dropdown-menu {
+                position: absolute;
+                background-color: white;
+                /* border-radius: 9999px; */
+                box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+                min-width: 160px;
+                z-index: 1000;
+            }
+
+            .dropdown-item {
+                display: block;
+                padding: 0.5rem 1rem;
+                color: #212529;
+            }
+
+            .dropdown-item:hover {
+                background-color: #f3f4f6; 
+            }
+
+
         
-        /* word-break: break-word; */
-    }
-    .dataTables_filter input {
-        border: 1px solid #d1d5db;
-        border-radius: 8px;
-        padding: 6px 10px;
-        outline: none;
-    }
+            .dataTables_filter input {
+                padding: 0.375rem 0.75rem !important;
+                border-radius: 0.375rem !important;
+                border: 1px solid #ced4da !important;
+                font-size: 0.8rem !important;
+                margin-top: 1rem !important; 
+                font-family: 'Poppins', sans-serif !important;
+            }
 
-    .dataTables_filter input:focus {
-        ring: 2px solid #93c5fd;
-    }
+            .dataTables_info {
+                font-size: 0.85rem !important;
+                font-family: 'Poppins', sans-serif !important;
+                color: #4b5563 !important; /* Tailwind gray-700 */
+            }
 
-    .dataTables_length select {
-        border-radius: 8px;
-        padding: 4px 8px;
-        padding-right: 30px; /* space for arrow */
-        border: 1px solid #d1d5db;
-    }
-
-
-    /* Dropdown Menu Styles */
-    .dropdown-menu {
-        position: absolute;
-        background-color: white;
-        /* border-radius: 9999px; */
-        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-        min-width: 160px;
-        z-index: 1000;
-    }
-
-    .dropdown-item {
-        display: block;
-        padding: 0.5rem 1rem;
-        color: #212529;
-    }
-
-    .dropdown-item:hover {
-        background-color: #f3f4f6; 
-    }
-
-
-  
-    .dataTables_filter input {
-        padding: 0.375rem 0.75rem !important;
-        border-radius: 0.375rem !important;
-        border: 1px solid #ced4da !important;
-        font-size: 0.8rem !important;
-        margin-top: 1rem !important; 
-        font-family: 'Poppins', sans-serif !important;
-    }
-
-    .dataTables_info {
-        font-size: 0.85rem !important;
-        font-family: 'Poppins', sans-serif !important;
-        color: #4b5563 !important; /* Tailwind gray-700 */
-    }
-
-    .dataTables_paginate {
-        display: flex;
-        gap: 6px;
-        align-items: center;
-    }
-
-    .dataTables_paginate .paginate_button {
-        padding: 6px 10px;
-        border-radius: 6px;
-        background: #f3f4f6;
-        cursor: pointer;
-    }
-
-    .dataTables_paginate .current {
-        background: #4f46e5 !important;
-        color: white !important;
-    }
-
-
-            /* Force green Excel button */
-            .excel-export-btn {
-                border: none !important;       /* Ensures no border, overrides any border below */
-                border-radius: 6px !important;
-                background-color: rgb(32, 180, 39) !important;
-                color: #ffffff;
-                padding: 0.25rem 0.75rem !important;   /* smaller padding */
-                box-shadow: none !important;          /* removes inner or outer shadow */
-                background-image: none !important;    /* removes gradient */
-                /* padding: 0.5rem 2rem; */
-                font-size: 0.7rem !important;
-                display: inline-flex;
+            .dataTables_paginate {
+                display: flex;
+                gap: 6px;
                 align-items: center;
             }
 
-            .excel-export-btn:hover {
-                background-color: #f3f4f6;  
-                transform: translateY(-1px);
-                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+            .dataTables_paginate .paginate_button {
+                padding: 6px 10px;
+                border-radius: 6px;
+                background: #f3f4f6;
+                cursor: pointer;
             }
 
-            .pdf-export-btn {
-                border: none !important;       /* Ensures no border, overrides any border below */
-                border-radius: 6px !important;
-                background-color: rgb(238, 45, 45) !important;
-                color: #ffffff;
-                padding: 0.25rem 0.75rem !important;   /* smaller padding */
-                box-shadow: none !important;          /* removes inner or outer shadow */
-                background-image: none !important;    /* removes gradient */
-                /* padding: 0.5rem 2rem; */
-                font-size: 0.7rem !important;
-                display: inline-flex !important;
-                align-items: center;
-            }
-
-            .pdf-export-btn:hover {
-                background-color: #f3f4f6;  
-                transform: translateY(-1px);
-                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+            .dataTables_paginate .current {
+                background: #4f46e5 !important;
+                color: white !important;
             }
 
 
-</style>
+                    /* Force green Excel button */
+                    .excel-export-btn {
+                        border: none !important;       /* Ensures no border, overrides any border below */
+                        border-radius: 6px !important;
+                        background-color: rgba(234, 236, 241, 0.76) !important;
+                        color: #000000;
+                        padding: 0.25rem 0.75rem !important;   /* smaller padding */
+                        box-shadow: none !important;          /* removes inner or outer shadow */
+                        background-image: none !important;    /* removes gradient */
+                        /* padding: 0.5rem 2rem; */
+                        font-size: 0.7rem !important;
+                        display: inline-flex;
+                        align-items: center;
+                    }
+
+                    .excel-export-btn:hover {
+                        background-color: #f3f4f6;  
+                        transform: translateY(-1px);
+                        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+                    }
+
+                    .pdf-export-btn {
+                        border: none !important;       /* Ensures no border, overrides any border below */
+                        border-radius: 6px !important;
+                        background-color:  rgba(234, 236, 241, 0.76) !important;
+                        color: #000000;
+                        padding: 0.25rem 0.75rem !important;   /* smaller padding */
+                        box-shadow: none !important;          /* removes inner or outer shadow */
+                        background-image: none !important;    /* removes gradient */
+                        /* padding: 0.5rem 2rem; */
+                        font-size: 0.7rem !important;
+                        display: inline-flex !important;
+                        align-items: center;
+                    }
+
+                    .pdf-export-btn:hover {
+                        background-color: #f3f4f6;  
+                        transform: translateY(-1px);
+                        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+                    }
+
+
+        </style>
 @endpush
 
 @push('scripts')

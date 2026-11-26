@@ -1,22 +1,56 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mx-auto px-4 py-8 max-w-7xl mt-3 rounded-md min-h-screen ">
+
+@if (session()->has('success'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                titleText: @js(session('success')),
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: false
+            });
+        });
+    </script>
+@endif
+@if (session()->has('error'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            Swal.fire({
+                icon: 'error',
+                title: 'Action failed',
+                text: @js(session('error')),
+                confirmButtonColor: '#0891b2',
+                width: 320
+            });
+        });
+    </script>
+@endif
+
+
+<div class="container mx-auto px-4 py-8 max-w-screen-2xl px-3 sm:px-6 lg:px-8 mt-1 rounded-md min-h-screen">
     <div class="mb-4 flex items-start justify-between">
         <div>
             <h1 class="text-3xl font-bold text-gray-800">File Types</h1>
             <p class="text-gray-500 text-sm mt-2 mb-2">Manage file types used in file reference numbers:</p>
             
             {{-- <label class="block text-m text-slate-900"></label> --}}
-            <select id="fileTypeFilter" class="filter-input w-full text-sm text-gray-600 border px-3 py-2 focus:ring focus:ring-cyan-200">
+            <select id="fileTypeFilter" class="filter-input w-full rounded-lg text-sm text-gray-600 border px-3 py-2 focus:ring focus:ring-cyan-200">
                 <option value="">All file types</option>
                 <option value="ministry">organisation-specific</option>
                 <option value="global">government-wide</option>
             </select>
         </div>
         <a href="{{ route('registry.file-types.create') }}"
-                class="inline-flex items-center mt-5 gap-2 px-4 py-2 bg-cyan-600 text-white text-sm rounded-md hover:bg-cyan-700 transition">
-                <i class="fas fa-plus"></i>
+                class="inline-flex items-center justify-center gap-2
+                        min-h-[60px] border px-5 py-3 rounded-lg
+                        bg-white text-cyan-700 text-sm font-semibold
+                        shadow-sm hover:bg-cyan-700 transition duration-200">
+                        <i class="fa-solid fa-plus" aria-hidden="true"></i>
                 Add file type
         </a>
     </div>
@@ -41,51 +75,51 @@
 @endsection
 
 @push('styles')
-<style>
+ <style>
     /* Table Styles */
-    #fileTypesTable {
-            width:100% !important;
-            border-collapse: separate;
-            table-layout:auto;
-            border: 0.5px solid #f2f2f5;
-            border-radius: 4px;
-            overflow: hidden;
+    table.dataTable {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        border: 0.5px solid #d3d3d8;
+        border-radius: 8px;
+        overflow: hidden;
     }
 
     /* Header */
     #fileTypesTable thead {
-        background-color: #f9fafb;
-        color: #6b7280;
-        text-transform: uppercase;
+        background-color: #edf0f1;
+        color: #5f6163;
         font-size: 12px;
-       
+    }
+
+    #fileTypesTable thead th {
+        padding: 8px 10px;
+        font-weight: 600;   
     }
 
     /* Cells */
-    #fileTypesTable th,
     #fileTypesTable td {
-        padding: 8px 8px;
+        padding: 12px 14px;
+        white-space: normal !important;
+        border-bottom: 1px solid #cfd4d7;
     }
 
     /* Row divider */
     #fileTypesTable tbody tr {
-        border-bottom: 0.5px solid #ffffff;
+        border-bottom: 1.5px solid #6b6969;
+        border-top: 1.5px solid #6b6969;
+        background-color: #ffffff;
     }
 
     /* Hover effect */
     #fileTypesTable tbody tr:hover {
         background-color: #f9fafb;
-        
     }
 
-    /* Fix long text */
-    #fileTypesTable td {
-        white-space: normal !important;
-        border: 0.5px solid #dbdbe2;
-        word-break: break-word;
-    }
     .dataTables_filter input {
-        border-radius: 4px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
         padding: 6px 10px;
         outline: none;
     }
@@ -95,89 +129,76 @@
     }
 
     .dataTables_length select {
+        border-radius: 8px;
         padding: 4px 8px;
         padding-right: 30px; /* space for arrow */
-        
-    }
-
-    /* Action Button Styles */ 
-    .action-btn {
-        cursor: pointer;
-        padding: 0.5rem 1rem;
-        border-radius: 9999px;
-        font-size: 0.875rem;
-        transition: background-color 0.3s, transform 0.2s;
-    }
-
-    .action-btn:hover {
-        background-color: #e5e7eb;
+        border: 1px solid #d1d5db;
     }
 
     /* Dropdown Menu Styles */
     .dropdown-menu {
         position: absolute;
         background-color: white;
-        /* border-radius: 9999px; */
         box-shadow: 0 2px 5px rgba(0,0,0,0.15);
         min-width: 160px;
         z-index: 1000;
     }
 
-    .dropdown-item {
-        display: block;
-        padding: 0.5rem 1rem;
-        color: #212529;
-    }
+            .dropdown-item {
+                display: block;
+                padding: 0.5rem 1rem;
+                color: #212529;
+            }
 
-    .dropdown-item:hover {
-        background-color: #f3f4f6; 
-    }
+            .dropdown-item:hover {
+                background-color: #f3f4f6; 
+            }
 
-  
-    .dataTables_filter input {
-        padding: 0.375rem 0.75rem !important;
-        border-radius: 0.375rem !important;
-        border: 0.5px solid #ced4da !important;
-        font-size: 0.8rem !important;
-        margin-top: 1rem !important; 
-        font-family: 'Poppins', sans-serif !important;
-    }
 
-    .dataTables_info {
-        font-size: 0.85rem !important;
-        font-family: 'Poppins', sans-serif !important;
-        color: #4b5563 !important; /* Tailwind gray-700 */
-    }
+        
+            .dataTables_filter input {
+                padding: 0.375rem 0.75rem !important;
+                border-radius: 0.375rem !important;
+                border: 1px solid #ced4da !important;
+                font-size: 0.8rem !important;
+                margin-top: 1rem !important; 
+                font-family: 'Poppins', sans-serif !important;
+            }
 
-    .dataTables_paginate {
-        display: flex;
-        gap: 6px;
-        align-items: center;
-    }
+            .dataTables_info {
+                font-size: 0.85rem !important;
+                font-family: 'Poppins', sans-serif !important;
+                color: #4b5563 !important; /* Tailwind gray-700 */
+            }
 
-    .dataTables_paginate .paginate_button {
-        padding: 6px 10px;
-        border-radius: 2px;
-        background: #f3f4f6;
-        cursor: pointer;
-    }
+            .dataTables_paginate {
+                display: flex;
+                gap: 6px;
+                align-items: center;
+            }
 
-    .dataTables_paginate .current {
-        background: #4f46e5 !important;
-        color: white !important;
-    }
+            .dataTables_paginate .paginate_button {
+                padding: 6px 10px;
+                border-radius: 6px;
+                background: #f3f4f6;
+                cursor: pointer;
+            }
+
+            .dataTables_paginate .current {
+                background: #4f46e5 !important;
+                color: white !important;
+            }
 
 
             /* Force green Excel button */
             .excel-export-btn {
                 border: none !important;       /* Ensures no border, overrides any border below */
                 border-radius: 6px !important;
-                background-color:  #f9fafb; !important;
-                color: #322f2f;
+                background-color: rgba(234, 236, 241, 0.76) !important;
+                color: #000000;
                 padding: 0.25rem 0.75rem !important;   /* smaller padding */
                 box-shadow: none !important;          /* removes inner or outer shadow */
                 background-image: none !important;    /* removes gradient */
-                /* padding: 0.5rem 2rem; */
                 font-size: 0.7rem !important;
                 display: inline-flex;
                 align-items: center;
@@ -192,12 +213,11 @@
             .pdf-export-btn {
                 border: none !important;       /* Ensures no border, overrides any border below */
                 border-radius: 6px !important;
-                background-color:  #f9fafb; !important;
-                color: #322f2f;
+                background-color:  rgba(234, 236, 241, 0.76) !important;
+                color: #000000;
                 padding: 0.25rem 0.75rem !important;   /* smaller padding */
                 box-shadow: none !important;          /* removes inner or outer shadow */
                 background-image: none !important;    /* removes gradient */
-                /* padding: 0.5rem 2rem; */
                 font-size: 0.7rem !important;
                 display: inline-flex !important;
                 align-items: center;
@@ -209,6 +229,47 @@
                 box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
             }
 
+    .swal2-popup:not(.swal2-toast) {
+        width: 320px !important;
+        padding: 1.25rem !important;
+        border-radius: 12px !important;
+    }
+
+    .swal2-popup:not(.swal2-toast) .swal2-title {
+        font-size: 18px !important;
+        font-weight: 600;
+        padding: 0.5rem 0 0 !important;
+    }
+
+    .swal2-popup:not(.swal2-toast) .swal2-html-container {
+        font-size: 13px !important;
+        line-height: 1.5;
+        margin: 0.75rem 0 !important;
+    }
+
+    .swal2-popup:not(.swal2-toast) .swal2-icon {
+        transform: scale(0.65);
+        margin: 0 auto !important;
+    }
+
+    .swal2-popup:not(.swal2-toast) .swal2-actions {
+        margin: 0.5rem auto 0 !important;
+    }
+
+    .swal2-styled {
+        font-size: 13px !important;
+        padding: 8px 16px !important;
+        border-radius: 6px !important;
+    }
+
+    .swal2-toast {
+        max-width: 280px !important;
+        padding: 10px !important;
+    }
+
+    .swal2-toast .swal2-title {
+        font-size: 13px !important;
+    }
 
 </style>
 @endpush
@@ -223,22 +284,6 @@
 
 <script>
 $(document).ready(function() {
-    let activeDropdown = null;
-
-    // Close dropdown when clicking outside
-    $(document).on('click', function(e) {
-       if (!$(e.target).closest('.action-dropdown').length) {
-           closeAllDropdowns();
-       }
-    });
-
-   function closeAllDropdowns() {
-       $('.dropdown-menu').remove();
-       if (activeDropdown) {
-           activeDropdown.removeClass('active');
-           activeDropdown = null; 
-       }
-   }
 
    var table = $('#fileTypesTable').DataTable({
        processing: true,
@@ -373,8 +418,8 @@ $(document).ready(function() {
             }
        ],
         dom:   "<'row mb-3'<'col-md-6 d-flex align-items-center'B><'col-12 col-md-6 text-md-end text-start'f>>" +
-                        "<'row'<'col-sm-12'tr>>" +
-                        "<'row mt-3'<'col-sm-5'i><'col-sm-7'p>>",
+                "<'row'<'col-sm-12'tr>>" +
+                "<'row mt-3'<'col-sm-5'i><'col-sm-7'p>>",
     
         language: {
                         paginate: {
@@ -383,25 +428,25 @@ $(document).ready(function() {
                         }
                     },
        buttons: [
-                        {
-                            extend: 'excelHtml5',
-                            text: '<i class="fas fa-download"></i> Download Excel',
-                            className: 'excel-export-btn',
-                            title: 'File types',
-                            exportOptions: {
-                                columns: ':not(:last-child)'
-                            }
-                        },
-                        {
-                            extend: 'pdfHtml5',
-                            text: '<i class="fas fa-download"></i> Download PDF',
-                            className: 'pdf-export-btn',
-                            title: 'File types',
-                            exportOptions: {
-                                columns: ':not(:last-child)'
-                            }
+                    {
+                        extend: 'excelHtml5',
+                        text: '<i class="fas fa-download"></i> Excel',
+                        className: 'excel-export-btn',
+                        title: 'File types',
+                        exportOptions: {
+                            columns: ':not(:last-child)'
                         }
-                    ]
+                    },
+                    {
+                        extend: 'pdfHtml5',
+                        text: '<i class="fas fa-download"></i> PDF',
+                        className: 'pdf-export-btn',
+                        title: 'File types',
+                        exportOptions: {
+                            columns: ':not(:last-child)'
+                        }
+                    }
+                ]
    });
 
    table.columns.adjust();
@@ -475,7 +520,6 @@ $(document).ready(function() {
             });
         }
 
-        closeAllDropdowns();
     });
 
 
@@ -502,7 +546,65 @@ $(document).ready(function() {
             });
         }
 
-        closeAllDropdowns();
+    });
+
+    // Handle delete action
+    $(document).on('click', '.delete-action', async function (e) {
+        e.preventDefault();
+
+        const id = $(this).data('id');
+
+        const result = await Swal.fire({
+            title: 'Delete file type?',
+            text: 'Are you sure you want to delete this file type? This action cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Yes, delete',
+            cancelButtonText: 'Cancel',
+            reverseButtons: true,
+            focusCancel: true
+        });
+
+        if (!result.isConfirmed) {
+            return;
+        }
+
+        $.ajax({
+            url: route('registry.file-types.destroy', id),
+            type: 'DELETE',
+
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'Accept': 'application/json'
+            },
+
+            success(response) {
+                $('#fileTypesTable').DataTable().ajax.reload(null, false);
+
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: response.message ?? 'File type deleted successfully.',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+            },
+
+            error(xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Unable to delete file type',
+                    text: xhr.responseJSON?.message ??
+                        'An unexpected error occurred. Please try again.',
+                    confirmButtonColor: '#0891b2',
+                    confirmButtonText: 'OK'
+                });
+            }
+        });
     });
 
    function route(name, id) {
@@ -510,7 +612,8 @@ $(document).ready(function() {
           'registry.file-types.show': "{{ route('registry.file-types.show', ':id') }}".replace(':id', id),
           'registry.file-types.edit': "{{ route('registry.file-types.edit', ':id') }}".replace(':id', id),
           'registry.file-types.deactivate': "{{ route('registry.file-types.deactivate', ':id') }}".replace(':id', id),
-          'registry.file-types.activate': "{{ route('registry.file-types.activate', ':id') }}".replace(':id', id)
+          'registry.file-types.activate': "{{ route('registry.file-types.activate', ':id') }}".replace(':id', id),
+          'registry.file-types.destroy': "{{ route('registry.file-types.destroy', ':id') }}".replace(':id', id)
 
       }[name];
    }

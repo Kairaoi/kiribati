@@ -26,12 +26,12 @@
                 </h2>
             @else
                 <h2 class="text-sm font-semibold text-gray-800 mb-6">
-                    <span class="text-cyan-600">Create your organisation file type</span>
+                    <span class="text-cyan-600">Create file type</span>
                 </h2>
             @endif
 
             <!-- File Type Name -->
-            <div class="mb-5 relative">
+            <div class="mb-3 relative">
                 <label class="block text-sm font-medium text-gray-700">
                     File Type Name <span class="text-red-500">*</span>
                 </label>
@@ -54,7 +54,7 @@
             
 
             <!-- Description -->
-            <div class="mb-5">
+            {{-- <div class="mb-5">
                 <label for="description" class="block text-sm font-medium text-gray-700">
                     Description <span class="text-gray-400">(optional)</span>
                 </label>
@@ -64,17 +64,17 @@
                         focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 
                         text-sm px-3 py-2"
                     placeholder="Short description of this file type">
-            </div>
+            </div> --}}
 
             <!-- Code -->
-            <div class="mb-5">
+            <div class="mb-1">
                 <label for="code" class="block text-sm font-medium text-gray-700">
                     Code <span class="text-red-500">*</span>
                 </label>
 
                 <!-- Helper text -->
                 <p class="text-xs text-gray-500 mt-1">
-                    Use a unique 2 or 3-letter code to identify this file type (e.g. <span class="font-medium">WKS</span> for Workshop, 
+                    Use a unique 2 or 3-letter code to identify this file type (e.g. <span class="font-medium">WSP</span> for Workshop, 
                     <span class="font-medium">LTR</span> for Letter).
                 </p>
 
@@ -101,9 +101,9 @@
             </div>
 
             <!-- Divider -->
-            <div class="border-t border-gray-200 pt-5 flex justify-center gap-3">
+            <div class="border-t border-gray-200 pt-5 flex gap-3">
                 <button type="submit"
-                    class="px-5 py-2 text-sm font-medium rounded-lg 
+                    class="px-5 py-3 text-sm font-medium rounded-lg 
                         bg-cyan-600 text-white hover:bg-cyan-700 
                         focus:ring-2 focus:ring-cyan-300">
                     Create File Type
@@ -170,7 +170,12 @@
                         return;
                     }
 
+                    if (document.activeElement !== input || input.value.trim() !== query) {
+                        return;
+                    }
+
                     box.classList.remove('hidden');
+                    box.style.display = '';
 
                     // Header
                     const header = document.createElement('div');
@@ -191,9 +196,10 @@
 
                         item.addEventListener('click', () => {
                             input.value = name;
-                            box.classList.add('hidden');
 
-                            // show warning immediately
+                            box.classList.add('hidden');
+                            box.style.display = 'none';
+
                             warning.classList.remove('hidden');
                         });
 
@@ -223,6 +229,14 @@
             let currentSuggestions = [];
 
             if (!input || !box || !warning) return;
+
+            // Hide suggestions when clicking outside
+            document.addEventListener('pointerdown', function (event) {
+                if (!input.contains(event.target) && !box.contains(event.target)) {
+                    box.classList.add('hidden');
+                    box.style.display = 'none';
+                }
+            }, true);
 
             function checkDuplicate(value) {
                 const exists = currentSuggestions.some(
@@ -268,7 +282,9 @@
                         return;
                     }
 
-                    box.classList.remove('hidden');
+                    if (document.activeElement === input) {
+                        box.classList.remove('hidden');
+                    }
 
                     // Header
                     const header = document.createElement('div');

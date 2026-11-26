@@ -73,40 +73,45 @@
                         @endif
                     </div>  
                     <div>
+                        <p class="text-sm text-gray-500">Reference No</p>
+                        <p class="text-md font-medium text-gray-800 mt-1">
+                            {{ $file->reference_no ?? '-' }}
+                        </p>
+                    </div> 
+                    <div>
                         <p class="text-sm text-gray-500">Source/Origin</p>
                         <p class="text-md font-medium text-gray-800 mt-1">
                             {{ $file->source->name ?? '-' }}
                         </p>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-500">Reference No</p>
+                        <p class="text-sm text-gray-500">Division</p>
                         <p class="text-md font-medium text-gray-800 mt-1">
-                            {{ $file->reference_no ?? '-' }}
+                            {{ $file->division?->name ?? '-' }}
                         </p>
-                    </div>     
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">File Type</p>
+                        <p class="text-md font-medium text-gray-800 mt-1">
+                            {{ $file->fileType->name ?? '-' }}
+                        </p>
+                    </div>
+                        
                     <div>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
                         <p class="text-sm text-gray-500">Document Source</p>
                         <p class="text-md font-medium text-gray-800 mt-1">
                             {{ $file->document_source ?? '-' }}
                         </p>
                     </div>  
-                    @isset($file->correspondence_type)
+                    {{-- @isset($file->correspondence_type)
                         <div>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
                             <p class="text-sm text-gray-500">Correspondence Type</p>
                             <p class="text-md font-medium text-gray-800 mt-1">
                                 {{ $file->correspondence_type ?? '-' }}
                             </p>
                         </div> 
-                    @endisset                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
-
-                    @isset($file->division)
-                        <div>
-                            <p class="text-sm text-gray-500">Division</p>
-                            <p class="text-md font-medium text-gray-800 mt-1">
-                                {{ $file->division->name ?? '-' }}
-                            </p>
-                        </div>
-                    @endisset
+                    @endisset --}}
+    
                     <div>
                         <p class="text-sm text-gray-500">Created At</p>
                         <p class="text-md font-medium text-gray-800 mt-1">
@@ -119,12 +124,7 @@
                             {{ $file->createdBy->name ?? '-' }}
                         </p>
                     </div>
-                    <div>
-                        <p class="text-sm text-gray-500">File Type</p>
-                        <p class="text-md font-medium text-gray-800 mt-1">
-                            {{ $file->fileType->name ?? '-' }}
-                        </p>
-                    </div>
+
                     <div>
                         <p class="text-sm text-gray-500">Due Date</p>
                         <p class="text-md font-medium text-gray-800 mt-1">
@@ -839,9 +839,11 @@
                                                     Comment <span class="text-red-600">*</span>
                                                 </label>
                                                 <textarea name="comment"
+                                                    required 
                                                     rows="3"
                                                     class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-cyan-500 focus:ring focus:ring-cyan-200"
-                                                    placeholder="Write your review comment...">{{ old('comment') }}</textarea>
+                                                    placeholder="Write your review comment...">{{ old('comment') }}
+                                                </textarea>
                                             </div>
                                             <div class="mt-6">
                                                 <label for="assignedOfficers" class="block text-md font-medium text-gray-700 mb-2">

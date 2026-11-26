@@ -237,24 +237,7 @@
                         </div>
                     @endif
                 </div>
-                
-                <!-- File Category -->
-                <div>
-                    <label for="category_id" class="block">
-                        Category
-                    </label>
-                    <select name="category_id" 
-                            id="category_id" 
-                            class="select2 mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm" 
-                    >
-                        <option value="" disabled selected>Select Document Category</option>
-                        @foreach ($categories as $category)
-                            <option value="{{ $category->id }}" {{ old('category_id', $file->category_id) == $category->id ? 'selected' : '' }}>
-                                {{ $category->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
+
 
                 <!-- Due Date -->
                 <div>

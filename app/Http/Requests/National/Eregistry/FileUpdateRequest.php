@@ -4,6 +4,7 @@ namespace App\Http\Requests\National\Eregistry;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class FileUpdateRequest extends FormRequest
 {
@@ -18,7 +19,12 @@ class FileUpdateRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        $authenticatedUser = auth()->user();
+
+        return $authenticatedUser && $authenticatedUser->hasAnyRole([
+                'registry',
+            ]);
+        
     }
 
     /**
@@ -67,10 +73,7 @@ class FileUpdateRequest extends FormRequest
                 'required', 
                 'exists:file_types,id'
             ],
-            'category_id' => [
-                'nullable',
-                'exists:categories,id'
-            ],
+            
             'due_date' => [
                 'nullable',
                 'date'
@@ -78,12 +81,11 @@ class FileUpdateRequest extends FormRequest
             'additional_files' => [
                 'nullable',
                 'array',
-                'max:5'
+                'max:20'
             ],
             'additional_files.*' => [
                 'file',
                 'mimes:pdf,xls,xlsx,png,jpg,jpeg,doc,docx,ppt,pptx',
-                'max:30720'
             ],
             'remove_additional_files' => [
                 'sometimes', 
@@ -205,4 +207,48 @@ class FileUpdateRequest extends FormRequest
         ];
     
     }
+
+    // public function after(): array
+    // {
+    //     return [
+    //         function (Validator $validator): void {
+    //             $attachments = $this->file('additional_files', []);
+
+    //             logger()->info('Update attachment check', [
+    //                 'file_fields' => array_keys($this->allFiles()),
+    //                 'attachment_count' => is_array($attachments) ? count($attachments) : 1,
+    //                 'upload_errors' => $validator->errors()->toArray(),
+    //             ]);
+
+               
+
+    //             // The array rule handles malformed attachment input.
+    //             if (!is_array($attachments)) {
+    //                 return;
+    //             }
+
+    //             $files = [$this->file('main_file'), ...$attachments];
+    //             $totalBytes = 0;
+
+    //             foreach ($files as $file) {
+    //                 if ($file instanceof \Illuminate\Http\UploadedFile && $file->isValid()) {
+    //                     $totalBytes += $file->getSize();
+    //                 }
+    //             }
+
+    //             logger()->info('Update upload size check', [
+    //                 'total_bytes' => $totalBytes,
+    //                 'limit_bytes' => 50 * 1024 * 1024,
+    //                 'attachment_errors' => $validator->errors()->get('additional_files'),
+    //             ]);
+
+    //             if ($totalBytes > 50 * 1024 * 1024) {
+    //                 $validator->errors()->add(
+    //                     'additional_files',
+    //                     'The main file and attachments together must not exceed 50 MB.'
+    //                 );
+    //             }
+    //         },
+    //     ];
+    // }
 }

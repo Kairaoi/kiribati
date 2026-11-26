@@ -50,12 +50,14 @@
                 </label>
 
                 <select name="organisation_type_id" id="organisation_type_id"
-                    class="mt-1 w-full rounded-lg border-gray-300 shadow-sm text-sm px-3 py-2">
+                    class="mt-1 w-full rounded-lg border-gray-300 shadow-sm 
+                        focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 
+                        text-sm px-3 py-2"
 
                     <option value="">-- None --</option>
 
                     @foreach($organisationTypes as $type)
-                        <option value="{{ $type->id }}"
+                        <option value="{{ $type->id }}" 
                             {{ old('organisation_type_id') == $type->id ? 'selected' : '' }}>
                             {{ $type->name }}
                         </option>

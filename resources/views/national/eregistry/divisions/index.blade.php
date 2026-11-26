@@ -2,35 +2,37 @@
 
 @section('content')
 
-@if (session('success'))
-    <div 
-        x-data="{ show: true }"
-        x-show="show"
-        x-transition.opacity.scale.80
-        x-init="setTimeout(() => show = false, 4000)" 
-        class="fixed right-0 bg-cyan-400 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 z-50">
-        <!-- Icon -->
-        <svg xmlns="http://www.w3.org/2000/svg" 
-             fill="none" 
-             viewBox="0 0 24 24" 
-             stroke-width="2" 
-             stroke="currentColor" 
-             class="w-6 h-6 text-white">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-        </svg>
-
-        <!-- Message -->
-        <span class="font-medium">{{ session('success') }}</span>
-
-        <!-- Close button -->
-        <button @click="show = false" class="ml-4 text-white hover:text-gray-200">
-            &times;
-        </button>
-    </div>
+@if (session()->has('success'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                titleText: @js(session('success')),
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: false
+            });
+        });
+    </script>
+@endif
+@if (session()->has('error'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            Swal.fire({
+                icon: 'error',
+                title: 'Action failed',
+                text: @js(session('error')),
+                confirmButtonColor: '#0891b2',
+                width: 320
+            });
+        });
+    </script>
 @endif
 
-<div class="container mx-auto px-4 py-8 max-w-full mt-3 rounded-md min-h-screen ">
-    <div class="mb-4 flex flex-wrap items-start gap-6">
+<div class="container mx-auto px-4 py-8 max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 mt-3 rounded-md min-h-screen ">
+    <div class="mb-4 flex items-start justify-between">
         <div>
             <h1 class="text-3xl font-bold tracking-wide">Divisions</h1>
             <p class="mt-1 text-base text-gray-500">
@@ -39,15 +41,19 @@
         </div>
 
         <a href="{{ route('registry.divisions.create') }}"
-            class="mt-4 inline-flex items-center gap-2 rounded-md bg-cyan-600 px-4 py-2 text-sm text-white transition hover:bg-cyan-700">
-            <i class="fas fa-plus"></i>
+            class="inline-flex items-center justify-center gap-2
+                            min-h-[60px] border px-5 py-3 rounded-lg
+                            bg-white text-cyan-700 text-sm font-semibold
+                            shadow-sm hover:bg-cyan-700 transition duration-200">
+
+                        <i class="fa-solid fa-plus" aria-hidden="true"></i>
             Create New Division
         </a>
 
-        <a href="{{ route('registry.hod-appointments.create') }}"
+        {{-- <a href="{{ route('registry.hod-appointments.create') }}"
             class="mt-4 inline-flex items-center gap-2 rounded-md bg-cyan-600 px-4 py-2 text-sm text-white transition hover:bg-cyan-700">
             Assign Temporary HOD
-        </a>
+        </a> --}}
     </div>
 
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-2">

@@ -24,7 +24,7 @@
                 @if ($isSystemAdmin)
                     <div>
                         <label for="organisation_id" class="mb-1 block text-sm font-medium text-gray-700">
-                            Ministry
+                            Organisation
                         </label>
 
                         <select name="organisation_id"
@@ -118,7 +118,7 @@
                     @foreach ($roles as $id => $name)
                         <option value="{{ $id }}"
                             {{ old('role_id', $currentRole?->id) == $id ? 'selected' : '' }}>
-                            {{ ucfirst($name) }}
+                            {{ $name }}
                         </option>
                     @endforeach
                 </select>

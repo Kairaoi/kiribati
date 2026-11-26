@@ -96,7 +96,7 @@ class ExternalPartnerController extends Controller
 
         $this->externalPartners->create($validated);
 
-        return redirect()->route('registry.external-partners.index')->with('success', 'External Partner created');
+        return redirect()->route('registry.external-partners.index')->with('success', 'External partner created');
     }
 
     public function suggestions(Request $request)
@@ -213,6 +213,26 @@ class ExternalPartnerController extends Controller
 
         return response()->json([
             'message' => 'External Partner deactivated successfully.'
+        ]);
+    }
+
+    public function destroy(ExternalPartner $externalPartner)
+    {
+        // $this->authorize('delete', $fileType);
+
+
+        if ($externalPartner->files()->exists()) {
+            return redirect()
+                ->route('registry.external-partners.index')
+                ->with(
+                    'error', 'This file type cannot be deleted because it is being used by one or more files.'
+                );
+        }
+
+        $this->externalPartners->deleteById($externalPartner->id);
+
+        return response()->json([
+            'message' => 'External partner deleted successfully.',
         ]);
     }
     

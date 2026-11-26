@@ -4,6 +4,7 @@ namespace App\Http\Requests\National\Eregistry;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class FileStoreRequest extends FormRequest
 {
@@ -19,7 +20,12 @@ class FileStoreRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+
+        $authenticatedUser = auth()->user();
+
+        return $authenticatedUser && $authenticatedUser->hasAnyRole([
+                'registry',
+            ]);
     }
 
 
@@ -66,10 +72,6 @@ class FileStoreRequest extends FormRequest
                 'required', 
                 'exists:file_types,id'
             ],
-            'category_id' => [
-                'nullable',
-                'exists:categories,id'
-            ],
             'due_date' => [
                 'nullable',
                 'date'
@@ -77,12 +79,11 @@ class FileStoreRequest extends FormRequest
             'additional_files' => [
                 'nullable',
                 'array',
-                'max:5'
+                'max:20'
             ],
             'additional_files.*' => [
                 'file',
                 'mimes:pdf,xls,xlsx,png,jpg,jpeg,doc,docx,ppt,pptx',
-                'max:30720'
             ],
             'main_file' => [
                 'exclude_unless:document_source,upload',
@@ -97,103 +98,135 @@ class FileStoreRequest extends FormRequest
                 'in:letter,internal,memo'
             ],
 
-            'memo_recipients' => [
-                'exclude_unless:correspondence_type,memo',
-                'required',
-                'array',
-                'min:1',
-            ],
+            // 'memo_recipients' => [
+            //     'exclude_unless:correspondence_type,memo',
+            //     'required',
+            //     'array',
+            //     'min:1',
+            // ],
 
-            'memo_recipients.*' => [
-                'integer',
-                'exists:organisations,id',
-            ],
+            // 'memo_recipients.*' => [
+            //     'integer',
+            //     'exists:organisations,id',
+            // ],
 
-            'registered_organisations' => [
-                'exclude_unless:correspondence_type,letter',
-                'required_without:external_partners',
-                'array',
-                'min:1',
-            ],
+            // 'registered_organisations' => [
+            //     'exclude_unless:correspondence_type,letter',
+            //     'required_without:external_partners',
+            //     'array',
+            //     'min:1',
+            // ],
 
-            'registered_organisations.*' => [
-                'integer',
-                'distinct',
-                'exists:organisations,id',
-            ],
+            // 'registered_organisations.*' => [
+            //     'integer',
+            //     'distinct',
+            //     'exists:organisations,id',
+            // ],
 
-            'external_partners' => [
-                'exclude_unless:correspondence_type,letter',
-                'required_without:registered_organisations',
-                'array',
-                'min:1',
-            ],
+            // 'external_partners' => [
+            //     'exclude_unless:correspondence_type,letter',
+            //     'required_without:registered_organisations',
+            //     'array',
+            //     'min:1',
+            // ],
 
-            'external_partners.*' => [
-                'integer',
-                'distinct',
-                'exists:external_partners,id',
-            ],
+            // 'external_partners.*' => [
+            //     'integer',
+            //     'distinct',
+            //     'exists:external_partners,id',
+            // ],
 
-            'memo_from_field' => [
-                'exclude_unless:correspondence_type,memo',
-                 'exclude_unless:document_source,online',
-                'required',
-                'string',
-                'max:255',
-            ],
+            // 'memo_from_field' => [
+            //     'exclude_unless:correspondence_type,memo',
+            //      'exclude_unless:document_source,online',
+            //     'required',
+            //     'string',
+            //     'max:255',
+            // ],
 
-            'memo_cc_field' => [
-                'exclude_unless:correspondence_type,memo',
-                'exclude_unless:document_source,online',
-                'nullable',
-                'string',
-                'max:255',
-            ],
-            'memo_attention_to' => [
-                'exclude_unless:correspondence_type,memo',
-                'exclude_unless:document_source,online',
-                'nullable',
-                'string',
-                'max:255',
-            ],
-            'internal_from_field' => [
-                'exclude_unless:correspondence_type,internal',
-                'exclude_unless:document_source,online',
-                'required',
-                'string',
-                'max:255',
-            ],
-            'internal_to_field' => [
-                'exclude_unless:correspondence_type,internal',
-                'exclude_unless:document_source,online',
-                'required',
-                'string',
-                'max:255',
-            ],
-            'internal_cc_field' => [
-                'exclude_unless:correspondence_type,internal',
-                'exclude_unless:document_source,online',
-                'nullable',
-                'string',
-                'max:255',
-            ],
-            'internal_ufs_id' => [
-                'exclude_unless:correspondence_type,internal',
-                'exclude_unless:document_source,online',
-                'required',
-                'exists:users,id',
-            ],
-            'content' => [
-                'nullable',
-                'exclude_unless:document_source,online',
-                'required_without:main_file',
-                'string',
-            ],
+            // 'memo_cc_field' => [
+            //     'exclude_unless:correspondence_type,memo',
+            //     'exclude_unless:document_source,online',
+            //     'nullable',
+            //     'string',
+            //     'max:255',
+            // ],
+            // 'memo_attention_to' => [
+            //     'exclude_unless:correspondence_type,memo',
+            //     'exclude_unless:document_source,online',
+            //     'nullable',
+            //     'string',
+            //     'max:255',
+            // ],
+            // 'internal_from_field' => [
+            //     'exclude_unless:correspondence_type,internal',
+            //     'exclude_unless:document_source,online',
+            //     'required',
+            //     'string',
+            //     'max:255',
+            // ],
+            // 'internal_to_field' => [
+            //     'exclude_unless:correspondence_type,internal',
+            //     'exclude_unless:document_source,online',
+            //     'required',
+            //     'string',
+            //     'max:255',
+            // ],
+            // 'internal_cc_field' => [
+            //     'exclude_unless:correspondence_type,internal',
+            //     'exclude_unless:document_source,online',
+            //     'nullable',
+            //     'string',
+            //     'max:255',
+            // ],
+            // 'internal_ufs_id' => [
+            //     'exclude_unless:correspondence_type,internal',
+            //     'exclude_unless:document_source,online',
+            //     'required',
+            //     'exists:users,id',
+            // ],
+            // 'content' => [
+            //     'nullable',
+            //     'exclude_unless:document_source,online',
+            //     'required_without:main_file',
+            //     'string',
+            // ],
            
         ];
     
     
+    }
+
+    
+
+    public function after(): array
+    {
+        return [
+            function (Validator $validator): void {
+                $attachments = $this->file('additional_files', []);
+
+                // The array rule handles malformed attachment input.
+                if (!is_array($attachments)) {
+                    return;
+                }
+
+                $files = [$this->file('main_file'), ...$attachments];
+                $totalBytes = 0;
+
+                foreach ($files as $file) {
+                    if ($file instanceof \Illuminate\Http\UploadedFile && $file->isValid()) {
+                        $totalBytes += $file->getSize();
+                    }
+                }
+
+                if ($totalBytes > 50 * 1024 * 1024) {
+                    $validator->errors()->add(
+                        'additional_files',
+                        'The main file and attachments together must not exceed 50 MB.'
+                    );
+                }
+            },
+        ];
     }
 
     public function messages()

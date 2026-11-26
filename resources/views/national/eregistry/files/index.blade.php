@@ -1,92 +1,161 @@
 @extends('layouts.app')
 
 @section('content')
-    @if (session('success'))
-        <div 
-            x-data="{ show: true }"
-            x-show="show"
-            x-transition.opacity.scale.80
-            x-init="setTimeout(() => show = false, 4000)" 
-            class="fixed right-0 text-white bg-cyan-400 px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 z-50">
-            <!-- Icon -->
-            <svg xmlns="http://www.w3.org/2000/svg" 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke-width="2" 
-                stroke="currentColor" 
-                class="w-6 h-6">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-
-            <!-- Message -->
-            <span class="font-medium">{{ session('success') }}</span>
-
-            <!-- Close button -->
-            <button @click="show = false" class="ml-4 hover:text-gray-200">
-                &times;
-            </button>
-        </div>
+    @if (session()->has('success'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    titleText: @js(session('success')),
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: false
+                });
+            });
+        </script>
+    @endif
+    @if (session()->has('error'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Action failed',
+                    text: @js(session('error')),
+                    confirmButtonColor: '#0891b2',
+                    width: 320
+                });
+            });
+        </script>
     @endif
 
-    <div class="container mx-auto px-4 py-8 max-w-full rounded-md min-h-screen">
-        <div class="mb-4 flex items-center justify-between">
-            <div>
-                <h1 class="text-2xl font-semibold text-gray-800">Files</h1>
-                <p class="text-sm text-gray-500">Manage all incoming, outgoing and internal files</p>
+    <div class="container mx-auto px-4 py-8 max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 rounded-md min-h-screen">
+        <div class="mb-6 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+
+            {{-- Page Header --}}
+            <div class="shrink-0">
+                <h1 class="text-2xl font-bold tracking-tight text-gray-800">
+                    Files
+                </h1>
+
+                <p class="mt-1 text-sm text-gray-500">
+                    Manage all incoming, outgoing and internal files
+                </p>
             </div>
-            <div>
+
+            {{-- Actions --}}
+            <div class="flex flex-wrap items-center gap-3">
+
+                {{-- Current Reviewer --}}
                 @role('registry')
-                    <a href="{{ route('registry.files.create') }}"
-                        class="inline-flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white text-sm font-medium shadow-sm hover:bg-cyan-700 transition">
-                        Create File
-                    </a>
-                    
                     <a href="{{ route('registry.users.edit-review-officer') }}"
-                    class="inline-flex items-center mt-3 gap-2 px-4 py-2 border font-semibold text-sm transition
-                        {{ $reviewOfficer
-                            ? 'bg-gray-200 border-cyan-100 text-cyan-700 hover:bg-gray-300'
-                            : 'bg-red-100 border-red-300 text-red-700 hover:bg-red-200' }}">
+                        class="group inline-flex items-center gap-3 min-h-[60px]
+                            px-4 py-2.5 border rounded-lg shadow-sm transition
+                            {{ $reviewOfficer
+                                    ? 'bg-white border-gray-200 hover:border-cyan-400 hover:bg-cyan-50'
+                                    : 'bg-red-50 border-red-200 hover:border-red-400' }}">
+                @else
+                    <div class="inline-flex items-center gap-3 min-h-[60px]
+                                px-4 py-2.5 border rounded-lg
+                                {{ $reviewOfficer
+                                    ? 'bg-gray-50 border-gray-200'
+                                    : 'bg-red-50 border-red-200' }}">
+                @endrole
 
-                        @unless($reviewOfficer)
-                            <span aria-hidden="true" class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-600 text-white font-bold">!</span>
-                        @endunless
+                    <span class="flex shrink-0 items-center justify-center w-9 h-9 rounded-full
+                                {{ $reviewOfficer
+                                    ? 'bg-cyan-100 text-cyan-700'
+                                    : 'bg-red-100 text-red-600' }}">
 
-                        <span>Current Reviewer: {{ $reviewOfficer?->name ?? 'Not assigned' }}</span>
+                        <i aria-hidden="true"
+                            class="fa-solid {{ $reviewOfficer
+                                ? 'fa-user-check'
+                                : 'fa-circle-exclamation' }}"></i>
+                    </span>
+
+                    <div>
+                        <p class="text-xs font-medium text-gray-500">
+                            Current Reviewer
+                        </p>
+
+                        <p class="mt-0.5 text-sm font-semibold
+                                {{ $reviewOfficer ? 'text-gray-800' : 'text-red-700' }}">
+                            {{ $reviewOfficer?->name ?? 'Not assigned' }}
+                        </p>
+                    </div>
+
+                    @role('registry')
+                        <i aria-hidden="true"
+                            class="fa-solid fa-pen-to-square ml-2 text-xs text-gray-400
+                                group-hover:text-cyan-600 transition"></i>
+                    @endrole
+
+                @role('registry')
                     </a>
                 @else
-                    <div class="inline-flex items-center mt-3 gap-2 px-4 py-2 border font-semibold text-sm cursor-default
-                        {{ $reviewOfficer
-                            ? 'bg-gray-100 border-gray-200 text-gray-600'
-                            : 'bg-red-100 border-red-300 text-red-700' }}">
-
-                        @unless($reviewOfficer)
-                            <span aria-hidden="true" class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-600 text-white font-bold">!</span>
-                        @endunless
-
-                        <span>Current Reviewer: {{ $reviewOfficer?->name ?? 'Not assigned' }}</span>
                     </div>
                 @endrole
 
+
+                {{-- Secretary / SRO --}}
                 @role('registry|system-admin')
                     <a href="{{ route('registry.users.edit-secretary') }}"
-                    class="inline-flex items-center mt-3 gap-2 px-4 py-2 border font-semibold text-sm transition
-                        {{ $sro
-                            ? 'bg-gray-200 border-cyan-100 text-cyan-700 hover:bg-gray-300'
-                            : 'bg-red-100 border-red-300 text-red-700 hover:bg-red-200' }}">
+                        class="group inline-flex items-center gap-3 min-h-[60px]
+                            px-4 py-2.5 border rounded-lg shadow-sm transition
+                            {{ $sro
+                                    ? 'bg-white border-gray-200 hover:border-cyan-400 hover:bg-cyan-50'
+                                    : 'bg-red-50 border-red-200 hover:border-red-400' }}">
 
-                        @unless($sro)
-                            <span aria-hidden="true"
-                                class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-600 text-white font-bold">
-                                !
-                            </span>
-                        @endunless
+                        <span class="flex shrink-0 items-center justify-center w-9 h-9 rounded-full
+                                    {{ $sro
+                                        ? 'bg-cyan-100 text-cyan-700'
+                                        : 'bg-red-100 text-red-600' }}">
 
-                        <span>
-                            {{ $organisation->reviewer_title ?? 'Reviewer title not set - Contact Sytem Admin' }}:
-                            {{ $sro?->name ?? 'Not assigned' }}
+                            <i aria-hidden="true"
+                                class="fa-solid {{ $sro
+                                    ? 'fa-user-tie'
+                                    : 'fa-circle-exclamation' }}"></i>
                         </span>
+
+                        <div>
+                            <p class="text-xs font-medium text-gray-500">
+                                {{ $organisation->reviewer_title ?? 'Reviewer title not set' }}
+                            </p>
+
+                            <p class="mt-0.5 text-sm font-semibold
+                                    {{ $sro ? 'text-gray-800' : 'text-red-700' }}">
+                                {{ $sro?->name ?? 'Not assigned' }}
+                            </p>
+
+                            @unless($organisation->reviewer_title ?? null)
+                                <p class="text-xs text-red-600">
+                                    Contact System Administrator
+                                </p>
+                            @endunless
+                        </div>
+
+                        <i aria-hidden="true"
+                            class="fa-solid fa-pen-to-square ml-2 text-xs text-gray-400
+                                group-hover:text-cyan-600 transition"></i>
                     </a>
                 @endrole
+
+                
+                {{-- Create File --}}
+                @role('registry')
+                    <a href="{{ route('registry.files.create') }}"
+                        class="inline-flex items-center justify-center gap-2
+                            min-h-[60px] border px-5 py-3 rounded-lg
+                            bg-white text-sm font-semibold
+                            shadow-sm hover:bg-cyan-700 transition duration-200">
+
+                        <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                        Create File
+                    </a>
+                @endrole
+
+
             </div>
         </div>
 
@@ -409,25 +478,10 @@
         <script src="https://cdn.datatables.net/buttons/2.3.5/js/buttons.html5.min.js"></script>
         <script>
             $(document).ready(function() {
-                let activeDropdown = null;
+
                 const isReviewOfficer = @json(Auth::user()->hasRole('review-officer'));
                 const isUser = @json(Auth::user()->hasRole('user'));
                 const isRegistry = @json(Auth::user()->hasRole('registry'));
-
-                // Close dropdown when clicking outside
-                $(document).on('click', function(e) {
-                    if (!$(e.target).closest('.action-dropdown').length) {
-                        closeAllDropdowns();
-                    }
-                });
-
-                function closeAllDropdowns() {
-                    $('.dropdown-menu').remove();
-                    if (activeDropdown) {
-                        activeDropdown.removeClass('active');
-                        activeDropdown = null; 
-                    }
-                }
 
                 // Initialize DataTable
                 let table = $('#filesTable').DataTable({
@@ -646,7 +700,6 @@
                         }
                     });
                 }
-                closeAllDropdowns(); 
             });
 
             function route(name, id) {
@@ -657,20 +710,6 @@
                     'registry.files.destroy': "{{ route('registry.files.destroy', ':uuid') }}".replace(':uuid', id),
                 }[name];
             }
-
-                // Open PDF Viewer Modal
-            $(document).on('click', '.view-btn', function(e) {
-                    const filePath = $(this).closest('tr').find('td').eq(8).text().trim(); // Extract file path from table
-                    
-                    // Update PDF Embed Source
-                    $('#pdfEmbed').attr('src', '{{ asset('storage') }}/' + filePath);
-                    $('#pdfViewerModal').fadeIn();
-            });
-
-                // Close PDF Viewer Modal
-                $('#closePdfModal').on('click', function() {
-                    $('#pdfViewerModal').fadeOut();
-                });
 
             document.addEventListener('DOMContentLoaded', function () {
 
@@ -1000,10 +1039,8 @@
                         File Document
                     </h2>
 
-                    <p
-                        id="modal-file-reference"
-                        class="mt-1 break-words text-sm font-medium text-gray-700"
-                    ></p>
+                    <p id="modal-file-reference" class="mt-1 break-words text-sm font-medium text-gray-700">
+                    </p>
 
                     <p
                         id="modal-file-subject"

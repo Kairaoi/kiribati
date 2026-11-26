@@ -1,389 +1,475 @@
 <nav x-data="{ open: false }" class="bg-white border-b py-2 border-gray-200 shadow-sm">
     <!-- Primary Navigation Menu -->
-    <div class="max-full mx-auto text-sm px-2 sm:px-4 lg:px-4">
-        <div class="flex h-12 w-full items-center">
-            <div class="flex w-full items-center">
-                    <div class="hidden sm:flex items-center justify-between space-x-3 p-4 font-bold">
-                        <img src="{{ asset('images/flag1.png') }}"
-                            alt=""
-                            class="w-12 h-12 mr-2" />
+    <nav x-data="{ mobileOpen: false }"
+        class="relative bg-white border-b border-gray-200 shadow-sm">
 
-                        <div class="text-base text-gray-600 flex items-center gap-2">
-                            <span>Document Management System |</span>
-                            <div x-data="{ open: false }" class="relative">
-                                <button type="button"
-                                        @click="open = !open"
-                                        @click.outside="open = false"
-                                        class="inline-flex items-center gap-1 text-cyan-600 hover:text-cyan-700">
-                                    <span>
-                                        {{ Auth::user()->organisation->code ?? 'No Organisation Assigned' }}
-                                    </span>
-                                </button>
-                            </div>
+        {{-- Top Header --}}
+        <div class="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8">
+
+            <div class="flex min-h-[72px] items-center justify-between gap-3 py-3">
+
+                {{-- Branding --}}
+                <div class="flex min-w-0 items-center gap-3">
+
+                    <img src="{{ asset('images/flag1.png') }}"
+                        alt="Kiribati Flag"
+                        class="h-9 w-9 sm:h-12 sm:w-12 shrink-0 object-contain">
+
+                    <div class="min-w-0">
+
+                        <h1 class="text-base lg:text-lg font-bold text-gray-800 leading-tight">
+
+                            <span class="hidden md:inline">
+                                Document Management System
+                            </span>
+
+                            <span class="md:hidden">
+                                DMS
+                            </span>
+
+                        </h1>
+
+                        <div class="mt-1 flex items-center gap-2">
+
+                            <span class="inline-flex items-center rounded-md
+                                        text-xs
+                                        font-semibold text-cyan-700">
+
+                                {{ Auth::user()->organisation?->code ?? 'No Organisation Assigned' }}
+
+                            </span>
+
                         </div>
+
                     </div>
-            
-                    <div class="hidden space-x-6 text-md ml-4 sm:flex items-center">
-                        {{-- E-Registry --}}
-                                <div x-data="{ open: false }"
-                                    class="relative flex items-center h-16"
-                                    @mouseenter="open = true"
-                                    @mouseleave="open = false">
 
-                                    <x-nav-link href="#"
-                                        class="flex items-center h-full" :active="request()->routeIs('registry.files.*')">
-                                        <span class="leading-none flex items-center text-gray-500 font-semibold">
-                                            {{ __('Files') }}
-                                            <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                                            </svg>
-                                        </span>
-                                    </x-nav-link>
+                </div>
 
-                                    <!-- Dropdown -->
-                                    <div x-show="open"
-                                        x-transition
-                                        class="absolute left-0 top-full w-64 bg-white border border-gray-200 rounded-md shadow-md z-50">
+                {{-- Header Actions --}}
+                <div class="flex shrink-0 items-center gap-2 sm:gap-4">
 
-                                        <div class="px-4 py-2 text-xs text-gray-400 uppercase tracking-wide" >
-                                            Files
-                                        </div>
-                                        <a href="{{ route('registry.files.index') }}"
-                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            View Files
-                                        </a>
-                                    
-                                        @hasrole(['registry'])
-                                        <a href="{{ route('registry.files.create') }}"
-                                            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            Create File
-                                        </a>
-                                        @endrole
-                                    </div>
-                                </div>
-                            @hasrole(['registry', 'system-admin'])
-                                <div class="relative flex items-center h-16">
-                                    <x-nav-link
-                                            href="{{ route('registry.folders.index') }}"
-                                            :active="request()->routeIs('registry.folders.*')"
-                                            class="flex items-center h-full cursor-pointer"
-                                        >
-                                        <span class="leading-none flex items-center text-gray-500 font-semibold">
-                                            {{ __('E-Filing') }}
-                                        </span>
-                                    </x-nav-link>
-                                </div>
-                    
-                        
-                                <div x-data="{ open: false }"
-                                    class="relative flex items-center h-16"
-                                    @mouseenter="open = true"
-                                    @mouseleave="open = false">
-                                    
-                                    <x-nav-link href="#"
-                                        class="flex items-center h-full" :active="request()->routeIs('registry.file-types.*')">
-                                        <span class="leading-none flex items-center text-gray-500 font-semibold">
-                                            {{ __('File Types') }}
-                                            <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                                            </svg>
-                                        </span>
-                                    </x-nav-link>
+                    {{-- Teams Dropdown --}}
+                    @if (Laravel\Jetstream\Jetstream::hasTeamFeatures())
 
-                                    <!-- Dropdown -->
-                                    <div x-show="open"
-                                        x-transition
-                                        class="absolute left-0 top-full w-64 bg-white border border-gray-200 rounded-md shadow-md z-50">
+                        <x-dropdown align="right" width="60">
 
-                                        <div class="px-4 py-2 text-xs text-gray-400 uppercase tracking-wide">
-                                            File Types
-                                        </div>
-                                        <a href="{{ route('registry.file-types.index') }}"
-                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            View File Types
-                                        </a>
-                                        <a href="{{ route('registry.file-types.create') }}"
-                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            Add File Type
-                                        </a>
-                                    </div>
-                                </div>
+                            <x-slot name="trigger">
 
-                               
+                                <button type="button"
+                                        class="inline-flex items-center gap-2
+                                            rounded-lg border border-gray-200
+                                            px-3 py-2 text-sm font-medium
+                                            text-gray-600 hover:bg-gray-50 transition">
 
-                                {{-- <div class="relative flex items-center h-16">
-                                    <x-nav-link
-                                            href="{{ route('registry.organisations.edit', Auth::user()->organisation) }}"
-                                            :active="request()->routeIs('registry.organisations.edit')"
-                                            class="flex items-center h-full cursor-pointer"
-                                        >
-                                        <span class="leading-none flex items-center text-gray-500 font-semibold">
-                                            {{ __('Logo & Profile') }}
-                                        </span>
-                                    </x-nav-link>
-                                </div> --}}
+                                    <i class="fa-solid fa-users" aria-hidden="true"></i>
 
-                                <div class="relative flex items-center h-16">
-                                    <x-nav-link
-                                            href="{{ route('registry.external-partners.index') }}"
-                                            :active="request()->routeIs('registry.external-partners.*')"
-                                            class="flex items-center h-full cursor-pointer"
-                                        >
-                                        <span class="leading-none flex items-center text-gray-500 font-semibold">
-                                            {{ __('External Partners') }}
-                                        </span>
-                                    </x-nav-link>
-                                </div>
-
-                                <div class="relative flex items-center h-16">
-                                    <x-nav-link
-                                            href="{{ route('registry.organisations.index') }}"
-                                            :active="request()->routeIs('registry.organisations.*')"
-                                            class="flex items-center h-full cursor-pointer"
-                                        >
-                                        <span class="leading-none flex items-center text-gray-500 font-semibold">
-                                            {{ __('Organisations') }}
-                                        </span>
-                                    </x-nav-link>
-                                </div>
-
-
-                                <div class="relative flex items-center h-16">
-                                    <x-nav-link
-                                            href="{{ route('registry.divisions.index') }}"
-                                            :active="request()->routeIs('registry.divisions.*')"
-                                            class="flex items-center h-full cursor-pointer"
-                                        >
-                                        <span class="leading-none flex items-center text-gray-500 font-semibold">
-                                            {{ __('Divisions & HoDs') }}
-                                        </span>
-                                    </x-nav-link>
-                                </div>
-                            @endhasrole
-
-                            @hasrole(['admin', 'system-admin', 'registry'])
-                                <div class="relative flex items-center h-16">
-                                    <x-nav-link
-                                            href="{{ route('registry.users.index') }}"
-                                            :active="request()->routeIs('registry.users.*')"
-                                            class="flex items-center h-full cursor-pointer"
-                                        >
-                                        <span class="leading-none flex items-center text-gray-500 font-semibold">
-                                            {{ __('Users') }}
-                                        </span>
-                                    </x-nav-link>
-                                </div>
-                            @endhasrole
-                                
-                          
-                        
-
-                               
-
-                        {{-- @hasrole(['admin', 'system-admin'])
-                            <div class="relative flex items-center h-16">
-                                <x-nav-link
-                                        href="{{ route('registry.users.index') }}"
-                                        :active="request()->routeIs('registry.users.*')"
-                                        class="flex items-center h-full cursor-pointer"
-                                    >
-                                    <span class="leading-none flex items-center text-gray-500 font-semibold">
-                                        {{ __('Users') }}
+                                    <span class="hidden lg:block max-w-[120px] truncate">
+                                        {{ Auth::user()->currentTeam->name }}
                                     </span>
-                                </x-nav-link>
-                            </div>
-                        @endhasrole --}}
-                    </div>
-                    
-                    <div class="hidden sm:flex sm:items-center sm:ms-6">
-                            <!-- Teams Dropdown -->
-                            @if (Laravel\Jetstream\Jetstream::hasTeamFeatures())
-                                <div class="ms-3 relative">
-                                    <x-dropdown align="right" width="60">
-                                        <x-slot name="trigger">
-                                            <span class="inline-flex rounded-md">
-                                                <button type="button" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none focus:bg-gray-50 active:bg-gray-50 transition ease-in-out duration-150">
-                                                    {{ Auth::user()->currentTeam->name }}
-                                                    <svg class="ms-2 -me-0.5 size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9" />
-                                                    </svg>
-                                                </button>
-                                            </span>
-                                        </x-slot>
-                                        <x-slot name="content">
-                                            <div class="w-60">
-                                                <!-- Team Management -->
-                                                <div class="block px-4 py-2 text-xs text-gray-400">
-                                                    {{ __('Manage Team') }}
-                                                </div>
 
-                                                <!-- Team Settings -->
-                                                <x-dropdown-link href="{{ route('teams.show', Auth::user()->currentTeam->id) }}">
-                                                    {{ __('Team Settings') }}
-                                                </x-dropdown-link>
+                                    <i class="fa-solid fa-chevron-down text-xs"
+                                    aria-hidden="true"></i>
 
-                                                @can('create', Laravel\Jetstream\Jetstream::newTeamModel())
-                                                    <x-dropdown-link href="{{ route('teams.create') }}">
-                                                        {{ __('Create New Team') }}
-                                                    </x-dropdown-link>
-                                                @endcan
+                                </button>
 
-                                                <!-- Team Switcher -->
-                                                @if (Auth::user()->allTeams()->count() > 1)
-                                                    <div class="border-t border-gray-200"></div>
+                            </x-slot>
 
-                                                    <div class="block px-4 py-2 text-xs text-gray-400">
-                                                        {{ __('Switch Teams') }}
-                                                    </div>
+                            <x-slot name="content">
 
-                                                    @foreach (Auth::user()->allTeams() as $team)
-                                                        <x-switchable-team :team="$team" />
-                                                    @endforeach
-                                                @endif
-                                            </div>
-                                        </x-slot>
-                                    </x-dropdown>
+                                <div class="px-4 py-2 text-xs font-semibold text-gray-400">
+                                    Manage Team
                                 </div>
+
+                                <x-dropdown-link
+                                    href="{{ route('teams.show', Auth::user()->currentTeam->id) }}">
+                                    Team Settings
+                                </x-dropdown-link>
+
+                                @can('create', Laravel\Jetstream\Jetstream::newTeamModel())
+
+                                    <x-dropdown-link href="{{ route('teams.create') }}">
+                                        Create New Team
+                                    </x-dropdown-link>
+
+                                @endcan
+
+                                @if (Auth::user()->allTeams()->count() > 1)
+
+                                    <div class="border-t border-gray-100"></div>
+
+                                    <div class="px-4 py-2 text-xs font-semibold text-gray-400">
+                                        Switch Teams
+                                    </div>
+
+                                    @foreach (Auth::user()->allTeams() as $team)
+                                        <x-switchable-team :team="$team" />
+                                    @endforeach
+
+                                @endif
+
+                            </x-slot>
+
+                        </x-dropdown>
+
+                    @endif
+
+
+                    {{-- Account Dropdown --}}
+                    <x-dropdown align="right" width="48">
+
+                        <x-slot name="trigger">
+
+                            <button type="button"
+                                    class="flex items-center gap-2 sm:gap-3
+                                        rounded-lg p-1.5 sm:px-3 sm:py-2
+                                        hover:bg-gray-100 transition">
+
+                                @if (Laravel\Jetstream\Jetstream::managesProfilePhotos())
+
+                                    <img src="{{ Auth::user()->profile_photo_url }}"
+                                        alt="{{ Auth::user()->first_name }}"
+                                        class="w-9 h-9 rounded-full object-cover">
+
+                                @else
+
+                                    <div class="flex shrink-0 items-center justify-center
+                                                w-9 h-9 rounded-full bg-cyan-100
+                                                text-cyan-700 text-sm font-bold">
+
+                                        {{ strtoupper(substr(Auth::user()->first_name, 0, 1)) }}
+
+                                    </div>
+
+                                @endif
+
+                                <div class="hidden sm:block min-w-0 text-left">
+
+                                    <p class="max-w-[140px] truncate text-sm font-semibold text-gray-800">
+                                        {{ Auth::user()->first_name }}
+                                    </p>
+
+                                    <p class="text-xs text-gray-500 capitalize">
+                                        {{ str_replace('-', ' ', Auth::user()->roles->pluck('name')->first() ?? '') }}
+                                    </p>
+
+                                </div>
+
+                                <i class="fa-solid fa-chevron-down text-xs text-gray-400"
+                                aria-hidden="true"></i>
+
+                            </button>
+
+                        </x-slot>
+
+                        <x-slot name="content">
+
+                            <div class="px-4 py-3 border-b border-gray-100">
+
+                                <p class="text-sm font-semibold text-gray-800">
+                                    {{ Auth::user()->name }}
+                                </p>
+
+                                <p class="text-xs text-gray-500 break-all">
+                                    {{ Auth::user()->email }}
+                                </p>
+
+                            </div>
+
+                            <x-dropdown-link href="{{ route('profile.show') }}">
+
+                                <i class="fa-solid fa-user w-5 text-gray-400"></i>
+                                Profile
+
+                            </x-dropdown-link>
+
+                            {{-- <x-dropdown-link href="{{ route('registry.users.signature.edit') }}">
+
+                                <i class="fa-solid fa-signature w-5 text-gray-400"></i>
+                                Edit Signature
+
+                            </x-dropdown-link> --}}
+
+                            @if (Laravel\Jetstream\Jetstream::hasApiFeatures())
+
+                                <x-dropdown-link href="{{ route('api-tokens.index') }}">
+
+                                    <i class="fa-solid fa-key w-5 text-gray-400"></i>
+                                    API Tokens
+
+                                </x-dropdown-link>
+
                             @endif
 
-                            <!-- Administration Settings Dropdown -->
-                            {{-- @hasanyrole(['sro', 'registry', 'admin'])
-                                <div class="ms-3 relative">
-                                    <x-dropdown>
-                                        <x-slot name="trigger">
-                                            @if (Laravel\Jetstream\Jetstream::managesProfilePhotos())
-                                                <button class="flex text-sm border-2 border-transparent rounded-full focus:outline-none focus:border-gray-300 transition">
-                                                    <img class="size-8 rounded-full object-cover" src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->first_name }}" />
-                                                </button>
-                                            @else
-                                                <span class="inline-flex rounded-md">
-                                                    <button type="button" class="inline-flex font-roboto items-center px-3 py-2 text-sm leading-4 font-light rounded-md text-gray-800 bg-white hover:text-gray-700 focus:outline-none focus:bg-gray-50 active:bg-gray-50 transition ease-in-out duration-150">
-                                                        Administration
-                                                    </button>
-                                                </span>
-                                            @endif
-                                        </x-slot>
+                            <div class="border-t border-gray-100"></div>
 
-                                        <x-slot name="content">
+                            {{-- Logout --}}
+                            <form method="POST" action="{{ route('logout') }}">
 
-                                            <x-dropdown-link href="{{ route('registry.users.index') }}">
-                                                {{ __('Manage Users') }}
-                                            </x-dropdown-link>
+                                @csrf
 
-                                            <x-dropdown-link href="{{ route('registry.divisions.index') }}">
-                                                {{ __('Manage User Roles') }}
-                                            </x-dropdown-link>
+                                <button type="submit"
+                                        class="flex items-center gap-2 w-full
+                                            px-4 py-2 text-left text-sm
+                                            text-red-600 hover:bg-red-50 transition">
 
-                                            <x-dropdown-link href="{{ route('registry.divisions.index') }}">
-                                                {{ __('Manage Divisions') }}
-                                            </x-dropdown-link>
+                                    <i class="fa-solid fa-arrow-right-from-bracket w-4"
+                                    aria-hidden="true"></i>
 
-                                            <x-dropdown-link href="{{ route('registry.divisions.index') }}">
-                                                {{ __('Audit Trails') }}
-                                            </x-dropdown-link>
-                                        </x-slot>
-                                    </x-dropdown>
-                                </div>
-                            @endhasanyrole --}}
-                    </div>
-                    <!-- User Settings Dropdown -->
-                    <div class="ms-auto justify-right ms-3 relative">
-                                <x-dropdown>
-                                    <x-slot name="trigger">
-                                        @if (Laravel\Jetstream\Jetstream::managesProfilePhotos())
-                                            <button class="flex text-sm border-2 border-transparent rounded-full focus:outline-none focus:border-gray-300 transition">
-                                                <img class="size-8 rounded-full object-cover" src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->first_name }}" />
-                                            </button>
-                                        @else
-                                            <span class="flex rounded-md">
-                                                <button type="button"
-                                                    class="inline-flex items-center whitespace-nowrap font-roboto px-3 py-3 text-sm leading-4 font-light rounded-md text-gray-800 bg-white hover:text-gray-700 focus:outline-none focus:bg-gray-50 active:bg-gray-50 transition ease-in-out duration-150">
+                                    Log Out
 
-                                                    <span>
-                                                        {{ Auth::user()->first_name }}
-                                                        |
-                                                        {{ Auth::user()->roles->pluck('name')->first() }}
-                                                    </span>
+                                </button>
 
-                                                    <svg class="ms-2 -me-0.5 size-4"
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        fill="none"
-                                                        viewBox="0 0 24 24"
-                                                        stroke-width="1.5"
-                                                        stroke="currentColor">
-                                                        <path stroke-linecap="round"
-                                                            stroke-linejoin="round"
-                                                            d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                                                    </svg>
-                                                </button>
-                                            </span>
-                                        @endif
-                                    </x-slot>
+                            </form>
 
-                                    <x-slot name="content">
-                                        <!-- Account Management -->
-                                        <div class="block px-4 py-2 text-xs text-gray-400">
-                                            {{ __('Manage Account') }}
-                                        </div>
+                        </x-slot>
 
-                                        <x-dropdown-link href="{{ route('profile.show') }}">
-                                            {{ __('Profile') }}
-                                        </x-dropdown-link>
+                    </x-dropdown>
 
-                                        @if (Laravel\Jetstream\Jetstream::hasApiFeatures())
-                                            <x-dropdown-link href="{{ route('api-tokens.index') }}">
-                                                {{ __('API Tokens') }}
-                                            </x-dropdown-link>
-                                        @endif
 
-                                        <!-- New Dropdown Menu -->
-                                        <div class="border-t border-gray-200"></div>
-                                        {{-- <div class="block px-4 py-2 text-xs text-gray-400">
-                                            {{ __('New Menu') }}
-                                        </div>
+                    {{-- Mobile Menu Button --}}
+                    <button type="button"
+                            @click="mobileOpen = !mobileOpen"
+                            :aria-expanded="mobileOpen.toString()"
+                            aria-controls="main-navigation"
+                            aria-label="Toggle navigation"
+                            class="inline-flex lg:hidden items-center justify-center
+                                w-10 h-10 rounded-lg border border-gray-200
+                                text-gray-600 hover:bg-gray-100 transition">
 
-                                        <x-dropdown-link href="{{ route('registry.boards.index') }}">
-                                            {{ __('E-Registry') }}
-                                        </x-dropdown-link>
+                        <i class="fa-solid text-lg"
+                        :class="mobileOpen ? 'fa-xmark' : 'fa-bars'">
+                        </i>
 
-                                        <x-dropdown-link href="{{ route('registry.boards.index') }}">
-                                            {{ __('New Option 2') }}
-                                        </x-dropdown-link> --}}
+                    </button>
 
-                                        <x-dropdown-link href="{{ route('registry.users.signature.edit') }}" :active="request()->routeIs('registry.users.signature.edit')">
-                                                {{ __('Edit Signature') }}
-                                        </x-dropdown-link>
+                </div>
 
-                                        <div class="border-t border-gray-200"></div>
-
-                                        <!-- Authentication -->
-                                        <form method="POST" action="{{ route('logout') }}" x-data>
-                                            @csrf
-
-                                            <x-dropdown-link href="{{ route('logout') }}"
-                                                    @click.prevent="$root.submit();">
-                                                {{ __('Log Out') }}
-                                            </x-dropdown-link>
-                                        </form>
-                                    </x-slot>
-                                </x-dropdown>
-                    </div>
             </div>
+
         </div>
 
-            <!-- Hamburger -->
-            <div class="-me-2 flex items-center sm:hidden">
-                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
-                    <svg class="size-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                        <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+
+        {{-- Main Navigation --}}
+        <div id="main-navigation"
+            :class="mobileOpen ? 'block' : 'hidden'"
+            class="hidden lg:block border-t border-gray-100 bg-gray-50/50">
+
+            <div class="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8">
+
+                <div class="flex flex-col lg:flex-row lg:flex-wrap
+                            lg:items-center gap-1 lg:gap-2 py-2">
+
+                    {{-- Files --}}
+                    <div x-data="{ open: false }"
+                        @click.outside="open = false"
+                        @keydown.escape.window="open = false"
+                        class="relative">
+
+                        <button type="button"
+                                @click="open = !open"
+                                :aria-expanded="open.toString()"
+                                class="flex w-full items-center gap-2
+                                    px-4 py-2.5 rounded-lg text-sm font-semibold
+                                    transition
+                                    {{ request()->routeIs('registry.files.*')
+                                            ? 'bg-cyan-100 text-cyan-800'
+                                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+
+                            <i class="fa-regular fa-file-lines w-4"></i>
+
+                            <span>Files</span>
+
+                            <i class="fa-solid fa-chevron-down ml-auto text-[10px]
+                                    transition-transform"
+                            :class="{ 'rotate-180': open }">
+                            </i>
+
+                        </button>
+
+                        {{-- Files Dropdown --}}
+                        <div x-show="open"
+                            x-transition
+                            style="display: none;"
+                            class="mt-1 lg:absolute lg:left-0 lg:top-full
+                                    lg:w-56 lg:z-50 lg:shadow-lg
+                                    bg-white border border-gray-200 rounded-lg p-1">
+
+                            <a href="{{ route('registry.files.index') }}"
+                            class="flex items-center gap-3 px-3 py-2.5
+                                    rounded-md text-sm text-gray-700 hover:bg-cyan-50
+                                    hover:text-cyan-700 transition">
+
+                                <i class="fa-solid fa-list w-4"></i>
+                                View Files
+
+                            </a>
+
+                            @role('registry')
+
+                                <a href="{{ route('registry.files.create') }}"
+                                class="flex items-center gap-3 px-3 py-2.5
+                                        rounded-md text-sm text-gray-700 hover:bg-cyan-50
+                                        hover:text-cyan-700 transition">
+
+                                    <i class="fa-solid fa-plus w-4"></i>
+                                    Create File
+
+                                </a>
+
+                            @endrole
+
+                        </div>
+
+                    </div>
+
+
+                    @hasanyrole('registry|system-admin')
+
+                        {{-- E-Filing --}}
+                        <a href="{{ route('registry.folders.index') }}"
+                        class="flex items-center gap-2 px-4 py-2.5 rounded-lg
+                                text-sm font-semibold transition
+                                {{ request()->routeIs('registry.folders.*')
+                                        ? 'bg-cyan-100 text-cyan-800'
+                                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+
+                            <i class="fa-regular fa-folder-open w-4"></i>
+
+                            E-Filing
+
+                        </a>
+
+
+                        {{-- File Types --}}
+                        <div x-data="{ open: false }"
+                            @click.outside="open = false"
+                            @keydown.escape.window="open = false"
+                            class="relative">
+
+                            <button type="button"
+                                    @click="open = !open"
+                                    :aria-expanded="open.toString()"
+                                    class="flex w-full items-center gap-2 px-4 py-2.5
+                                        rounded-lg text-sm font-semibold transition
+                                        {{ request()->routeIs('registry.file-types.*')
+                                                ? 'bg-cyan-100 text-cyan-800'
+                                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+
+                                <i class="fa-solid fa-layer-group w-4"></i>
+
+                                <span>File Types</span>
+
+                                <i class="fa-solid fa-chevron-down ml-auto text-[10px]
+                                        transition-transform"
+                                :class="{ 'rotate-180': open }">
+                                </i>
+
+                            </button>
+
+                            <div x-show="open"
+                                x-transition
+                                style="display: none;"
+                                class="mt-1 lg:absolute lg:left-0 lg:top-full
+                                        lg:w-56 lg:z-50 lg:shadow-lg
+                                        bg-white border border-gray-200 rounded-lg p-1">
+
+                                <a href="{{ route('registry.file-types.index') }}"
+                                class="flex items-center gap-3 px-3 py-2.5
+                                        rounded-md text-sm text-gray-700
+                                        hover:bg-cyan-50 hover:text-cyan-700 transition">
+
+                                    <i class="fa-solid fa-list w-4"></i>
+                                    View File Types
+
+                                </a>
+
+                                <a href="{{ route('registry.file-types.create') }}"
+                                class="flex items-center gap-3 px-3 py-2.5
+                                        rounded-md text-sm text-gray-700
+                                        hover:bg-cyan-50 hover:text-cyan-700 transition">
+
+                                    <i class="fa-solid fa-plus w-4"></i>
+                                    Add File Type
+
+                                </a>
+
+                            </div>
+
+                        </div>
+
+
+                        {{-- External Partners --}}
+                        <a href="{{ route('registry.external-partners.index') }}"
+                        class="flex items-center gap-2 px-4 py-2.5 rounded-lg
+                                text-sm font-semibold transition
+                                {{ request()->routeIs('registry.external-partners.*')
+                                        ? 'bg-cyan-100 text-cyan-800'
+                                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+
+                            <i class="fa-solid fa-handshake w-4"></i>
+
+                            External Partners
+
+                        </a>
+
+
+                        {{-- Organisations --}}
+                        <a href="{{ route('registry.organisations.index') }}"
+                        class="flex items-center gap-2 px-4 py-2.5 rounded-lg
+                                text-sm font-semibold transition
+                                {{ request()->routeIs('registry.organisations.*')
+                                        ? 'bg-cyan-100 text-cyan-800'
+                                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+
+                            <i class="fa-regular fa-building w-4"></i>
+
+                            Organisations
+
+                        </a>
+
+
+                        {{-- Divisions and HoDs --}}
+                        <a href="{{ route('registry.divisions.index') }}"
+                        class="flex items-center gap-2 px-4 py-2.5 rounded-lg
+                                text-sm font-semibold transition
+                                {{ request()->routeIs('registry.divisions.*')
+                                        ? 'bg-cyan-100 text-cyan-800'
+                                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+
+                            <i class="fa-solid fa-sitemap w-4"></i>
+
+                            Divisions & HoDs
+
+                        </a>
+
+                    @endhasanyrole
+
+
+                    {{-- Users --}}
+                    @hasanyrole('admin|system-admin')
+
+                        <a href="{{ route('registry.users.index') }}"
+                        class="flex items-center gap-2 px-4 py-2.5 rounded-lg
+                                text-sm font-semibold transition
+                                {{ request()->routeIs('registry.users.*')
+                                        ? 'bg-cyan-100 text-cyan-800'
+                                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+
+                            <i class="fa-solid fa-users w-4"></i>
+
+                            Users
+
+                        </a>
+
+                    @endhasanyrole
+
+                </div>
+
             </div>
+
         </div>
-    </div>
+
+    </nav>
 
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">

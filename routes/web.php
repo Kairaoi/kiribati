@@ -105,14 +105,8 @@ Route::group(['as' => 'registry.',
     Route::middleware('role:admin|system-admin')->group(function () {
         Route::patch('/users/{user}/activate', [UserController::class, 'activate'])->name('users.activate');
         Route::patch('/users/{user}/deactivate', [UserController::class, 'deactivate'])->name('users.deactivate');
-        Route::resource('users', UserController::class)->except(['index', 'show']);
-    });
-
-
-    Route::middleware('role:registry|admin|system-admin')->group(function () {
         Route::match(['get', 'post'], 'users/datatables', [UserController::class, 'getDataTables'])->name('users.datatables');
-        Route::get('users/{user}', [UserController::class, 'show'])->name('users.show'); 
-        Route::get('users/', [UserController::class, 'index'])->name('users.index');
+        Route::resource('users', UserController::class);
     });
 
 

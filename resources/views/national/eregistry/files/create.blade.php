@@ -80,7 +80,7 @@
                         <label for="source_type">Source Type <span class="text-red-600">*</span></label>
                         <select name="source_type" id="source_type" 
                             class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm">
-                            <option value="own_ministry">My Ministry {{ Auth::user()->organisation->name ? ' (' . Auth::user()->organisation->name . ')' : '' }}</option>                            
+                            <option value="own_ministry">My Organisation {{ Auth::user()->organisation->name ? ' - ' . Auth::user()->organisation->name : '' }}</option>                            
                             <option value="identity_organisation">Other Registered Organisations</option>
                             <option value="external_partner">External Partners</option>
                         </select>
@@ -89,7 +89,7 @@
                     <div id="division-select-container">
                         <div class="mt-3 flex items-center justify-between mb-1">
                             <label for="division" class="mt-1 block text-sm text-gray-700">
-                                Division <span class="text-red-600">*</span>
+                                Select Division <span class="text-red-600">*</span>
                             </label>
                         </div>
                         <select id="division" name="from_division_id" class="mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm text-gray-700 shadow-sm transition duration-200 hover:border-cyan-400 focus:border-cyan-500 focus:outline-none focus:ring-4 focus:ring-cyan-100">
@@ -161,8 +161,7 @@
                 <!-- File Type -->
                 <div>
                     <label for="file_type_id" class="block">File Type <span class="text-red-500">*</span></label>
-                    <select name="file_type_id"
-                            id="file_type_id" 
+                    <select name="file_type_id" id="file_type_id" 
                             class="select2 mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
                             required>
                             <option class="" disabled selected>Select File Type</option>
@@ -173,49 +172,40 @@
                             @endforeach
                     </select>
                     @if($isRegistry)
-                        <div class="mt-2">
-                            <div class="flex items-center justify-between text-xs text-cyan-600">
-                                <span>No suitable file type?</span>
-                                <a href="{{ route('registry.file-types.create') }}" 
-                                    class="inline-flex items-center gap-1 font-medium text-cyan-600 hover:text-cyan-800 transition">
-                                    <svg xmlns="http://www.w3.org/2000/svg" 
-                                        class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                            d="M12 4v16m8-8H4" />
-                                    </svg>
-                                    Add file type
-                                </a>
-                            </div>
+                        <div class="mt-2 flex items-center justify-between gap-2 text-xs">
+                            <span class="text-gray-500">
+                                No suitable file type?
+                            </span>
+                            <button type="button"
+                                    id="openFileTypeModal"
+                                    class="inline-flex items-center gap-1 font-semibold
+                                        text-cyan-600 hover:text-cyan-800 transition">
+
+                                <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                                Add File Type
+                            </button>
                         </div>
                     @endif
                 </div>
                 
-                <!-- File Category -->
-                <div>
-                    <label for="category_id" class="block">
-                        Category
-                    </label>
-                    <select name="category_id" 
-                            id="category_id" 
-                            class="select2 mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm" 
-                    >
-                        <option value="" disabled selected>Select Document Category</option>
-                        @foreach ($categories as $category)
-                            <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
-                                {{ $category->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
                 <!-- Due Date -->
                 <div>
-                    <label for="due_date" class="block">Due Date 
-                    <input type="date" name="due_date" min="{{ date('Y-m-d') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm" value="{{ old('due_date') }}">
+                    <label for="due_date" class="block text-sm font-medium text-gray-700">
+                        Due Date
+                    </label>
+
+                    <input type="text"
+                        id="due_date"
+                        name="due_date"
+                        placeholder="DD/MM/YYYY"
+                        value="{{ old('due_date') }}"
+                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm
+                                focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm">
                 </div>
             </div>
 
             {{-- @if(Auth::user()->hasRole('registry')) --}}
-                <div class="pt-6 border-t border-gray-300 mt-6 text-gray-700 space-y-6">
+                {{-- <div class="pt-6 border-t border-gray-300 mt-6 text-gray-700 space-y-6">
                     <label class="block text-sm font-medium text-gray-700 mb-3">
                         Document Type <span class="text-red-600">*</span>
                     </label>
@@ -233,7 +223,7 @@
                                 <div class="text-xs text-gray-500">Upload an existing PDF file </div>
                             </div>
                         </label>
-                        {{-- <label id="online-option"
+                        <label id="online-option"
                             class="flex items-center gap-3 border border-gray-300 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition">
                             <input type="radio" 
                                 name="document_source" 
@@ -245,10 +235,12 @@
                                     Create memorandum using editor
                                 </div>
                             </div>
-                        </label> --}}
+                        </label>
                     </div>
-                </div>
+                </div> --}}
 
+                <input type="hidden" name="document_source" value="upload">
+                
                 {{-- Upload Section --}}
                 <div id="upload-section" class="mt-4 text-gray-700 text-sm grid grid-cols-1">
                     <label for="main_file" class="block text-sm font-medium text-gray-700 mb-2">
@@ -562,7 +554,7 @@
         <div id="file-upload-container" class="space-y-4">
             <div class="file-upload-item text-sm relative">
                 <label for="file_1" class="block mt-4">
-                    Supporting Documents (30MB per file):      
+                    Supporting Documents:      
                 </label>
                 <input type="file" name="additional_files[]" id="file_1" accept="application/pdf"
                         class="block w-full text-sm text-gray-600
@@ -618,8 +610,8 @@
             const addButton = document.getElementById('add-file-button');
 
             addButton.addEventListener('click', function () {
-                if (fileCounter >= 5) {
-                    alert('You can only add up to 5 files.');
+                if (fileCounter >= 20) {
+                    alert('You can only add up to 20 files.');
                     return;
                 }
 
@@ -987,5 +979,245 @@
                 [...ministryCheckboxes].every(cb => cb.checked);
         });
     </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            flatpickr("#due_date", {
+                dateFormat: "Y-m-d",
+                altInput: true,
+                altFormat: "d/m/y",
+                minDate: "today",
+                disableMobile: true
+            });
+        });
+    </script>
+
+    @if($isRegistry)
+        <div id="fileTypeModal"
+            class="fixed inset-0 z-50 hidden items-center justify-center
+                    bg-gray-900/50 backdrop-blur-sm p-4">
+
+            <div class="w-full max-w-md rounded-xl bg-white shadow-xl">
+
+                {{-- Modal Header --}}
+                <div class="flex items-center justify-between gap-3
+                            border-b border-gray-200 px-6 py-4">
+
+                    <h2 class="text-lg font-semibold text-gray-800">
+                        Add File Type
+                    </h2>
+
+                    <button type="button"
+                            id="closeFileTypeModal"
+                            aria-label="Close"
+                            class="rounded-lg p-2 text-gray-400
+                                hover:bg-gray-100 hover:text-gray-700">
+
+                        <i class="fa-solid fa-xmark"></i>
+
+                    </button>
+
+                </div>
+
+                <form id="fileTypeForm" action="{{ route('registry.file-types.store') }}" method="POST">
+                    @csrf
+
+                    <div class="p-6 space-y-4">
+
+                        <div>
+                            <label for="fileTypeName"
+                                class="block text-sm font-medium text-gray-700">
+                                File Type Name
+                                <span class="text-red-500">*</span>
+                            </label>
+
+                            <input type="text"
+                                id="fileTypeName"
+                                name="name"
+                                required
+                                placeholder="e.g. Meeting Minutes"
+                                class="mt-1 block w-full rounded-lg border-gray-300
+                                        text-sm focus:border-cyan-500 focus:ring-cyan-500">
+                        </div>
+
+                        <div>
+                            <label for="fileTypeCode"
+                                class="block text-sm font-medium text-gray-700">
+                                File Type Code
+                                <span class="text-red-500">*</span>
+                            </label>
+
+                            <input type="text"
+                                id="fileTypeCode"
+                                name="code"
+                                minlength="2"
+                                maxlength="3"
+                                required
+                                placeholder="e.g. MT"
+                                class="mt-1 block w-full rounded-lg border-gray-300
+                                        uppercase text-sm
+                                        focus:border-cyan-500 focus:ring-cyan-500">
+
+                            <p class="mt-1 text-xs text-gray-500">
+                                Enter a unique 2–3 letter code for the file reference number.
+                            </p>
+                        </div>
+
+                        {{-- Validation Errors --}}
+                        <div id="fileTypeErrors"
+                            role="alert"
+                            class="hidden rounded-lg bg-red-50 p-3
+                                    text-sm text-red-700">
+                        </div>
+
+                    </div>
+
+                    {{-- Modal Footer --}}
+                    <div class="flex flex-wrap justify-end gap-3
+                                rounded-b-xl border-t border-gray-200
+                                bg-gray-50 px-6 py-4">
+
+                        <button type="button"
+                                id="cancelFileTypeModal"
+                                class="rounded-lg border border-gray-300
+                                    bg-white px-4 py-2 text-sm
+                                    font-medium text-gray-700 hover:bg-gray-100">
+                            Cancel
+                        </button>
+
+                        <button type="submit"
+                                id="saveFileTypeButton"
+                                class="inline-flex items-center gap-2 rounded-lg
+                                    bg-cyan-600 px-4 py-2 text-sm font-semibold
+                                    text-white hover:bg-cyan-700
+                                    disabled:cursor-not-allowed disabled:opacity-50">
+
+                            <i class="fa-solid fa-plus"></i>
+                            Save File Type
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+
+                const modal = document.getElementById('fileTypeModal');
+                const fileTypeForm = document.getElementById('fileTypeForm');
+
+                if (modal && fileTypeForm) {
+
+                    const errors = document.getElementById('fileTypeErrors');
+                    const saveButton = document.getElementById('saveFileTypeButton');
+                    const fileTypeSelect = document.getElementById('file_type_id');
+
+                    function openModal() {
+                        modal.classList.remove('hidden');
+                        modal.classList.add('flex');
+
+                        document.getElementById('fileTypeName').focus();
+                    }
+
+                    function closeModal() {
+                        modal.classList.add('hidden');
+                        modal.classList.remove('flex');
+
+                        fileTypeForm.reset();
+                        errors.classList.add('hidden');
+                        errors.textContent = '';
+                    }
+
+                    document.getElementById('openFileTypeModal')
+                        .addEventListener('click', openModal);
+
+                    document.getElementById('closeFileTypeModal')
+                        .addEventListener('click', closeModal);
+
+                    document.getElementById('cancelFileTypeModal')
+                        .addEventListener('click', closeModal);
+
+                    document.addEventListener('keydown', function (event) {
+                        if (event.key === 'Escape' && !saveButton.disabled) {
+                            closeModal();
+                        }
+                    });
+
+                    fileTypeForm.addEventListener('submit', async function (event) {
+
+                        event.preventDefault();
+
+                        errors.classList.add('hidden');
+                        errors.textContent = '';
+                        saveButton.disabled = true;
+
+                        try {
+                            const response = await fetch(fileTypeForm.action, {
+                                method: 'POST',
+                                headers: {
+                                    'Accept': 'application/json'
+                                },
+                                body: new FormData(fileTypeForm)
+                            });
+
+                            const contentType = response.headers.get('content-type') ?? '';
+
+                            if (!contentType.includes('application/json')) {
+                                const responseText = await response.text();
+
+                                console.error('File Type Response:', {
+                                    status: response.status,
+                                    url: response.url,
+                                    redirected: response.redirected,
+                                    body: responseText
+                                });
+
+                                throw new Error('The server returned an unexpected response.');
+                            }
+
+                            const result = await response.json();
+
+                            if (!response.ok) {
+                                const messages = Object.values(result.errors ?? {}).flat();
+
+                                throw new Error(
+                                    messages.join(' ') ||
+                                    result.message ||
+                                    'Unable to create file type.'
+                                );
+                            }
+
+                            const fileType = result.file_type;
+
+                            const option = new Option(
+                                fileType.name,
+                                fileType.id,
+                                true,
+                                true
+                            );
+
+                            fileTypeSelect.add(option);
+
+                            fileTypeSelect.dispatchEvent(
+                                new Event('change', { bubbles: true })
+                            );
+
+                            closeModal();
+
+                        } catch (error) {
+                            errors.textContent = error.message;
+                            errors.classList.remove('hidden');
+
+                        } finally {
+                            saveButton.disabled = false;
+                        }
+                    });
+                }
+
+            });
+        </script>
+    @endif
 
 @endsection

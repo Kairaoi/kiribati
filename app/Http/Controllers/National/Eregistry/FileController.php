@@ -327,13 +327,13 @@ class FileController extends Controller
                 mainFileName: $mainFileName,
         );
             
-        activity('file')
-            ->causedBy(Auth::user())
-            ->performedOn($file)
-            ->withProperties([
-                'file_name' => $file->name
-            ])
-            ->log('File created');
+        // activity('file')
+        //     ->causedBy(Auth::user())
+        //     ->performedOn($file)
+        //     ->withProperties([
+        //         'file_name' => $file->name
+        //     ])
+        //     ->log('File created');
 
         return redirect()->route('registry.files.index')->with('success', 'File created successfully!');
     }
@@ -835,55 +835,46 @@ class FileController extends Controller
      */
     public function update(FileUpdateRequest $request, File $file)
     {
-
         $validated = $request->validated();
-
-        // dd('validated');
-
         $sourceType = $validated['source_type'];
 
-        // Handle the case when the source type is "own_ministry"
         if ($sourceType === 'own_ministry') {
             $organisation = Organisation::findOrFail(Auth::user()->organisation_id);
+
             $validated['source_type'] = Organisation::class;
             $validated['source_id'] = $organisation->id;
-
         } else {
             $sourceTypeMap = [
                 'identity_organisation' => Organisation::class,
-                'external_partner'      => ExternalPartner::class,
+                'external_partner' => ExternalPartner::class,
             ];
 
             $validated['source_type'] = $sourceTypeMap[$sourceType];
         }
 
-        $newFileTypeId = $validated['file_type_id'] ?? $file->file_type_id;
-        $validated['reference_no'] = $file->reference_no;
-
-        if ((string) $newFileTypeId !== (string) $file->file_type_id) {
-            $validated['reference_no'] = FileReferenceService::generate(
-                $file->organisation_id,
-                $newFileTypeId
-            );
-        }
-
         $disk = Storage::disk('public');
-        $newPaths = [];
         $pathsToRemove = $validated['remove_additional_files'] ?? [];
-        $newUploads = $request->file('additional_files', []);
+        $newMainFile = $request->file('main_file');
+        $newUploads = $request->file('additional_files') ?? [];
+        $newPaths = [];
 
-        
         try {
             $obsoletePaths = DB::transaction(function () use (
-                $file, $request, $validated, $disk, $pathsToRemove, $newUploads, &$newPaths
+                $file,
+                $validated,
+                $disk,
+                $pathsToRemove,
+                $newMainFile,
+                $newUploads,
+                &$newPaths
             ) {
-                // Use the latest saved attachments if two users edit the same record.
                 $file = $file->newQuery()
                     ->lockForUpdate()
                     ->findOrFail($file->getKey());
 
                 $keptAttachments = [];
                 $obsoletePaths = [];
+                $retainedAttachmentPaths = [];
 
                 foreach ($file->additional_file_paths ?? [] as $attachment) {
                     $path = is_string($attachment)
@@ -896,11 +887,35 @@ class FileController extends Controller
                     }
 
                     $keptAttachments[] = $attachment;
+
+                    if ($path) {
+                        $retainedAttachmentPaths[] = $path;
+                    }
                 }
 
-                if (count($keptAttachments) + count($newUploads) > 5) {
+                if (count($keptAttachments) + count($newUploads) > 20) {
                     throw ValidationException::withMessages([
-                        'additional_files' => 'You can keep up to five supporting documents. Remove an existing document to add another.',
+                        'additional_files' => 'You can keep up to 20 supporting documents. Remove an existing document to add another.',
+                    ]);
+                }
+
+                $totalBytes = $newMainFile?->getSize() ?? 0;
+
+                if ($newMainFile === null && $file->main_file_path) {
+                    $totalBytes += $disk->size($file->main_file_path);
+                }
+
+                foreach ($retainedAttachmentPaths as $path) {
+                    $totalBytes += $disk->size($path);
+                }
+
+                foreach ($newUploads as $upload) {
+                    $totalBytes += $upload->getSize();
+                }
+
+                if ($totalBytes > 50 * 1024 * 1024) {
+                    throw ValidationException::withMessages([
+                        'additional_files' => 'The main file and all retained and new attachments together must not exceed 50 MB.',
                     ]);
                 }
 
@@ -913,9 +928,18 @@ class FileController extends Controller
                     'additional_file_paths',
                 ]);
 
-                if ($request->hasFile('main_file')) {
-                    $upload = $request->file('main_file');
-                    $path = $upload->store('uploads/main_files', 'public');
+                $newFileTypeId = $validated['file_type_id'] ?? $file->file_type_id;
+                $updateData['reference_no'] = $file->reference_no;
+
+                if ((string) $newFileTypeId !== (string) $file->file_type_id) {
+                    $updateData['reference_no'] = FileReferenceService::generate(
+                        $file->organisation_id,
+                        $newFileTypeId
+                    );
+                }
+
+                if ($newMainFile !== null) {
+                    $path = $newMainFile->store('uploads/main_files', 'public');
 
                     if ($path === false) {
                         throw new \RuntimeException('Could not store the main document.');
@@ -923,7 +947,7 @@ class FileController extends Controller
 
                     $newPaths[] = $path;
                     $updateData['main_file_path'] = $path;
-                    $updateData['main_file_name'] = $upload->getClientOriginalName();
+                    $updateData['main_file_name'] = $newMainFile->getClientOriginalName();
 
                     if ($file->main_file_path) {
                         $obsoletePaths[] = $file->main_file_path;
@@ -938,11 +962,13 @@ class FileController extends Controller
                     }
 
                     $newPaths[] = $path;
+                    $timestamp = now()->toISOString();
+
                     $keptAttachments[] = [
                         'name' => $upload->getClientOriginalName(),
                         'file_path' => $path,
-                        'created_at' => now()->toISOString(),
-                        'updated_at' => now()->toISOString(),
+                        'created_at' => $timestamp,
+                        'updated_at' => $timestamp,
                     ];
                 }
 
@@ -955,45 +981,47 @@ class FileController extends Controller
 
                 return array_values(array_unique($obsoletePaths));
             });
-        } catch (ValidationException $e) {
-            throw $e;
-        } catch (\Exception $e) {
-            report($e);
-
+        } catch (\Exception $exception) {
             if ($newPaths !== []) {
                 try {
                     if (!$disk->delete($newPaths)) {
-                        report(new \RuntimeException("Could not clean up new uploads for file {$file->id}."));
+                        report(new \RuntimeException(
+                            "Could not clean up new uploads for file {$file->id}."
+                        ));
                     }
                 } catch (\Exception $cleanupException) {
                     report($cleanupException);
                 }
             }
 
+            if ($exception instanceof ValidationException) {
+                throw $exception;
+            }
+
+            report($exception);
+
             return back()
                 ->withErrors(['error' => 'The file could not be updated.'])
                 ->withInput();
         }
 
-        // Delete old uploads only after the database changes have committed.
-        $cleanupFailed = false;
-
+        // Delete replaced or removed files after the database update commits.
         if ($obsoletePaths !== []) {
             try {
-                $cleanupFailed = !$disk->delete($obsoletePaths);
-
-                if ($cleanupFailed) {
-                    report(new \RuntimeException("Could not remove old uploads for file {$file->id}."));
+                if (!$disk->delete($obsoletePaths)) {
+                    report(new \RuntimeException(
+                        "Could not remove old uploads for file {$file->id}."
+                    ));
                 }
-            } catch (\Exception $e) {
-                report($e);
-                $cleanupFailed = true;
+            } catch (\Exception $exception) {
+                report($exception);
             }
         }
 
-        return redirect()->route('registry.files.index')->with('success', 'File edited');
-    
-        }
+        return redirect()
+            ->route('registry.files.index')
+            ->with('success', 'File edited successfully');
+    }
 
     /**
      * Remove the specified file and its upload from storage.

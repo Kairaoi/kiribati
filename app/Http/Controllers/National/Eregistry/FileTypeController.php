@@ -169,9 +169,21 @@ class FileTypeController extends Controller {
             ],
         ]);
 
-        $this->fileTypes->createFileType($validated, $user);
+        $fileType = $this->fileTypes->createFileType($validated, $user);
+
+        // return to create page
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'File type created successfully.',
+                'file_type' => [
+                    'id' => $fileType->id,
+                    'name' => $fileType->name,
+                    'code' => $fileType->code,
+                ],
+            ], 201);
+        }
        
-        return redirect()->route('registry.file-types.index')->with('message', 'File Type created successfully.');
+        return redirect()->route('registry.file-types.index')->with('success', 'File type created');
     }
 
     
@@ -330,21 +342,22 @@ class FileTypeController extends Controller {
 
     public function destroy(FileType $fileType)
     {
-        $this->authorize('delete', $fileType);
+        // $this->authorize('delete', $fileType);
+// 
+        // dd('ikai');
 
         if ($fileType->files()->exists()) {
             return redirect()
                 ->route('registry.file-types.index')
                 ->with(
-                    'error',
-                    'This file type cannot be deleted because it is being used by one or more files.'
+                    'error', 'This file type cannot be deleted because it is being used by one or more files.'
                 );
         }
 
         $this->fileTypes->deleteById($fileType->id);
 
-        return redirect()
-            ->route('registry.file-types.index')
-            ->with('success', 'File type deleted successfully.');
+        return response()->json([
+            'message' => 'File type deleted successfully.',
+        ]);
     }
 }

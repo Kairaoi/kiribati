@@ -8,7 +8,7 @@
 
         <div class="px-6 py-4 border-b">
             <h1 class="text-md font-semibold text-gray-500">
-                Assign Head of Division
+                Assign HOD for {{ $division->name ?? '' }}
             </h1>
         </div>
 
@@ -18,25 +18,14 @@
 
             <div class="p-6 space-y-6">
 
-                {{-- Division --}}
-                <div>
-                    <label class="block text-sm font-medium text-gray-500">
-                        Division
-                    </label>
-
-                    <p class="mt-1 text-gray-900 font-semibold">
-                        {{ $division->name }}
-                    </p>
-                </div>
-
                 {{-- Current HOD --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-500">
-                        Current Head of Division
+                        Current HOD
                     </label>
 
                     <p class="mt-1 text-gray-900">
-                        {{ $division->hod?->name ?? 'No HOD assigned' }}
+                        {{ $division->hod?->name ?? '-' }}
                     </p>
                 </div>
 

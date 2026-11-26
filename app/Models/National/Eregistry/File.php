@@ -85,7 +85,6 @@ class File extends Model implements Auditable
     ];
 
 
-
     public function signedBy()
     {
         return $this->belongsTo(User::class, 'signed_by');
@@ -210,7 +209,7 @@ class File extends Model implements Auditable
 
     public function division()
     {
-        return $this->belongsTo(Division::class);
+        return $this->belongsTo(Division::class, 'from_division_id');
     }
 
     

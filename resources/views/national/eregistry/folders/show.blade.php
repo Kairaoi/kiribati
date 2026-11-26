@@ -28,7 +28,7 @@
         </div>
     @endif
 
-    <div class="container px-4 py-8 max-w-full bg-white shadow-lg mt-4 mb-4 rounded-md min-h-screen">
+    <div class="container px-4 py-8 max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8 bg-white shadow-lg mt-4 mb-4 rounded-md min-h-screen">
         <div class="mb-1 flex items-center justify-between">
             <div>
                 <nav aria-label="Folder breadcrumb" class="mb-4">

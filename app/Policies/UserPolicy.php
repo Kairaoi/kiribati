@@ -23,7 +23,7 @@ class UserPolicy
      */
     public function view(User $user, User $model): bool
     {
-        if( ($user->hasRole('admin') || $user->hasRole('registry')) && $user->organisation_id === $model->organisation_id) {
+        if ($user->hasRole('admin') && $user->organisation_id === $model->organisation_id) {
             return true;
         }
 

@@ -29,73 +29,27 @@
     </div>
 @endif
 
-<div class="container mx-auto px-4 py-8 max-w-full mt-3 rounded-md min-h-screen ">
-    <div class="flex justify-between">
+<div class="container mx-auto px-4 py-8 max-w-full mt-2 rounded-md min-h-screen ">
+    <div class="mb-4 flex justify-between">
         <div>
-            <h1 class="text-3xl font-bold tracking-wide">User Management</h1>
-            <p class="text-base text-gray-500 mt-1">
+            <h1 class="text-2xl font-bold ">User Management</h1>
+            <p class="text-base text-gray-500 text-sm mt-1">
                 View and manage all users from your organisation.
             </p>
         </div>
-    </div>
-    <div class="mb-4 flex items-start justify-between">
         <div>
-            @role('admin|system-admin')
-                <a href="{{ route('registry.users.create') }}"
-                    class="inline-flex items-center mt-3 gap-2 px-4 py-2 bg-cyan-600 font-semibold text-sm text-white hover:bg-cyan-700 transition">
-                    Create New User
-                </a>
-            @endrole
+            <a href="{{ route('registry.users.create') }}" 
+                class="inline-flex items-center justify-center gap-2
+                            min-h-[60px] border px-5 py-3 rounded-lg
+                            bg-white text-cyan-700 text-sm font-semibold
+                            shadow-sm hover:bg-cyan-700 transition duration-200">
 
-            @role('registry|system-admin')
-                    <a href="{{ route('registry.users.edit-review-officer') }}"
-                    class="inline-flex items-center mt-3 gap-2 px-4 py-2 border font-semibold text-sm transition
-                        {{ $reviewOfficer
-                            ? 'bg-gray-200 border-cyan-100 text-cyan-700 hover:bg-gray-300'
-                            : 'bg-red-100 border-red-300 text-red-700 hover:bg-red-200' }}">
-
-                        @unless($reviewOfficer)
-                            <span aria-hidden="true" class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-600 text-white font-bold">!</span>
-                        @endunless
-
-                        <span>Current Reviewer: {{ $reviewOfficer?->name ?? 'Not assigned' }}</span>
-                    </a>
-                @else
-                    <div class="inline-flex items-center mt-3 gap-2 px-4 py-2 border font-semibold text-sm cursor-default
-                        {{ $reviewOfficer
-                            ? 'bg-gray-100 border-gray-200 text-gray-600'
-                            : 'bg-red-100 border-red-300 text-red-700' }}">
-
-                        @unless($reviewOfficer)
-                            <span aria-hidden="true" class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-600 text-white font-bold">!</span>
-                        @endunless
-
-                        <span>Current Reviewer: {{ $reviewOfficer?->name ?? 'Not assigned' }}</span>
-                    </div>
-                @endrole
-
-                @role('registry|system-admin')
-                    <a href="{{ route('registry.users.edit-secretary') }}"
-                    class="inline-flex items-center mt-3 gap-2 px-4 py-2 border font-semibold text-sm transition
-                        {{ $sro
-                            ? 'bg-gray-200 border-cyan-100 text-cyan-700 hover:bg-gray-300'
-                            : 'bg-red-100 border-red-300 text-red-700 hover:bg-red-200' }}">
-
-                        @unless($sro)
-                            <span aria-hidden="true"
-                                class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-600 text-white font-bold">
-                                !
-                            </span>
-                        @endunless
-
-                        <span>
-                            {{ $organisation->reviewer_title ?? 'Reviewer title not set' }}:
-                            {{ $sro?->name ?? 'Secretary not set' }}
-                        </span>
-                    </a>
-                @endrole
+                    <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                Create New User
+            </a>
         </div>
     </div>
+
 
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-2">
         <table id="usersTable" class="bg-gray-50 text-gray-800 text-sm divide-y divide-gray-200 stripe">
@@ -181,19 +135,6 @@
             border: 1px solid #d1d5db;
         }
 
-        /* Action Button Styles */ 
-        /* .action-btn {
-            cursor: pointer;
-            padding: 0.5rem 1rem;
-            border-radius: 9999px;
-            font-size: 0.875rem;
-            transition: background-color 0.3s, transform 0.2s;
-        }
-
-        .action-btn:hover {
-            background-color: #e5e7eb;
-        } */
-
         /* Dropdown Menu Styles */
         .dropdown-menu {
             position: absolute;
@@ -250,46 +191,46 @@
         }
 
 
-                /* Force green Excel button */
-                .excel-export-btn {
-                    border: none !important;       /* Ensures no border, overrides any border below */
-                    border-radius: 6px !important;
-                    background-color: rgba(234, 236, 241, 0.76) !important;
-                    color: #000000;
-                    padding: 0.25rem 0.75rem !important;   /* smaller padding */
-                    box-shadow: none !important;          /* removes inner or outer shadow */
-                    background-image: none !important;    /* removes gradient */
-                    /* padding: 0.5rem 2rem; */
-                    font-size: 0.7rem !important;
-                    display: inline-flex;
-                    align-items: center;
-                }
+        /* Force green Excel button */
+        .excel-export-btn {
+            border: none !important;       /* Ensures no border, overrides any border below */
+            border-radius: 6px !important;
+            background-color: rgba(234, 236, 241, 0.76) !important;
+            color: #000000;
+            padding: 0.25rem 0.75rem !important;   /* smaller padding */
+            box-shadow: none !important;          /* removes inner or outer shadow */
+            background-image: none !important;    /* removes gradient */
+            /* padding: 0.5rem 2rem; */ 
+            font-size: 0.7rem !important;
+            display: inline-flex;
+            align-items: center;
+        }
 
-                .excel-export-btn:hover {
-                    background-color: #f3f4f6;  
-                    transform: translateY(-1px);
-                    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-                }
+        .excel-export-btn:hover {
+            background-color: #f3f4f6;  
+            transform: translateY(-1px);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
 
-                .pdf-export-btn {
-                    border: none !important;       /* Ensures no border, overrides any border below */
-                    border-radius: 6px !important;
-                    background-color:  rgba(234, 236, 241, 0.76) !important;
-                    color: #000000;
-                    padding: 0.25rem 0.75rem !important;   /* smaller padding */
-                    box-shadow: none !important;          /* removes inner or outer shadow */
-                    background-image: none !important;    /* removes gradient */
-                    /* padding: 0.5rem 2rem; */
-                    font-size: 0.7rem !important;
-                    display: inline-flex !important;
-                    align-items: center;
-                }
+        .pdf-export-btn {
+            border: none !important;       /* Ensures no border, overrides any border below */
+            border-radius: 6px !important;
+            background-color:  rgba(234, 236, 241, 0.76) !important;
+            color: #000000;
+            padding: 0.25rem 0.75rem !important;   /* smaller padding */
+            box-shadow: none !important;          /* removes inner or outer shadow */
+            background-image: none !important;    /* removes gradient */
+            /* padding: 0.5rem 2rem; */
+            font-size: 0.7rem !important;
+            display: inline-flex !important;
+            align-items: center;
+        }
 
-                .pdf-export-btn:hover {
-                    background-color: #f3f4f6;  
-                    transform: translateY(-1px);
-                    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-                }
+        .pdf-export-btn:hover {
+            background-color: #f3f4f6;  
+            transform: translateY(-1px);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
 
 
     </style>
